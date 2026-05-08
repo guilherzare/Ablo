@@ -4,9 +4,11 @@ interface Props {
   text: string;
   onChange: (text: string) => void;
   onContinue: () => void;
+  isLoading?: boolean;
+  loadingLabel?: string;
 }
 
-export function TranscriptionView({ text, onChange, onContinue }: Props) {
+export function TranscriptionView({ text, onChange, onContinue, isLoading, loadingLabel }: Props) {
   return (
     <div className="transcription-view">
       <div className="transcription-header">
@@ -33,9 +35,9 @@ export function TranscriptionView({ text, onChange, onContinue }: Props) {
         <button
           className="btn-continue"
           onClick={onContinue}
-          disabled={!text.trim()}
+          disabled={!text.trim() || isLoading}
         >
-          Continuer → Anonymisation
+          {isLoading ? loadingLabel ?? "Chargement…" : "Continuer → Anonymisation"}
         </button>
       </div>
     </div>

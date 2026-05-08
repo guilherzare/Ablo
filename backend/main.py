@@ -9,6 +9,7 @@ from settings_manager import get_settings, update_settings
 from template_engine import load as load_template, validate_file as validate_template
 from model_manager import check_models, download_models
 from transcription import transcribe
+from anonymizer import anonymize
 
 
 def handle(cmd: dict) -> dict | None:
@@ -65,6 +66,11 @@ def handle(cmd: dict) -> dict | None:
         # Streaming : transcribe écrit les événements directement sur stdout
         transcribe(audio_path)
         return None
+
+    # --- Anonymisation ---
+    if method == "anonymize":
+        text = params.get("text", "")
+        return {"id": req_id, "result": anonymize(text)}
 
     return {"id": req_id, "error": f"Méthode inconnue : {method}"}
 

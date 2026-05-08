@@ -3,15 +3,28 @@ import { invoke } from "@tauri-apps/api/core";
 import { FirstRun } from "./components/FirstRun";
 import { AudioRecorder } from "./components/AudioRecorder";
 import { TranscriptionView } from "./components/TranscriptionView";
+import { AnonymisationView, MaskSpan } from "./components/AnonymisationView";
 import "./App.css";
 
-type AppState = "loading" | "first-run" | "step-audio" | "step-transcription";
+type AppState =
+  | "loading"
+  | "first-run"
+  | "step-audio"
+  | "step-transcription"
+  | "step-anonymisation";
 
 const STEPS = ["Audio", "Transcription", "Anonymisation", "Génération", "Export"];
+
+interface AnonymisationData {
+  spans: MaskSpan[];
+}
 
 export default function App() {
   const [appState, setAppState] = useState<AppState>("loading");
   const [transcription, setTranscription] = useState("");
+  const [anonymisationData, setAnonymisationData] = useState<AnonymisationData | null>(null);
+  const [isAnonymizing, setIsAnonymizing] = useState(false);
+  const [anonymizeError, setAnonymizeError] = useState("");
 
   useEffect(() => {
     invoke<{ result: Record<string, { present: boolean }> }>("call_backend", {
@@ -25,6 +38,25 @@ export default function App() {
       .catch(() => setAppState("first-run"));
   }, []);
 
+  async function handleAnonymise() {
+    setIsAnonymizing(true);
+    setAnonymizeError("");
+    try {
+      const res = await invoke<{
+        result: { anonymized_text: string; spans: MaskSpan[]; substitution_map: Record<string, string> };
+      }>("call_backend", {
+        method: "anonymize",
+        params: { text: transcription },
+      });
+      setAnonymisationData({ spans: res.result.spans });
+      setAppState("step-anonymisation");
+    } catch (e) {
+      setAnonymizeError(String(e));
+    } finally {
+      setIsAnonymizing(false);
+    }
+  }
+
   if (appState === "loading") {
     return <div className="loading-screen"><p>Démarrage d'Oralis…</p></div>;
   }
@@ -33,26 +65,24 @@ export default function App() {
     return <FirstRun onComplete={() => setAppState("step-audio")} />;
   }
 
-  const currentStep = appState === "step-audio" ? 0 : 1;
+  const stepIndex = { "step-audio": 0, "step-transcription": 1, "step-anonymisation": 2 }[appState] ?? 0;
 
   return (
     <div className="app-layout">
-      {/* En-tête */}
       <header className="app-header">
         <span className="app-logo">Oralis</span>
         <nav className="step-nav">
           {STEPS.map((label, i) => (
             <span
               key={label}
-              className={`step-pill ${i === currentStep ? "active" : ""} ${i < currentStep ? "done" : ""}`}
+              className={`step-pill ${i === stepIndex ? "active" : ""} ${i < stepIndex ? "done" : ""}`}
             >
-              {i < currentStep ? "✓ " : ""}{label}
+              {i < stepIndex ? "✓ " : ""}{label}
             </span>
           ))}
         </nav>
       </header>
 
-      {/* Contenu principal */}
       <main className="app-main">
         {appState === "step-audio" && (
           <section className="step-section">
@@ -75,9 +105,30 @@ export default function App() {
             <TranscriptionView
               text={transcription}
               onChange={setTranscription}
-              onContinue={() => {
-                // TODO: étape anonymisation (#8)
-                alert("Anonymisation — à venir dans l'issue #8");
+              onContinue={handleAnonymise}
+              isLoading={isAnonymizing}
+              loadingLabel="Analyse en cours…"
+            />
+            {anonymizeError && (
+              <p style={{ color: "#dc2626", marginTop: 8, fontSize: "0.875rem" }}>
+                ❌ {anonymizeError}
+              </p>
+            )}
+          </section>
+        )}
+
+        {appState === "step-anonymisation" && anonymisationData && (
+          <section className="step-section">
+            <h1>Étape 3 — Anonymisation</h1>
+            <p className="step-desc">
+              Les informations personnelles détectées sont masquées. Vérifiez, corrigez si besoin, puis confirmez.
+            </p>
+            <AnonymisationView
+              originalText={transcription}
+              initialSpans={anonymisationData.spans}
+              onConfirm={(_anonymizedText, _subMap) => {
+                // TODO : issue #9 — génération LLM
+                alert("Génération du bilan — à venir dans l'issue #9");
               }}
             />
           </section>
