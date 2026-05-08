@@ -5,14 +5,56 @@ Lit des commandes JSON sur stdin, écrit les réponses JSON sur stdout.
 import sys
 import json
 
+from settings_manager import get_settings, update_settings
+from template_engine import load as load_template, validate_file as validate_template
+from model_manager import check_models, download_models
 
-def handle(cmd: dict) -> dict:
+
+def handle(cmd: dict) -> dict | None:
+    """
+    Retourne un dict pour les réponses simples.
+    Retourne None pour les commandes streaming (download_models) qui écrivent
+    directement sur stdout et n'ont pas de réponse unique.
+    """
     method = cmd.get("method", "")
     params = cmd.get("params", {})
-    req_id = cmd.get("id", None)
+    req_id = cmd.get("id")
 
     if method == "ping":
         return {"id": req_id, "result": "pong"}
+
+    # --- Settings ---
+    if method == "get_settings":
+        return {"id": req_id, "result": get_settings()}
+
+    if method == "update_settings":
+        return {"id": req_id, "result": update_settings(params)}
+
+    # --- Template Engine ---
+    if method == "load_template":
+        path = params.get("path")
+        if not path:
+            return {"id": req_id, "error": "Paramètre 'path' manquant"}
+        try:
+            tmpl = load_template(path)
+            return {"id": req_id, "result": tmpl.to_dict()}
+        except Exception as e:
+            return {"id": req_id, "error": str(e)}
+
+    if method == "validate_template":
+        path = params.get("path")
+        if not path:
+            return {"id": req_id, "error": "Paramètre 'path' manquant"}
+        return {"id": req_id, "result": validate_template(path)}
+
+    # --- Model Manager ---
+    if method == "check_models":
+        return {"id": req_id, "result": check_models()}
+
+    if method == "download_models":
+        # Streaming : écrit directement sur stdout, pas de réponse unique
+        download_models()
+        return None
 
     return {"id": req_id, "error": f"Méthode inconnue : {method}"}
 
@@ -25,12 +67,12 @@ def main() -> None:
         try:
             cmd = json.loads(line)
             response = handle(cmd)
+            if response is not None:
+                print(json.dumps(response, ensure_ascii=False), flush=True)
         except json.JSONDecodeError as e:
-            response = {"id": None, "error": f"JSON invalide : {e}"}
+            print(json.dumps({"id": None, "error": f"JSON invalide : {e}"}), flush=True)
         except Exception as e:
-            response = {"id": None, "error": str(e)}
-
-        print(json.dumps(response, ensure_ascii=False), flush=True)
+            print(json.dumps({"id": None, "error": str(e)}), flush=True)
 
 
 if __name__ == "__main__":

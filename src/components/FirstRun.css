@@ -1,0 +1,142 @@
+.firstrun {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: #f8f9fc;
+  padding: 24px;
+}
+
+.firstrun-card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 48px;
+  max-width: 560px;
+  width: 100%;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.07);
+}
+
+.firstrun-card h1 {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #1a1a2e;
+  margin: 0 0 16px;
+  text-align: center;
+}
+
+.firstrun-intro {
+  color: #4b5563;
+  line-height: 1.7;
+  margin-bottom: 32px;
+  text-align: center;
+}
+
+.models-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.model-item {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 16px;
+}
+
+.model-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.model-label {
+  font-weight: 500;
+  color: #111827;
+  font-size: 0.95rem;
+}
+
+.model-size {
+  font-size: 0.82rem;
+  color: #6b7280;
+}
+
+.model-progress {
+  height: 6px;
+  background: #e5e7eb;
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+
+.model-progress-bar {
+  height: 100%;
+  background: #4f46e5;
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.model-state {
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+.firstrun-total {
+  font-size: 0.88rem;
+  color: #6b7280;
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.firstrun-error {
+  color: #dc2626;
+  font-size: 0.9rem;
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.firstrun-success {
+  color: #16a34a;
+  font-size: 0.95rem;
+  font-weight: 500;
+  text-align: center;
+}
+
+.firstrun-btn {
+  width: 100%;
+  padding: 14px;
+  font-size: 1rem;
+  font-weight: 600;
+  background: #4f46e5;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.firstrun-btn:hover:not(:disabled) {
+  background: #4338ca;
+}
+
+.firstrun-btn:disabled {
+  background: #a5b4fc;
+  cursor: not-allowed;
+}
+
+@media (prefers-color-scheme: dark) {
+  .firstrun { background: #111827; }
+  .firstrun-card {
+    background: #1f2937;
+    border-color: #374151;
+  }
+  .firstrun-card h1 { color: #f9fafb; }
+  .firstrun-intro { color: #9ca3af; }
+  .model-item { background: #111827; border-color: #374151; }
+  .model-label { color: #f3f4f6; }
+  .model-progress { background: #374151; }
+  .firstrun-total { color: #9ca3af; }
+}

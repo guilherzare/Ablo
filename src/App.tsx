@@ -1,50 +1,48 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import { FirstRun } from "./components/FirstRun";
 import "./App.css";
 
-function App() {
-  const [status, setStatus] = useState<string>("En attente…");
-  const [loading, setLoading] = useState(false);
+type AppState = "loading" | "first-run" | "ready";
 
-  async function testBackend() {
-    setLoading(true);
-    setStatus("Appel du backend Python…");
-    try {
-      const response = await invoke<{ result?: string; error?: string }>(
-        "call_backend",
-        { method: "ping", params: {} }
-      );
-      if (response.error) {
-        setStatus(`❌ Erreur backend : ${response.error}`);
-      } else {
-        setStatus(`✅ Réponse du backend : ${response.result}`);
-      }
-    } catch (e) {
-      setStatus(`❌ Erreur IPC : ${e}`);
-    } finally {
-      setLoading(false);
-    }
+export default function App() {
+  const [state, setState] = useState<AppState>("loading");
+
+  useEffect(() => {
+    // Vérifie si les modèles sont présents au démarrage
+    invoke<{ result: Record<string, { present: boolean }> }>("call_backend", {
+      method: "check_models",
+      params: {},
+    })
+      .then((res) => {
+        const allPresent = Object.values(res.result).every((m) => m.present);
+        setState(allPresent ? "ready" : "first-run");
+      })
+      .catch(() => setState("first-run"));
+  }, []);
+
+  if (state === "loading") {
+    return (
+      <div className="loading-screen">
+        <p>Démarrage d'Oralis…</p>
+      </div>
+    );
+  }
+
+  if (state === "first-run") {
+    return <FirstRun onComplete={() => setState("ready")} />;
   }
 
   return (
     <main className="container">
       <h1>Oralis</h1>
       <p className="subtitle">Application de bilans pour art-thérapeutes</p>
-
-      <div className="ipc-demo">
-        <h2>Pont IPC — test de connexion</h2>
-        <p>
-          Ce bouton envoie une commande <code>ping</code> au backend Python
-          et affiche la réponse. Si tout fonctionne, le message sera{" "}
-          <code>pong</code>.
+      <div className="ready-card">
+        <p>✅ Modèles IA installés et opérationnels.</p>
+        <p style={{ color: "#6b7280", fontSize: "0.9rem" }}>
+          L'interface principale arrive dans la prochaine itération.
         </p>
-        <button onClick={testBackend} disabled={loading}>
-          {loading ? "Appel en cours…" : "Tester le backend Python"}
-        </button>
-        <p className="status">{status}</p>
       </div>
     </main>
   );
 }
-
-export default App;

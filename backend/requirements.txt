@@ -1,5 +1,7 @@
-# Dépendances MVP — à installer avec : pip install -r requirements.txt
-# (pour les phases suivantes du pipeline)
+# Dépendances MVP — à installer avec : pip3 install -r requirements.txt
+
+# Certificats SSL (requis sur macOS Python python.org)
+certifi
 
 # Transcription locale
 # faster-whisper==1.1.0
