@@ -10,6 +10,9 @@ from template_engine import load as load_template, validate_file as validate_tem
 from model_manager import check_models, download_models
 from transcription import transcribe
 from anonymizer import anonymize
+from llm_generator import generate
+from report_validator import validate
+from exporter import export
 
 
 def handle(cmd: dict) -> dict | None:
@@ -71,6 +74,30 @@ def handle(cmd: dict) -> dict | None:
     if method == "anonymize":
         text = params.get("text", "")
         return {"id": req_id, "result": anonymize(text)}
+
+    # --- Génération LLM (streaming) ---
+    if method == "generate":
+        generate(
+            text=params.get("text", ""),
+            template_path=params.get("template_path"),
+        )
+        return None
+
+    # --- Validation déterministe ---
+    if method == "validate_report":
+        result = validate(
+            sections=params.get("sections", []),
+            anonymized_source=params.get("anonymized_source", ""),
+        )
+        return {"id": req_id, "result": result}
+
+    # --- Export Word + PDF (streaming) ---
+    if method == "export":
+        export(
+            sections=params.get("sections", []),
+            template_name=params.get("template_name", "Bilan de séance"),
+        )
+        return None
 
     return {"id": req_id, "error": f"Méthode inconnue : {method}"}
 

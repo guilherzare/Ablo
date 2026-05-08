@@ -95,12 +95,38 @@ fn start_transcription(window: tauri::WebviewWindow, audio_path: String) -> Resu
     stream_backend(window, "transcribe", serde_json::json!({"audio_path": audio_path}), "transcription-progress")
 }
 
+#[tauri::command]
+fn start_generation(window: tauri::WebviewWindow, text: String) -> Result<(), String> {
+    stream_backend(window, "generate", serde_json::json!({"text": text}), "generation-progress")
+}
+
+#[tauri::command]
+fn start_export(window: tauri::WebviewWindow, sections: serde_json::Value, template_name: String) -> Result<(), String> {
+    stream_backend(window, "export", serde_json::json!({"sections": sections, "template_name": template_name}), "export-progress")
+}
+
+#[tauri::command]
+fn open_folder(path: String) -> Result<(), String> {
+    std::process::Command::new("open")
+        .arg(&path)
+        .spawn()
+        .map_err(|e| e.to_string())?;
+    Ok(())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_fs::init())
-        .invoke_handler(tauri::generate_handler![call_backend, start_model_download, start_transcription])
+        .invoke_handler(tauri::generate_handler![
+            call_backend,
+            start_model_download,
+            start_transcription,
+            start_generation,
+            start_export,
+            open_folder,
+        ])
         .run(tauri::generate_context!())
         .expect("Erreur au démarrage de Oralis");
 }

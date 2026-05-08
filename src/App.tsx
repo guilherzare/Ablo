@@ -4,6 +4,9 @@ import { FirstRun } from "./components/FirstRun";
 import { AudioRecorder } from "./components/AudioRecorder";
 import { TranscriptionView } from "./components/TranscriptionView";
 import { AnonymisationView, MaskSpan } from "./components/AnonymisationView";
+import { GenerationView, Section } from "./components/GenerationView";
+import { ReportEditor } from "./components/ReportEditor";
+import { ExportView } from "./components/ExportView";
 import "./App.css";
 
 type AppState =
@@ -11,18 +14,36 @@ type AppState =
   | "first-run"
   | "step-audio"
   | "step-transcription"
-  | "step-anonymisation";
+  | "step-anonymisation"
+  | "step-generation"
+  | "step-editing"
+  | "step-export";
 
 const STEPS = ["Audio", "Transcription", "Anonymisation", "Génération", "Export"];
 
-interface AnonymisationData {
-  spans: MaskSpan[];
-}
+const STEP_INDEX: Record<AppState, number> = {
+  loading: 0,
+  "first-run": 0,
+  "step-audio": 0,
+  "step-transcription": 1,
+  "step-anonymisation": 2,
+  "step-generation": 3,
+  "step-editing": 3,
+  "step-export": 4,
+};
 
 export default function App() {
   const [appState, setAppState] = useState<AppState>("loading");
+
+  // Données inter-étapes
   const [transcription, setTranscription] = useState("");
-  const [anonymisationData, setAnonymisationData] = useState<AnonymisationData | null>(null);
+  const [anonymizedText, setAnonymizedText] = useState("");
+  const [_substitutionMap, setSubstitutionMap] = useState<Record<string, string>>({});
+  const [anonSpans, setAnonSpans] = useState<MaskSpan[]>([]);
+  const [reportSections, setReportSections] = useState<Section[]>([]);
+  const [templateName, setTemplateName] = useState("Bilan de séance - Art-thérapie");
+
+  // États temporaires
   const [isAnonymizing, setIsAnonymizing] = useState(false);
   const [anonymizeError, setAnonymizeError] = useState("");
 
@@ -48,13 +69,44 @@ export default function App() {
         method: "anonymize",
         params: { text: transcription },
       });
-      setAnonymisationData({ spans: res.result.spans });
+      setAnonSpans(res.result.spans);
       setAppState("step-anonymisation");
     } catch (e) {
       setAnonymizeError(String(e));
     } finally {
       setIsAnonymizing(false);
     }
+  }
+
+  function handleAnonConfirm(anonText: string, subMap: Record<string, string>) {
+    setAnonymizedText(anonText);
+    setSubstitutionMap(subMap);
+    setAppState("step-generation");
+  }
+
+  function handleGenerationComplete(sections: Section[], tplName: string) {
+    setReportSections(sections);
+    setTemplateName(tplName);
+    setAppState("step-editing");
+  }
+
+  function handleGenerationSkip() {
+    // Sections vides pour remplissage manuel
+    setAppState("step-editing");
+  }
+
+  function handleExport(sections: Section[]) {
+    setReportSections(sections);
+    setAppState("step-export");
+  }
+
+  function handleRestart() {
+    setTranscription("");
+    setAnonymizedText("");
+    setSubstitutionMap({});
+    setAnonSpans([]);
+    setReportSections([]);
+    setAppState("step-audio");
   }
 
   if (appState === "loading") {
@@ -65,7 +117,7 @@ export default function App() {
     return <FirstRun onComplete={() => setAppState("step-audio")} />;
   }
 
-  const stepIndex = { "step-audio": 0, "step-transcription": 1, "step-anonymisation": 2 }[appState] ?? 0;
+  const stepIndex = STEP_INDEX[appState];
 
   return (
     <div className="app-layout">
@@ -117,7 +169,7 @@ export default function App() {
           </section>
         )}
 
-        {appState === "step-anonymisation" && anonymisationData && (
+        {appState === "step-anonymisation" && (
           <section className="step-section">
             <h1>Étape 3 — Anonymisation</h1>
             <p className="step-desc">
@@ -125,11 +177,51 @@ export default function App() {
             </p>
             <AnonymisationView
               originalText={transcription}
-              initialSpans={anonymisationData.spans}
-              onConfirm={(_anonymizedText, _subMap) => {
-                // TODO : issue #9 — génération LLM
-                alert("Génération du bilan — à venir dans l'issue #9");
-              }}
+              initialSpans={anonSpans}
+              onConfirm={handleAnonConfirm}
+            />
+          </section>
+        )}
+
+        {appState === "step-generation" && (
+          <section className="step-section">
+            <h1>Étape 4 — Génération du bilan</h1>
+            <p className="step-desc">
+              Oralis génère le bilan structuré à partir de la transcription anonymisée.
+            </p>
+            <GenerationView
+              anonymizedText={anonymizedText}
+              onComplete={handleGenerationComplete}
+              onSkip={handleGenerationSkip}
+            />
+          </section>
+        )}
+
+        {appState === "step-editing" && (
+          <section className="step-section">
+            <h1>Étape 4 — Édition du bilan</h1>
+            <p className="step-desc">
+              Relisez et corrigez chaque section avant d'exporter le bilan final.
+            </p>
+            <ReportEditor
+              sections={reportSections}
+              templateName={templateName}
+              anonymizedText={anonymizedText}
+              onExport={handleExport}
+            />
+          </section>
+        )}
+
+        {appState === "step-export" && (
+          <section className="step-section">
+            <h1>Étape 5 — Export</h1>
+            <p className="step-desc">
+              Génération des fichiers Word et PDF…
+            </p>
+            <ExportView
+              sections={reportSections}
+              templateName={templateName}
+              onRestart={handleRestart}
             />
           </section>
         )}
