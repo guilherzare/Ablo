@@ -77,16 +77,16 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   background: none;
-  border: 1px solid #e5e7eb;
+  border: none;
   border-radius: 8px;
-  font-size: 1.1rem;
+  font-size: 1.4rem;
   color: #6b7280;
   cursor: pointer;
   padding: 0;
-  transition: color 0.15s, background 0.15s, border-color 0.15s;
+  transition: color 0.15s, background 0.15s;
   flex-shrink: 0;
   margin-left: 12px;
 }
@@ -94,7 +94,6 @@
 .btn-settings:hover {
   color: #4f46e5;
   background: #ede9fe;
-  border-color: #c7d2fe;
 }
 
 /* Contenu */
