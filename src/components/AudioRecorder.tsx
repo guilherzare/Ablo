@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
-import { writeFile, tempDir } from "@tauri-apps/plugin-fs";
-import { join } from "@tauri-apps/api/path";
+import { writeFile } from "@tauri-apps/plugin-fs";
+import { join, tempDir } from "@tauri-apps/api/path";
 import "./AudioRecorder.css";
 
 type RecorderState = "idle" | "recording" | "paused" | "transcribing" | "done" | "error";
