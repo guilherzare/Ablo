@@ -8,6 +8,7 @@ import json
 from settings_manager import get_settings, update_settings
 from template_engine import load as load_template, validate_file as validate_template
 from model_manager import check_models, download_models
+from transcription import transcribe
 
 
 def handle(cmd: dict) -> dict | None:
@@ -54,6 +55,15 @@ def handle(cmd: dict) -> dict | None:
     if method == "download_models":
         # Streaming : écrit directement sur stdout, pas de réponse unique
         download_models()
+        return None
+
+    # --- Transcription ---
+    if method == "transcribe":
+        audio_path = params.get("audio_path")
+        if not audio_path:
+            return {"id": req_id, "error": "Paramètre 'audio_path' manquant"}
+        # Streaming : transcribe écrit les événements directement sur stdout
+        transcribe(audio_path)
         return None
 
     return {"id": req_id, "error": f"Méthode inconnue : {method}"}

@@ -46,6 +46,30 @@ fn call_backend(method: String, params: serde_json::Value) -> Result<serde_json:
     serde_json::from_str(stdout.trim()).map_err(|e| format!("Réponse invalide : {}", e))
 }
 
+// Commande streaming générique : envoie une méthode au backend et émet les lignes de stdout comme événements
+fn stream_backend(window: tauri::WebviewWindow, method: &str, params: serde_json::Value, event_name: &'static str) -> Result<(), String> {
+    let mut child = spawn_backend()?;
+    let request = serde_json::json!({"method": method, "params": params, "id": 1});
+    let request_str = serde_json::to_string(&request).unwrap() + "\n";
+    {
+        let mut stdin = child.stdin.take().ok_or("stdin introuvable")?;
+        stdin.write_all(request_str.as_bytes()).map_err(|e| e.to_string())?;
+    }
+    let stdout = child.stdout.take().ok_or("stdout introuvable")?;
+    std::thread::spawn(move || {
+        let reader = std::io::BufReader::new(stdout);
+        for line in reader.lines() {
+            if let Ok(line) = line {
+                if let Ok(event) = serde_json::from_str::<serde_json::Value>(&line) {
+                    let _ = window.emit(event_name, &event);
+                }
+            }
+        }
+        let _ = child.wait();
+    });
+    Ok(())
+}
+
 // Commande streaming : télécharge les modèles et émet des événements Tauri de progression
 #[tauri::command]
 fn start_model_download(window: tauri::WebviewWindow) -> Result<(), String> {
@@ -63,27 +87,20 @@ fn start_model_download(window: tauri::WebviewWindow) -> Result<(), String> {
     }
 
     // Lit stdout ligne par ligne dans un thread dédié et émet des événements
-    let stdout = child.stdout.take().ok_or("stdout introuvable")?;
-    std::thread::spawn(move || {
-        let reader = std::io::BufReader::new(stdout);
-        for line in reader.lines() {
-            if let Ok(line) = line {
-                if let Ok(event) = serde_json::from_str::<serde_json::Value>(&line) {
-                    let _ = window.emit("model-download-progress", &event);
-                }
-            }
-        }
-        let _ = child.wait();
-    });
+    stream_backend(window, "download_models", serde_json::json!({}), "model-download-progress")
+}
 
-    Ok(())
+#[tauri::command]
+fn start_transcription(window: tauri::WebviewWindow, audio_path: String) -> Result<(), String> {
+    stream_backend(window, "transcribe", serde_json::json!({"audio_path": audio_path}), "transcription-progress")
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![call_backend, start_model_download])
+        .plugin(tauri_plugin_fs::init())
+        .invoke_handler(tauri::generate_handler![call_backend, start_model_download, start_transcription])
         .run(tauri::generate_context!())
         .expect("Erreur au démarrage de Oralis");
 }
