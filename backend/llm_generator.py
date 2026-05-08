@@ -109,12 +109,14 @@ def generate(text: str, template_path: str | None = None) -> None:
         "message": "Chargement du modèle (30–60 secondes)…",
     })
 
+    # n_gpu_layers=-1 = décharge toutes les couches sur le GPU (Metal sur macOS, CUDA sur Windows)
+    # Gain typique : 3-5x par rapport au CPU seul
     try:
         llm = Llama(
             model_path=str(_MODEL_PATH),
-            n_ctx=4096,
-            n_threads=4,
-            n_gpu_layers=0,
+            n_ctx=2048,
+            n_threads=8,
+            n_gpu_layers=-1,
             verbose=False,
         )
     except Exception as e:
@@ -124,7 +126,7 @@ def generate(text: str, template_path: str | None = None) -> None:
     _emit({
         "type": "progress",
         "status": "generating",
-        "message": "Génération en cours (2–10 min selon la machine)…",
+        "message": "Génération en cours…",
     })
 
     prompt = _build_prompt(text, template)
@@ -133,8 +135,9 @@ def generate(text: str, template_path: str | None = None) -> None:
         collected: list[str] = []
         for chunk in llm(
             prompt,
-            max_tokens=2048,
+            max_tokens=1200,
             temperature=0.1,
+            repeat_penalty=1.1,
             stop=["</s>", "[INST]"],
             stream=True,
             echo=False,
