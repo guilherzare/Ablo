@@ -95,22 +95,20 @@
 
 .folder-picker {
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 8px;
-  padding: 8px 12px;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  background: #f9fafb;
-  min-height: 38px;
 }
 
 .folder-name {
-  flex: 1;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   color: #1a1a2e;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  padding: 6px 10px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
 }
 
 .folder-placeholder {
@@ -119,17 +117,17 @@
 }
 
 .btn-pick-folder {
-  flex-shrink: 0;
-  padding: 4px 12px;
+  padding: 8px 14px;
   background: #ffffff;
   border: 1px solid #d1d5db;
-  border-radius: 6px;
-  font-size: 0.82rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
   font-weight: 500;
   cursor: pointer;
   font-family: inherit;
   color: #374151;
   transition: background 0.15s;
+  text-align: center;
 }
 
 .btn-pick-folder:hover { background: #f3f4f6; }
