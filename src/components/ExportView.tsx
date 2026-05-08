@@ -6,7 +6,6 @@ import "./ExportView.css";
 
 interface ExportEvent {
   type: "progress" | "complete" | "error" | "warning";
-  status?: string;
   message?: string;
   docx_path?: string;
   pdf_path?: string;
@@ -21,11 +20,15 @@ interface Props {
 }
 
 export function ExportView({ sections, templateName, onRestart }: Props) {
+  const [patientName, setPatientName] = useState("");
+  const [started, setStarted] = useState(false);
   const [status, setStatus] = useState("Préparation de l'export…");
   const [result, setResult] = useState<{ docxPath: string; pdfPath: string; folderPath: string; filename: string } | null>(null);
   const [error, setError] = useState("");
 
   useEffect(() => {
+    if (!started) return;
+
     const unlisten = listen<ExportEvent>("export-progress", (ev) => {
       const data = ev.payload;
       if (data.type === "progress") {
@@ -42,21 +45,47 @@ export function ExportView({ sections, templateName, onRestart }: Props) {
       }
     });
 
-    invoke("start_export", {
-      sections,
-      templateName,
-    }).catch((e) => setError(String(e)));
+    invoke("start_export", { sections, templateName, patientName })
+      .catch((e) => setError(String(e)));
 
     return () => { unlisten.then((fn) => fn()); };
-  }, [sections, templateName]);
+  }, [started]);
+
+  // Étape 1 : saisie du nom du patient
+  if (!started) {
+    return (
+      <div className="export-form">
+        <p className="export-form-hint">
+          Le nom du patient apparaîtra dans le titre du document. Saisissez prénom et nom (ou initiales).
+        </p>
+        <label className="export-label">
+          Nom du patient
+          <input
+            className="export-input"
+            type="text"
+            placeholder="ex : Jean Dupont"
+            value={patientName}
+            onChange={(e) => setPatientName(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && patientName.trim() && setStarted(true)}
+            autoFocus
+          />
+        </label>
+        <button
+          className="btn-export-start"
+          disabled={!patientName.trim()}
+          onClick={() => setStarted(true)}
+        >
+          Générer les fichiers →
+        </button>
+      </div>
+    );
+  }
 
   if (error) {
     return (
       <div className="export-error">
         <p>❌ {error}</p>
-        <button className="btn-restart" onClick={onRestart}>
-          ↩ Recommencer depuis le début
-        </button>
+        <button className="btn-restart" onClick={onRestart}>↩ Recommencer depuis le début</button>
       </div>
     );
   }
@@ -94,15 +123,10 @@ export function ExportView({ sections, templateName, onRestart }: Props) {
       </div>
 
       <div className="export-actions">
-        <button
-          className="btn-open-folder"
-          onClick={() => invoke("open_folder", { path: result.folderPath })}
-        >
+        <button className="btn-open-folder" onClick={() => invoke("open_folder", { path: result.folderPath })}>
           Ouvrir le dossier
         </button>
-        <button className="btn-restart" onClick={onRestart}>
-          ↩ Nouvelle séance
-        </button>
+        <button className="btn-restart" onClick={onRestart}>↩ Nouvelle séance</button>
       </div>
     </div>
   );

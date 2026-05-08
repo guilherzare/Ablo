@@ -32,10 +32,11 @@ def _build_prompt(text: str, template: Template) -> str:
     )
     return (
         "<s>[INST] Tu es un assistant clinique pour art-thérapeutes. "
-        "Rédige un bilan de séance structuré en français, de façon factuelle et professionnelle, "
-        "en te basant UNIQUEMENT sur la transcription fournie. "
-        "Ne fabrique pas d'informations absentes de la transcription.\n\n"
-        "Transcription de la séance (données personnelles remplacées par des marqueurs) :\n"
+        "Tu dois rédiger un bilan de prise en charge en français, de façon factuelle et professionnelle.\n\n"
+        "RÈGLE ABSOLUE : utilise UNIQUEMENT les informations présentes dans la transcription ci-dessous. "
+        "Si une information n'est pas mentionnée, écris exactement 'Non mentionné dans la transcription' "
+        "pour cette partie. Ne complète pas, n'extrapole pas, n'invente jamais.\n\n"
+        "Transcription (données personnelles remplacées par des marqueurs comme [NOM_1]) :\n"
         "---\n"
         f"{text}\n"
         "---\n\n"
@@ -136,7 +137,7 @@ def generate(text: str, template_path: str | None = None) -> None:
         for chunk in llm(
             prompt,
             max_tokens=1200,
-            temperature=0.1,
+            temperature=0.0,
             repeat_penalty=1.1,
             stop=["</s>", "[INST]"],
             stream=True,

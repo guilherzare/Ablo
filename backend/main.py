@@ -96,6 +96,7 @@ def handle(cmd: dict) -> dict | None:
         export(
             sections=params.get("sections", []),
             template_name=params.get("template_name", "Bilan de séance"),
+            patient_name=params.get("patient_name", ""),
         )
         return None
 

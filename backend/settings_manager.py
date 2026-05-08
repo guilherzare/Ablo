@@ -12,6 +12,9 @@ DEFAULTS: dict = {
     "template_path": None,
     "export_folder": str(Path.home() / "Documents" / "Oralis"),
     "microphone_id": None,
+    "therapist_name": "",
+    "therapist_email": "",
+    "therapist_city": "",
 }
 
 

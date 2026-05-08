@@ -73,6 +73,23 @@
   color: #16a34a;
 }
 
+.btn-settings {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  color: #9ca3af;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 6px;
+  transition: color 0.15s, background 0.15s;
+  line-height: 1;
+}
+
+.btn-settings:hover {
+  color: #4f46e5;
+  background: #ede9fe;
+}
+
 /* Contenu */
 .app-main {
   flex: 1;

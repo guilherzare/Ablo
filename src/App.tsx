@@ -7,6 +7,7 @@ import { AnonymisationView, MaskSpan } from "./components/AnonymisationView";
 import { GenerationView, Section } from "./components/GenerationView";
 import { ReportEditor } from "./components/ReportEditor";
 import { ExportView } from "./components/ExportView";
+import { SettingsPanel } from "./components/SettingsPanel";
 import "./App.css";
 
 type AppState =
@@ -46,6 +47,7 @@ export default function App() {
   // États temporaires
   const [isAnonymizing, setIsAnonymizing] = useState(false);
   const [anonymizeError, setAnonymizeError] = useState("");
+  const [showSettings, setShowSettings] = useState(false);
 
   useEffect(() => {
     invoke<{ result: Record<string, { present: boolean }> }>("call_backend", {
@@ -133,7 +135,10 @@ export default function App() {
             </span>
           ))}
         </nav>
+        <button className="btn-settings" onClick={() => setShowSettings(true)} title="Réglages">⚙</button>
       </header>
+
+      {showSettings && <SettingsPanel onClose={() => setShowSettings(false)} />}
 
       <main className="app-main">
         {appState === "step-audio" && (

@@ -101,8 +101,8 @@ fn start_generation(window: tauri::WebviewWindow, text: String) -> Result<(), St
 }
 
 #[tauri::command]
-fn start_export(window: tauri::WebviewWindow, sections: serde_json::Value, template_name: String) -> Result<(), String> {
-    stream_backend(window, "export", serde_json::json!({"sections": sections, "template_name": template_name}), "export-progress")
+fn start_export(window: tauri::WebviewWindow, sections: serde_json::Value, template_name: String, patient_name: String) -> Result<(), String> {
+    stream_backend(window, "export", serde_json::json!({"sections": sections, "template_name": template_name, "patient_name": patient_name}), "export-progress")
 }
 
 #[tauri::command]
