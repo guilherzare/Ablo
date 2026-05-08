@@ -63,7 +63,7 @@ export function ExportView({ sections, templateName, onRestart }: Props) {
           <input
             className="export-input"
             type="text"
-            placeholder="ex : Jean Dupont"
+            placeholder="ex : Lucas M."
             value={patientName}
             onChange={(e) => setPatientName(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && patientName.trim() && setStarted(true)}

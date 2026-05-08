@@ -59,7 +59,7 @@ export function SettingsPanel({ onClose }: Props) {
             <input
               className="settings-input"
               type="text"
-              placeholder="ex : Marine Buffard-Morel"
+              placeholder="ex : Claire Fontaine"
               value={settings.therapist_name}
               onChange={(e) => update("therapist_name", e.target.value)}
             />
@@ -70,7 +70,7 @@ export function SettingsPanel({ onClose }: Props) {
             <input
               className="settings-input"
               type="email"
-              placeholder="ex : marine.arttherapeute@gmail.com"
+              placeholder="ex : claire.fontaine@cabinet-art.fr"
               value={settings.therapist_email}
               onChange={(e) => update("therapist_email", e.target.value)}
             />
