@@ -93,6 +93,47 @@
   box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
 }
 
+.folder-picker {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #f9fafb;
+  min-height: 38px;
+}
+
+.folder-name {
+  flex: 1;
+  font-size: 0.9rem;
+  color: #1a1a2e;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.folder-placeholder {
+  color: #9ca3af;
+  font-style: italic;
+}
+
+.btn-pick-folder {
+  flex-shrink: 0;
+  padding: 4px 12px;
+  background: #ffffff;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+  color: #374151;
+  transition: background 0.15s;
+}
+
+.btn-pick-folder:hover { background: #f3f4f6; }
+
 .settings-footer {
   padding: 20px 24px;
   margin-top: auto;

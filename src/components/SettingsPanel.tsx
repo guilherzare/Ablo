@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import { open } from "@tauri-apps/plugin-dialog";
 import "./SettingsPanel.css";
 
 interface Settings {
@@ -37,10 +38,22 @@ export function SettingsPanel({ onClose }: Props) {
     setTimeout(() => { setSaved(false); onClose(); }, 800);
   }
 
+  async function pickFolder() {
+    const selected = await open({ directory: true, multiple: false });
+    if (selected && typeof selected === "string") {
+      setSettings((s) => ({ ...s, export_folder: selected }));
+      setSaved(false);
+    }
+  }
+
   function update(key: keyof Settings, value: string) {
     setSettings((s) => ({ ...s, [key]: value }));
     setSaved(false);
   }
+
+  const folderName = settings.export_folder
+    ? settings.export_folder.split(/[\\/]/).filter(Boolean).pop() ?? settings.export_folder
+    : null;
 
   return (
     <div className="settings-overlay" onClick={onClose}>
@@ -90,16 +103,17 @@ export function SettingsPanel({ onClose }: Props) {
 
         <div className="settings-section">
           <h3>Export</h3>
-          <label className="settings-label">
+          <div className="settings-label">
             Dossier de destination
-            <input
-              className="settings-input"
-              type="text"
-              placeholder="~/Documents/Oralis"
-              value={settings.export_folder}
-              onChange={(e) => update("export_folder", e.target.value)}
-            />
-          </label>
+            <div className="folder-picker">
+              <span className="folder-name">
+                {folderName ?? <span className="folder-placeholder">Aucun dossier sélectionné</span>}
+              </span>
+              <button className="btn-pick-folder" onClick={pickFolder}>
+                Choisir…
+              </button>
+            </div>
+          </div>
         </div>
 
         <div className="settings-footer">

@@ -10,6 +10,8 @@
     "fs:allow-write-file",
     "fs:allow-read-file",
     "fs:allow-remove",
-    "fs:scope-temp-recursive"
+    "fs:scope-temp-recursive",
+    "dialog:default",
+    "dialog:allow-open"
   ]
 }
