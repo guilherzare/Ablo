@@ -110,7 +110,7 @@ export function SettingsPanel({ onClose }: Props) {
                 {folderName ?? <span className="folder-placeholder">Aucun dossier sélectionné</span>}
               </span>
               <button className="btn-pick-folder" onClick={pickFolder}>
-                {settings.export_folder ? "Changer…" : "Choisir…"}
+                {settings.export_folder ? "Changer de dossier" : "Choisir un dossier"}
               </button>
             </div>
           </div>
