@@ -20,6 +20,20 @@ interface GenerationEvent {
   template_name?: string;
 }
 
+// Messages affichés en séquence pendant la génération
+const PHASE_MESSAGES = [
+  "Analyse de l'enregistrement…",
+  "Extraction des informations clés…",
+  "Identification des objectifs thérapeutiques…",
+  "Structuration du bilan par sections…",
+  "Rédaction des observations cliniques…",
+  "Formulation des recommandations…",
+  "Finalisation du bilan…",
+];
+
+// Tokens attendus pour un rapport complet (estimation)
+const EXPECTED_TOKENS = 900;
+
 interface Props {
   anonymizedText: string;
   onComplete: (sections: Section[], templateName: string) => void;
@@ -27,39 +41,46 @@ interface Props {
 }
 
 export function GenerationView({ anonymizedText, onComplete, onSkip }: Props) {
-  const [status, setStatus] = useState("Démarrage…");
-  const [preview, setPreview] = useState("");
+  const [tokenCount, setTokenCount] = useState(0);
+  const [phaseIndex, setPhaseIndex] = useState(0);
+  const [modelLoading, setModelLoading] = useState(true);
   const [error, setError] = useState("");
-  const [phase, setPhase] = useState<"loading" | "error">("loading");
-  const previewRef = useRef<HTMLPreElement>(null);
+  const tokenRef = useRef(0);
+  const phaseTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Avancer les messages de phase toutes les 8 secondes
+  useEffect(() => {
+    phaseTimerRef.current = setInterval(() => {
+      setPhaseIndex((i) => Math.min(i + 1, PHASE_MESSAGES.length - 1));
+    }, 8000);
+    return () => { if (phaseTimerRef.current) clearInterval(phaseTimerRef.current); };
+  }, []);
 
   useEffect(() => {
     const unlisten = listen<GenerationEvent>("generation-progress", (ev) => {
       const data = ev.payload;
-      if (data.type === "progress") {
-        setStatus(data.message ?? "En cours…");
+      if (data.type === "progress" && data.status === "generating") {
+        setModelLoading(false);
       } else if (data.type === "token" && data.text) {
-        setPreview((p) => p + data.text);
-        if (previewRef.current) {
-          previewRef.current.scrollTop = previewRef.current.scrollHeight;
-        }
+        tokenRef.current += 1;
+        setTokenCount(tokenRef.current);
       } else if (data.type === "complete" && data.sections) {
+        if (phaseTimerRef.current) clearInterval(phaseTimerRef.current);
         onComplete(data.sections, data.template_name ?? "Bilan de séance");
       } else if (data.type === "error") {
+        if (phaseTimerRef.current) clearInterval(phaseTimerRef.current);
         setError(data.message ?? "Erreur inconnue");
-        setPhase("error");
       }
     });
 
     invoke("start_generation", { text: anonymizedText }).catch((e) => {
       setError(String(e));
-      setPhase("error");
     });
 
     return () => { unlisten.then((fn) => fn()); };
   }, [anonymizedText, onComplete]);
 
-  if (phase === "error") {
+  if (error) {
     return (
       <div className="gen-error">
         <p className="gen-error-icon">⚠️</p>
@@ -74,19 +95,29 @@ export function GenerationView({ anonymizedText, onComplete, onSkip }: Props) {
     );
   }
 
+  // Progression : 0–10% chargement modèle, 10–95% tokens, derniers 5% réservés au mapping
+  const rawProgress = modelLoading
+    ? 5
+    : 10 + Math.min((tokenCount / EXPECTED_TOKENS) * 85, 85);
+  const progress = Math.round(rawProgress);
+  const currentMessage = modelLoading
+    ? "Chargement du modèle…"
+    : PHASE_MESSAGES[phaseIndex];
+
   return (
     <div className="gen-view">
-      <div className="gen-status">
-        <div className="gen-spinner" />
-        <p>{status}</p>
-        <p className="gen-warning">
-          La génération peut prendre 2 à 10 minutes selon la machine.
+      <div className="gen-card">
+        <p className="gen-phase">{currentMessage}</p>
+
+        <div className="gen-bar-track">
+          <div className="gen-bar-fill" style={{ width: `${progress}%` }} />
+        </div>
+        <p className="gen-percent">{progress} %</p>
+
+        <p className="gen-hint">
+          La génération prend 2 à 10 minutes selon la puissance de la machine.
         </p>
       </div>
-
-      {preview && (
-        <pre className="gen-preview" ref={previewRef}>{preview}</pre>
-      )}
     </div>
   );
 }

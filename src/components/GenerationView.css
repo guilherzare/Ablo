@@ -4,52 +4,54 @@
   gap: 20px;
 }
 
-.gen-status {
+/* Carte de progression */
+.gen-card {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  padding: 40px 24px;
+  gap: 14px;
+  padding: 36px 32px;
   background: #f9fafb;
   border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  text-align: center;
+  border-radius: 14px;
 }
 
-.gen-spinner {
-  width: 36px;
-  height: 36px;
-  border: 3px solid #e5e7eb;
-  border-top-color: #4f46e5;
-  border-radius: 50%;
-  animation: spin 0.9s linear infinite;
-}
-
-@keyframes spin { to { transform: rotate(360deg); } }
-
-.gen-status p {
+.gen-phase {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1a1a2e;
   margin: 0;
-  color: #374151;
-  font-size: 0.95rem;
+  min-height: 1.4em;
 }
 
-.gen-warning {
-  color: #9ca3af !important;
-  font-size: 0.82rem !important;
+/* Barre de progression */
+.gen-bar-track {
+  width: 100%;
+  height: 8px;
+  background: #e5e7eb;
+  border-radius: 99px;
+  overflow: hidden;
 }
 
-.gen-preview {
-  max-height: 280px;
-  overflow-y: auto;
-  padding: 14px;
-  background: #1f2937;
-  color: #d1d5db;
-  border-radius: 10px;
+.gen-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #4f46e5, #818cf8);
+  border-radius: 99px;
+  transition: width 0.6s ease;
+}
+
+.gen-percent {
   font-size: 0.82rem;
-  line-height: 1.6;
-  white-space: pre-wrap;
-  word-break: break-word;
-  font-family: "Menlo", "Monaco", monospace;
+  color: #9ca3af;
+  margin: 0;
+  text-align: right;
+}
+
+.gen-hint {
+  font-size: 0.8rem;
+  color: #9ca3af;
+  margin: 4px 0 0;
+  border-top: 1px solid #e5e7eb;
+  padding-top: 12px;
 }
 
 /* Erreur */
@@ -97,7 +99,9 @@
 .btn-skip:hover { background: #4338ca; }
 
 @media (prefers-color-scheme: dark) {
-  .gen-status { background: #1f2937; border-color: #374151; }
-  .gen-status p { color: #d1d5db; }
+  .gen-card { background: #1f2937; border-color: #374151; }
+  .gen-phase { color: #f3f4f6; }
+  .gen-bar-track { background: #374151; }
+  .gen-hint { border-color: #374151; }
   .gen-error { background: #450a0a; border-color: #7f1d1d; }
 }
