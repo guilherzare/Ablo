@@ -29,6 +29,7 @@ class Section:
     title: str
     required: bool
     constraint: Optional[str]
+    description: Optional[str]
     index: int
 
     def to_dict(self) -> dict:
@@ -53,6 +54,7 @@ _FRONTMATTER_RE = re.compile(r"^---\s*\n(.*?)\n---\s*\n", re.DOTALL)
 _SECTION_RE = re.compile(r"^#{1,3}\s+(.+)$", re.MULTILINE)
 _REQUIRED_RE = re.compile(r"\[required:\s*(true|false)\]", re.IGNORECASE)
 _CONSTRAINT_RE = re.compile(r'\[constraint:\s*"([^"]+)"\]')
+_DESCRIPTION_RE = re.compile(r'\[description:\s*"([^"]+)"\]')
 
 
 def _parse_frontmatter(text: str) -> tuple[dict, str]:
@@ -103,7 +105,10 @@ def load(path: str) -> Template:
         con_match = _CONSTRAINT_RE.search(block)
         constraint = con_match.group(1) if con_match else None
 
-        sections.append(Section(title=title, required=required, constraint=constraint, index=i))
+        desc_match = _DESCRIPTION_RE.search(block)
+        description = desc_match.group(1) if desc_match else None
+
+        sections.append(Section(title=title, required=required, constraint=constraint, description=description, index=i))
 
     return Template(name=str(name), version=int(version), sections=sections)
 

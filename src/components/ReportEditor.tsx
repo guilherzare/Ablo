@@ -214,8 +214,8 @@ export function ReportEditor({ sections: initialSections, anonymizedText, onExpo
                   {s.title}
                   {s.required && <span className="required-badge">*</span>}
                 </span>
-                {s.constraint && (
-                  <span className="section-constraint">{s.constraint}</span>
+                {s.description && (
+                  <span className="section-constraint">{s.description}</span>
                 )}
               </div>
 

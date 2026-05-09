@@ -7,6 +7,7 @@ export interface Section {
   title: string;
   required: boolean;
   constraint: string | null;
+  description: string | null;
   index: number;
   content: string;
 }
