@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { flushSync } from "react-dom";
 import { invoke } from "@tauri-apps/api/core";
 import { AutoEvalEditor, parseAutoEval, serializeAutoEval, AutoEvalScores } from "./AutoEvalEditor";
 import "./SessionAutoEvalView.css";
@@ -31,7 +32,7 @@ export function SessionAutoEvalView({ patientId, patientName, anonymizedText, is
   }
 
   async function handleSave() {
-    setSaving(true);
+    flushSync(() => setSaving(true));
     setError("");
     try {
       await invoke("call_backend", {

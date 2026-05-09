@@ -85,15 +85,6 @@
   font-size: 0.95rem;
 }
 
-.pdf-preview {
-  width: 100%;
-  max-width: 600px;
-  height: 480px;
-  border: 1px solid #e5e7eb;
-  border-radius: 10px;
-  background: #f9fafb;
-}
-
 /* Succès */
 .export-success {
   display: flex;
@@ -104,10 +95,17 @@
   text-align: center;
 }
 
-.success-icon {
-  width: 100px;
-  height: 100px;
-  object-fit: contain;
+.success-check {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: #dcfce7;
+  color: #16a34a;
+  font-size: 2rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .export-success h2 {

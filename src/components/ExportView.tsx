@@ -1,10 +1,9 @@
 import { useEffect, useState } from "react";
-import { invoke, convertFileSrc } from "@tauri-apps/api/core";
+import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import confetti from "canvas-confetti";
 import { Section } from "./GenerationView";
 import "./ExportView.css";
-import successImg from "../assets/success.png";
 
 interface ExportEvent {
   type: "progress" | "complete" | "error" | "warning";
@@ -110,17 +109,9 @@ export function ExportView({ sections, templateName, patientId, patientName: ini
 
   return (
     <div className="export-success">
-      <img src={successImg} alt="" className="success-icon" />
+      <div className="success-check">✓</div>
       <h2>Export réussi !</h2>
       <p className="success-filename">{result.filename}</p>
-
-      {result.pdfPath && (
-        <iframe
-          className="pdf-preview"
-          src={convertFileSrc(result.pdfPath)}
-          title="Aperçu du bilan"
-        />
-      )}
 
       <div className="export-files">
         {result.docxPath && (
