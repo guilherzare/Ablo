@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Inter, Helvetica, Arial, sans-serif; background: #f8f9fc; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+  .export-success { display: flex; flex-direction: column; align-items: center; gap: 16px; padding: 40px 24px; text-align: center; }
+  .success-icon { width: 100px; height: 100px; object-fit: contain; }
+  h2 { font-size: 1.4rem; font-weight: 700; color: #1a1a2e; }
+  .filename { font-size: 0.85rem; color: #6b7280; font-family: monospace; }
+  .btn { background: #4f46e5; color: white; border: none; border-radius: 8px; padding: 10px 24px; font-size: 0.95rem; font-weight: 600; cursor: pointer; margin-top: 8px; }
+</style>
+</head>
+<body>
+<div class="export-success">
+  <img src="/src/assets/success.png" class="success-icon" />
+  <h2>Bilan généré avec succès !</h2>
+  <p class="filename">Lucas_M_bilan.docx</p>
+  <button class="btn">Ouvrir le dossier</button>
+</div>
+<script>
+  window.addEventListener('load', () => {
+    setTimeout(() => {
+      confetti({ particleCount: 120, spread: 80, origin: { y: 0.5 }, colors: ["#4f46e5", "#a5b4fc", "#818cf8", "#c4b5fd", "#ffffff"] });
+    }, 300);
+  });
+</script>
+</body>
+</html>

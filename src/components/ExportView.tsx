@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { invoke, convertFileSrc } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
+import confetti from "canvas-confetti";
 import { Section } from "./GenerationView";
 import "./ExportView.css";
+import successImg from "../assets/success.png";
 
 interface ExportEvent {
   type: "progress" | "complete" | "error" | "warning";
@@ -27,6 +29,11 @@ export function ExportView({ sections, templateName, patientId, patientName: ini
   const [status, setStatus] = useState("Préparation de l'export…");
   const [result, setResult] = useState<{ docxPath: string; pdfPath: string; folderPath: string; filename: string } | null>(null);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (!result) return;
+    confetti({ particleCount: 120, spread: 80, origin: { y: 0.5 }, colors: ["#4f46e5", "#a5b4fc", "#818cf8", "#c4b5fd", "#ffffff"] });
+  }, [result]);
 
   useEffect(() => {
     if (!started) return;
@@ -103,7 +110,7 @@ export function ExportView({ sections, templateName, patientId, patientName: ini
 
   return (
     <div className="export-success">
-      <div className="success-icon">✓</div>
+      <img src={successImg} alt="" className="success-icon" />
       <h2>Export réussi !</h2>
       <p className="success-filename">{result.filename}</p>
 
