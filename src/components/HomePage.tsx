@@ -33,7 +33,7 @@ export function HomePage({ onSelectPatient }: Props) {
   const [createError, setCreateError] = useState("");
   const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState<"all" | "bilan" | "date">("all");
+  const [filter, setFilter] = useState<"all" | "bilan">("all");
   const [page, setPage] = useState(0);
 
   useEffect(() => {
@@ -72,13 +72,9 @@ export function HomePage({ onSelectPatient }: Props) {
     .filter((p) => p.name.toLowerCase().includes(search.toLowerCase()))
     .filter((p) => {
       if (filter === "bilan") return p.bilan_count > 0;
-      if (filter === "date") return !!p.last_session_date;
-      return true;
+return true;
     })
-    .sort((a, b) => {
-      if (filter === "date") return (b.last_session_date ?? "").localeCompare(a.last_session_date ?? "");
-      return 0;
-    });
+    .sort(() => 0);
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
   const paginated = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
   const showPagination = filtered.length > PAGE_SIZE;
@@ -169,11 +165,10 @@ export function HomePage({ onSelectPatient }: Props) {
         <select
           className="home-filter"
           value={filter}
-          onChange={(e) => setFilter(e.target.value as "all" | "bilan" | "date")}
+          onChange={(e) => setFilter(e.target.value as "all" | "bilan")}
         >
           <option value="all">Tous</option>
           <option value="bilan">Bilan effectué</option>
-          <option value="date">Par date</option>
         </select>
       </div>
 
