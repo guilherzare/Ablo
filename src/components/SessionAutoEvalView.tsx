@@ -101,6 +101,7 @@ export function SessionAutoEvalView({ patientId, patientName, anonymizedText, is
           ← Retour
         </button>
         <button className="btn-save-session" onClick={handleSave} disabled={saving}>
+          {saving && <span className="btn-spinner" />}
           {saving ? "Génération du résumé…" : "Enregistrer la séance"}
         </button>
       </div>
