@@ -23,6 +23,8 @@ function formatDate(iso: string): string {
   return `${d}/${m}/${y}`;
 }
 
+const PAGE_SIZE = 10;
+
 export function HomePage({ onSelectPatient }: Props) {
   const [patients, setPatients] = useState<Patient[]>([]);
   const [creating, setCreating] = useState(false);
@@ -30,6 +32,8 @@ export function HomePage({ onSelectPatient }: Props) {
   const [loading, setLoading] = useState(true);
   const [createError, setCreateError] = useState("");
   const [saving, setSaving] = useState(false);
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(0);
 
   useEffect(() => {
     invoke<{ result: Patient[] }>("call_backend", { method: "list_patients", params: {} })
@@ -37,6 +41,10 @@ export function HomePage({ onSelectPatient }: Props) {
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    setPage(0);
+  }, [search]);
 
   async function handleCreate() {
     const name = newName.trim();
@@ -58,6 +66,13 @@ export function HomePage({ onSelectPatient }: Props) {
       setSaving(false);
     }
   }
+
+  const filtered = patients.filter((p) =>
+    p.name.toLowerCase().includes(search.toLowerCase())
+  );
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+  const paginated = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+  const showPagination = filtered.length > PAGE_SIZE;
 
   const isEmpty = !loading && patients.length === 0 && !creating;
 
@@ -128,30 +143,61 @@ export function HomePage({ onSelectPatient }: Props) {
         </div>
       )}
 
+      <input
+        className="home-search"
+        type="text"
+        placeholder="Rechercher un patient…"
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+      />
+
       {loading ? (
         <p className="home-empty">Chargement…</p>
+      ) : filtered.length === 0 ? (
+        <p className="home-empty">Aucun patient trouvé pour « {search} ».</p>
       ) : (
-        <ul className="patient-list">
-          {patients.map((p) => (
-            <li key={p.id} className="patient-card" onClick={() => onSelectPatient(p)}>
-              <div className="patient-card-main">
-                <span className="patient-name">{p.name}</span>
-                <span className="patient-meta">
-                  {p.session_count} séance{p.session_count !== 1 ? "s" : ""}
-                  {p.last_session_date ? ` · Dernière : ${formatDate(p.last_session_date)}` : ""}
-                </span>
-              </div>
-              <div className="patient-card-right">
-                {p.bilan_count > 0 && (
-                  <span className="patient-bilan-badge">✓ Bilan séances effectué</span>
-                )}
-                <span className="patient-chevron">›</span>
-              </div>
-            </li>
-          ))}
-        </ul>
-      )}
+        <>
+          <ul className="patient-list">
+            {paginated.map((p) => (
+              <li key={p.id} className="patient-card" onClick={() => onSelectPatient(p)}>
+                <div className="patient-card-main">
+                  <span className="patient-name">{p.name}</span>
+                  <span className="patient-meta">
+                    {p.session_count} séance{p.session_count !== 1 ? "s" : ""}
+                    {p.last_session_date ? ` · Dernière : ${formatDate(p.last_session_date)}` : ""}
+                  </span>
+                </div>
+                <div className="patient-card-right">
+                  {p.bilan_count > 0 && (
+                    <span className="patient-bilan-badge">✓ Bilan séances effectué</span>
+                  )}
+                  <span className="patient-chevron">›</span>
+                </div>
+              </li>
+            ))}
+          </ul>
 
+          {showPagination && (
+            <div className="home-pagination">
+              <button
+                className="pagination-btn"
+                onClick={() => setPage((p) => p - 1)}
+                disabled={page === 0}
+              >
+                ←
+              </button>
+              <span className="pagination-info">{page + 1} / {totalPages}</span>
+              <button
+                className="pagination-btn"
+                onClick={() => setPage((p) => p + 1)}
+                disabled={page >= totalPages - 1}
+              >
+                →
+              </button>
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 }
