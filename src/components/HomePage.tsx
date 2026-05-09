@@ -168,7 +168,7 @@ return true;
           onChange={(e) => setFilter(e.target.value as "all" | "bilan")}
         >
           <option value="all">Tous</option>
-          <option value="bilan">Bilan effectué</option>
+          <option value="bilan">Bilan réalisé</option>
         </select>
       </div>
 
