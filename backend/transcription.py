@@ -7,6 +7,8 @@ import sys
 import os
 from pathlib import Path
 
+from dictionary_manager import apply_dictionary
+
 
 def _emit(payload: dict) -> None:
     print(json.dumps(payload, ensure_ascii=False), flush=True)
@@ -68,7 +70,7 @@ def transcribe(audio_path: str) -> None:
                     "end": round(segment.end, 2),
                 })
 
-        full_text = " ".join(full_text_parts)
+        full_text = apply_dictionary(" ".join(full_text_parts))
         _emit({"type": "complete", "text": full_text})
 
     except Exception as e:

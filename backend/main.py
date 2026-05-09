@@ -6,6 +6,7 @@ import sys
 import json
 
 from settings_manager import get_settings, update_settings
+from dictionary_manager import get_dictionary, update_dictionary
 from template_engine import load as load_template, validate_file as validate_template
 from model_manager import check_models, download_models
 from transcription import transcribe
@@ -36,6 +37,13 @@ def handle(cmd: dict) -> dict | None:
 
     if method == "update_settings":
         return {"id": req_id, "result": update_settings(params)}
+
+    # --- Dictionnaire de corrections ---
+    if method == "get_dictionary":
+        return {"id": req_id, "result": get_dictionary()}
+
+    if method == "update_dictionary":
+        return {"id": req_id, "result": update_dictionary(params.get("entries", []))}
 
     # --- Template Engine ---
     if method == "load_template":
