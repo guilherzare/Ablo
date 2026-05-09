@@ -185,38 +185,17 @@
 }
 
 /* Overlay de surbrillance des marqueurs d'anonymisation */
-.highlight-wrap {
-  position: relative;
-}
-
-.highlight-layer {
-  position: absolute;
-  inset: 0;
-  padding: 10px 12px; /* doit correspondre exactement à .section-textarea */
-  font-size: 0.9rem;
-  font-family: inherit;
-  line-height: 1.7;
-  white-space: pre-wrap;
-  word-break: break-word;
-  overflow: hidden;
-  pointer-events: none;
-  color: transparent;
-  background: #ffffff;
-  border: 1px solid transparent;
-  border-radius: 8px;
-  box-sizing: border-box;
-}
-
 .anon-marker {
   color: #dc2626;
-  font-weight: 700;
+  background: none;
 }
 
-.highlight-textarea {
-  position: relative;
-  z-index: 1;
-  background: transparent !important;
-  caret-color: #1a1a2e;
+.section-contenteditable {
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-y: auto;
+  cursor: text;
+  outline: none;
 }
 
 /* Footer */
@@ -287,8 +266,7 @@
   .editor-footer { border-color: #374151; }
   .btn-validate { background: #374151; border-color: #4b5563; color: #e5e7eb; }
   /* Overlay de surbrillance en dark mode */
-  .highlight-layer { background: #1f2937; }
-  .highlight-textarea { caret-color: #f3f4f6; }
+  .section-contenteditable { background: #1f2937; caret-color: #f3f4f6; }
   .btn-export:disabled { background: #312e81; color: #a5b4fc; }
   /* Bannières de validation */
   .validation-banner.valid { background: #052e16; border-color: #166534; color: #86efac; }

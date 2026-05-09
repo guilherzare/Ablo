@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { Section } from "./GenerationView";
 import { AutoEvalEditor, AUTEVAL_CRITERIA } from "./AutoEvalEditor";
@@ -111,17 +111,19 @@ function SectionTextarea({
   onChange: (v: string) => void;
   placeholder?: string;
 }) {
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const layerRef = useRef<HTMLDivElement>(null);
+  const ref = useRef<HTMLDivElement>(null);
+  const isTypingRef = useRef(false);
 
   ANON_MARKER_RE.lastIndex = 0;
   const hasMarkers = ANON_MARKER_RE.test(value);
 
-  function syncScroll() {
-    if (layerRef.current && textareaRef.current) {
-      layerRef.current.scrollTop = textareaRef.current.scrollTop;
+  // Initialisation + mise à jour externe uniquement
+  useEffect(() => {
+    if (!ref.current || !hasMarkers) return;
+    if (!isTypingRef.current) {
+      ref.current.innerHTML = buildHighlightHtml(value);
     }
-  }
+  }, [value, hasMarkers]);
 
   if (!hasMarkers) {
     return (
@@ -138,25 +140,19 @@ function SectionTextarea({
   }
 
   return (
-    <div className="highlight-wrap">
-      <div
-        ref={layerRef}
-        className="highlight-layer"
-        dangerouslySetInnerHTML={{ __html: buildHighlightHtml(value) }}
-        aria-hidden
-      />
-      <textarea
-        ref={textareaRef}
-        className="section-textarea highlight-textarea"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        onScroll={syncScroll}
-        placeholder={placeholder ?? "Rédigez cette section…"}
-        rows={5}
-        lang="fr"
-        spellCheck
-      />
-    </div>
+    <div
+      ref={ref}
+      contentEditable
+      suppressContentEditableWarning
+      className="section-textarea section-contenteditable"
+      onInput={() => {
+        isTypingRef.current = true;
+        onChange(ref.current?.innerText ?? "");
+      }}
+      onBlur={() => { isTypingRef.current = false; }}
+      lang="fr"
+      spellCheck
+    />
   );
 }
 
