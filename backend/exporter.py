@@ -157,8 +157,18 @@ def _export_docx(
                     row_cells = table.add_row().cells
                     row_cells[0].paragraphs[0].add_run(criterion).font.size = Pt(9)
                     for i, sess in enumerate(sessions):
-                        val = sess.get("scores", {}).get(criterion, 0)
-                        row_cells[i + 1].paragraphs[0].add_run(str(val)).font.size = Pt(9)
+                        scores = sess.get("scores", {})
+                        cell_text = "—" if not scores else str(scores.get(criterion, 0))
+                        row_cells[i + 1].paragraphs[0].add_run(cell_text).font.size = Pt(9)
+                legend = doc.add_paragraph()
+                legend_run = legend.add_run(
+                    "Scores de 0 à 5 — 0 : non renseigné · 1 : Faible · 2 : Passable · "
+                    "3 : Bien · 4 : Très bien · 5 : Excellent. "
+                    "La première séance ne comporte pas d'autoévaluation (—)."
+                )
+                legend_run.italic = True
+                legend_run.font.size = Pt(8)
+                legend_run.font.color.rgb = RGBColor(0x9C, 0xA3, 0xAF)
             else:
                 scores = auteval["scores"]
                 table = doc.add_table(rows=1, cols=3)
@@ -299,8 +309,8 @@ def _export_pdf(
                 for criterion in AUTEVAL_CRITERIA:
                     row = [criterion]
                     for sess in sessions:
-                        val = sess.get("scores", {}).get(criterion, 0)
-                        row.append(str(val))
+                        scores = sess.get("scores", {})
+                        row.append("—" if not scores else str(scores.get(criterion, 0)))
                     table_data.append(row)
                 n_cols = len(header_row)
                 crit_col = 5 * cm
@@ -320,6 +330,12 @@ def _export_pdf(
                     ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
                 ]))
                 story.append(tbl)
+                legend_text = (
+                    "<i>Scores de 0 à 5 — 0 : non renseigné · 1 : Faible · 2 : Passable · "
+                    "3 : Bien · 4 : Très bien · 5 : Excellent. "
+                    "La première séance ne comporte pas d'autoévaluation (—).</i>"
+                )
+                story.append(Paragraph(legend_text, small_style))
             else:
                 scores = auteval["scores"]
                 table_data = [["Critère", "Note /5", "Appréciation"]]
