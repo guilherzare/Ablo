@@ -87,19 +87,21 @@ export function PatientPage({ patient, onNewSession, onFinalBilan, onSessionsLoa
 
   return (
     <div className="patient-view">
-      <div className="patient-actions">
-        <button className="btn-new-session" onClick={onNewSession}>
-          + Nouvelle séance
-        </button>
-        <button
-          className="btn-final-bilan"
-          onClick={() => onFinalBilan(sessions)}
-          disabled={sessions.length === 0}
-          title={sessions.length === 0 ? "Enregistrez au moins une séance d'abord" : undefined}
-        >
-          {bilans.length > 0 ? "Regénérer le bilan final" : "Générer le bilan final →"}
-        </button>
-      </div>
+
+      {/* Boutons d'action — uniquement si des séances existent */}
+      {!loading && sessions.length > 0 && (
+        <div className="patient-actions">
+          <button className="btn-new-session" onClick={onNewSession}>
+            + Nouvelle séance
+          </button>
+          <button
+            className="btn-final-bilan"
+            onClick={() => onFinalBilan(sessions)}
+          >
+            {bilans.length > 0 ? "Regénérer le bilan final" : "Générer le bilan final →"}
+          </button>
+        </div>
+      )}
 
       {/* Bilans générés */}
       {bilans.length > 0 && (
@@ -148,7 +150,10 @@ export function PatientPage({ patient, onNewSession, onFinalBilan, onSessionsLoa
           <div className="sessions-empty-state">
             <img src={vocalRecord} alt="" className="sessions-empty-illustration" />
             <p className="sessions-empty">Aucune séance enregistrée.</p>
-            <p className="sessions-empty-hint">Cliquez sur « + Nouvelle séance » pour commencer.</p>
+            <p className="sessions-empty-hint">Enregistrez la première séance de ce patient.</p>
+            <button className="btn-new-session btn-new-session--empty" onClick={onNewSession}>
+              + Nouvelle séance
+            </button>
           </div>
         ) : (
           <ul className="session-list">

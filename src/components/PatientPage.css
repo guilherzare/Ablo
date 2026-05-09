@@ -226,6 +226,18 @@
   background: #f9fafb;
   border: 1px dashed #d1d5db;
   border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-new-session--empty {
+  margin-top: 8px;
+  flex: unset;
+  min-width: unset;
+  width: auto;
+  padding: 10px 24px;
 }
 
 .sessions-empty-illustration {
