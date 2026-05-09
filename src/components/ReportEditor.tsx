@@ -238,6 +238,12 @@ export function ReportEditor({ sections: initialSections, anonymizedText, onExpo
                 <p key={i} className="section-error-msg">❌ {e}</p>
               ))}
 
+              {isAutoEval && (
+                <p className="section-autoeval-hint">
+                  Évaluations réalisées par le patient à la fin de chaque séance, de 0 à 5, sur différents critères (état, bien-être, envie de revenir…).
+                </p>
+              )}
+
               {isAutoEval && parseMultiSession(s.content) ? (
                 <AutoEvalSummary data={parseMultiSession(s.content)!} />
               ) : isAutoEval ? (

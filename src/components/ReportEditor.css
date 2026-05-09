@@ -89,6 +89,13 @@
   margin: 0;
 }
 
+.section-autoeval-hint {
+  font-size: 0.8rem;
+  color: #9ca3af;
+  margin: 0;
+  font-style: italic;
+}
+
 .section-textarea {
   width: 100%;
   padding: 10px 12px;
