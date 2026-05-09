@@ -50,15 +50,20 @@ function AutoEvalSummary({ data }: { data: MultiSessionAutoeval }) {
             <tr key={criterion}>
               <td className="auteval-td auteval-td-label">{criterion}</td>
               {sessions.map((s, i) => {
-                const val = s.scores[criterion] ?? 0;
+                const isEmpty = Object.keys(s.scores).length === 0;
+                const val = isEmpty ? null : (s.scores[criterion] ?? 0);
                 return (
                   <td key={i} className="auteval-td auteval-td-score">
-                    <span
-                      className="auteval-score-chip"
-                      style={{ background: DOT_COLORS[val] }}
-                    >
-                      {val}
-                    </span>
+                    {val === null ? (
+                      <span className="auteval-score-empty">—</span>
+                    ) : (
+                      <span
+                        className="auteval-score-chip"
+                        style={{ background: DOT_COLORS[val] }}
+                      >
+                        {val}
+                      </span>
+                    )}
                   </td>
                 );
               })}

@@ -165,6 +165,16 @@
 
 .auteval-td-score { vertical-align: middle; }
 
+.auteval-score-empty {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  font-size: 0.85rem;
+  color: #d1d5db;
+}
+
 .auteval-score-chip {
   display: inline-flex;
   align-items: center;
