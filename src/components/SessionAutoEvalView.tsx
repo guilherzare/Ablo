@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { flushSync } from "react-dom";
 import { invoke } from "@tauri-apps/api/core";
 import { AutoEvalEditor, parseAutoEval, serializeAutoEval, AutoEvalScores } from "./AutoEvalEditor";
 import "./SessionAutoEvalView.css";
@@ -32,8 +31,7 @@ export function SessionAutoEvalView({ patientId, patientName, anonymizedText, is
   }
 
   async function handleSave() {
-    flushSync(() => setSaving(true));
-    await new Promise((r) => requestAnimationFrame(r));
+    setSaving(true);
     setError("");
     try {
       await invoke("call_backend", {
@@ -54,6 +52,16 @@ export function SessionAutoEvalView({ patientId, patientName, anonymizedText, is
 
   return (
     <div className="session-auteval-view">
+      {saving && (
+        <div className="saving-overlay">
+          <div className="saving-overlay-box">
+            <div className="saving-spinner" />
+            <p className="saving-label">Enregistrement de la séance en cours…</p>
+            <p className="saving-sublabel">Cette opération peut prendre jusqu'à une minute.</p>
+          </div>
+        </div>
+      )}
+
       <p className="session-auteval-patient">
         Séance de <strong>{patientName}</strong>
       </p>
@@ -92,19 +100,12 @@ export function SessionAutoEvalView({ patientId, patientName, anonymizedText, is
 
       {error && <p className="session-save-error">❌ {error}</p>}
 
-      {saving && (
-        <p className="session-save-hint">
-          ⏳ Génération du résumé en cours… Cette opération peut prendre jusqu'à une minute.
-        </p>
-      )}
-
       <div className="session-auteval-footer">
         <button className="btn-cancel-session" onClick={onBack} disabled={saving}>
           ← Retour
         </button>
         <button className="btn-save-session" onClick={handleSave} disabled={saving}>
-          {saving && <span className="btn-spinner" />}
-          {saving ? "Génération du résumé…" : "Enregistrer la séance"}
+          Enregistrer la séance
         </button>
       </div>
     </div>

@@ -3,6 +3,57 @@
   flex-direction: column;
   gap: 24px;
   width: 100%;
+  position: relative;
+}
+
+.saving-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.saving-overlay-box {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 36px 48px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+}
+
+.saving-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #e0e7ff;
+  border-top-color: #4f46e5;
+  border-radius: 50%;
+  animation: saving-spin 0.8s linear infinite;
+}
+
+@keyframes saving-spin {
+  to { transform: rotate(360deg); }
+}
+
+.saving-label {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1a1a2e;
+  margin: 0;
+  text-align: center;
+}
+
+.saving-sublabel {
+  font-size: 0.82rem;
+  color: #9ca3af;
+  margin: 0;
+  text-align: center;
 }
 
 .session-auteval-patient {
@@ -120,25 +171,6 @@
 .btn-save-session:hover:not(:disabled) { background: #4338ca; }
 .btn-save-session:disabled { background: #c7d2fe; cursor: not-allowed; }
 
-.btn-save-session {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.btn-spinner {
-  width: 14px;
-  height: 14px;
-  border: 2px solid rgba(255, 255, 255, 0.4);
-  border-top-color: white;
-  border-radius: 50%;
-  animation: spin 0.7s linear infinite;
-  flex-shrink: 0;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
 
 @media (prefers-color-scheme: dark) {
   .session-auteval-block { background: #1f2937; border-color: #374151; }
