@@ -120,7 +120,8 @@
 .btn-back-header {
   background: none;
   border: none;
-  font-size: 1.1rem;
+  font-size: 0.875rem;
+  font-family: inherit;
   color: #6b7280;
   cursor: pointer;
   padding: 4px 2px;
