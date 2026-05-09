@@ -187,6 +187,7 @@
 /* Overlay de surbrillance des marqueurs d'anonymisation */
 .anon-marker {
   color: #dc2626;
+  font-weight: 700;
   background: none;
 }
 
