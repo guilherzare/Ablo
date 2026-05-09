@@ -31,6 +31,7 @@ interface Props {
   patient: Patient;
   onNewSession: () => void;
   onFinalBilan: (sessions: Session[]) => void;
+  onSessionsLoaded?: (count: number) => void;
 }
 
 const CRITERIA_SHORT: Record<string, string> = {
@@ -58,7 +59,7 @@ function ScorePill({ value }: { value: number }) {
   );
 }
 
-export function PatientPage({ patient, onNewSession, onFinalBilan }: Props) {
+export function PatientPage({ patient, onNewSession, onFinalBilan, onSessionsLoaded }: Props) {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [bilans, setBilans] = useState<Bilan[]>([]);
   const [loading, setLoading] = useState(true);
@@ -78,6 +79,7 @@ export function PatientPage({ patient, onNewSession, onFinalBilan }: Props) {
       .then(([sessRes, bilanRes]) => {
         setSessions(sessRes.result);
         setBilans(bilanRes.result);
+        onSessionsLoaded?.(sessRes.result.length);
       })
       .catch(() => {})
       .finally(() => setLoading(false));

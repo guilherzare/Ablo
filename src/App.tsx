@@ -61,6 +61,7 @@ export default function App() {
   const [renameSaving, setRenameSaving] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [patientSessionCount, setPatientSessionCount] = useState(0);
   const menuRef = useRef<HTMLDivElement>(null);
   const renameInputRef = useRef<HTMLInputElement>(null);
 
@@ -148,6 +149,7 @@ export default function App() {
 
   function goBackToHome() {
     setCurrentPatient(null); setRenaming(false); setMenuOpen(false);
+    setPatientSessionCount(0);
     setAppState("home");
   }
 
@@ -270,11 +272,11 @@ export default function App() {
         </div>
       )}
 
-      <main className={`app-main${appState === "home" || appState === "patient" ? " app-main--top" : ""}`}>
+      <main className={`app-main${appState === "home" || (appState === "patient" && patientSessionCount > 0) ? " app-main--top" : ""}`}>
 
         {appState === "home" && (
           <section className="step-section">
-            <HomePage onSelectPatient={(p) => { setCurrentPatient(p); setAppState("patient"); }} />
+            <HomePage onSelectPatient={(p) => { setCurrentPatient(p); setPatientSessionCount(0); setAppState("patient"); }} />
           </section>
         )}
 
@@ -284,6 +286,7 @@ export default function App() {
               patient={currentPatient}
               onNewSession={() => { resetTranscription(); setAppState("session-audio"); }}
               onFinalBilan={(sessions) => { setPatientSessions(sessions); resetTranscription(); setAppState("final-audio"); }}
+              onSessionsLoaded={setPatientSessionCount}
             />
           </section>
         )}
