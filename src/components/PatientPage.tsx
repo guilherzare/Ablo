@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import "./PatientPage.css";
+import vocalRecord from "../assets/vocal-record.png";
 
 export interface Patient {
   id: string;
@@ -143,6 +144,7 @@ export function PatientPage({ patient, onNewSession, onFinalBilan }: Props) {
           <p className="sessions-empty">Chargement…</p>
         ) : sessions.length === 0 ? (
           <div className="sessions-empty-state">
+            <img src={vocalRecord} alt="" className="sessions-empty-illustration" />
             <p className="sessions-empty">Aucune séance enregistrée.</p>
             <p className="sessions-empty-hint">Cliquez sur « + Nouvelle séance » pour commencer.</p>
           </div>

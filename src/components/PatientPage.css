@@ -228,9 +228,17 @@
   border-radius: 10px;
 }
 
+.sessions-empty-illustration {
+  width: 120px;
+  height: 120px;
+  object-fit: contain;
+  margin-bottom: 4px;
+}
+
 .sessions-empty {
   color: #6b7280;
   font-size: 0.95rem;
+  font-weight: 600;
   margin: 0 0 4px;
 }
 

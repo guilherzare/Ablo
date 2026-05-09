@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import "./HomePage.css";
+import folderEmpty from "../assets/folder-empty.png";
 
 interface Patient {
   id: string;
@@ -63,6 +64,7 @@ export function HomePage({ onSelectPatient }: Props) {
   if (isEmpty) {
     return (
       <div className="home-view home-view--empty">
+        <img src={folderEmpty} alt="" className="home-empty-illustration" />
         <h1 className="home-title">Patients</h1>
         <p className="home-empty-hint">Créez un dossier patient pour commencer.</p>
         <button className="btn-new-patient" onClick={() => setCreating(true)}>

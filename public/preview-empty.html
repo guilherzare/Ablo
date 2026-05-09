@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Inter, Helvetica, Arial, sans-serif; background: #f8f9fc; display: flex; flex-direction: column; min-height: 100vh; }
+  header { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; background: #fff; border-bottom: 1px solid #e5e7eb; }
+  .logo { font-size: 1.2rem; font-weight: 700; color: #4f46e5; }
+  .settings { font-size: 1.8rem; color: #9ca3af; background: none; border: none; cursor: pointer; }
+  main { flex: 1; display: flex; align-items: center; justify-content: center; padding: 32px 24px; }
+  .home-view { display: flex; flex-direction: column; align-items: center; gap: 16px; text-align: center; width: 100%; max-width: 480px; }
+  .home-empty-illustration { width: 140px; height: 140px; object-fit: contain; }
+  h1 { font-size: 1.5rem; font-weight: 700; color: #1a1a2e; }
+  .hint { color: #9ca3af; font-size: 0.875rem; }
+  .btn { background: #4f46e5; color: white; border: none; border-radius: 8px; padding: 9px 18px; font-size: 0.9rem; font-weight: 600; cursor: pointer; }
+</style>
+</head>
+<body>
+<header>
+  <span class="logo">Ablo</span>
+  <button class="settings">⚙</button>
+</header>
+<main>
+  <div class="home-view">
+    <img src="/src/assets/folder-empty.png" class="home-empty-illustration" alt="" />
+    <h1>Patients</h1>
+    <p class="hint">Créez un dossier patient pour commencer.</p>
+    <button class="btn">+ Nouveau patient</button>
+  </div>
+</main>
+</body>
+</html>

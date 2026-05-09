@@ -168,6 +168,12 @@
   text-align: center;
 }
 
+.home-empty-illustration {
+  width: 140px;
+  height: 140px;
+  object-fit: contain;
+}
+
 .home-empty-state {
   text-align: center;
   padding: 48px 24px;
