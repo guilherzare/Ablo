@@ -158,6 +158,74 @@ def generate(text: str, template_path: str | None = None) -> None:
         _emit({"type": "error", "message": f"Erreur pendant la génération : {e}"})
 
 
+def _build_summary_prompt(text: str, is_first_session: bool) -> str:
+    """Construit le prompt pour générer un résumé court d'une séance unique."""
+    if is_first_session:
+        focus = (
+            "Cette séance est la PREMIÈRE séance du patient. Le thérapeute aborde "
+            "généralement la demande initiale, les objectifs de la prise en charge, "
+            "le cadre proposé et l'histoire du patient.\n\n"
+            "Rédige un résumé concis (3 à 5 phrases) qui met l'accent sur :\n"
+            "- La demande initiale du patient et son contexte\n"
+            "- Les objectifs identifiés pour la prise en charge\n"
+            "- Le cadre / dispositif proposé pour la suite"
+        )
+    else:
+        focus = (
+            "Rédige un résumé concis (3 à 5 phrases) de cette séance d'art-thérapie "
+            "qui met en évidence :\n"
+            "- Les éléments marquants et le ressenti du patient\n"
+            "- Les œuvres, médiations ou activités réalisées\n"
+            "- L'évolution observée par rapport au cadre thérapeutique"
+        )
+    return (
+        "<s>[INST] Tu es un assistant clinique pour art-thérapeutes. "
+        "Tu dois résumer une séance en français, de façon factuelle et professionnelle.\n\n"
+        "RÈGLE ABSOLUE : utilise UNIQUEMENT les informations présentes dans la transcription. "
+        "Si une information demandée n'est pas mentionnée, ne la mentionne pas. "
+        "N'invente rien, n'extrapole pas.\n\n"
+        "Transcription (données personnelles remplacées par des marqueurs comme [NOM_1]) :\n"
+        "---\n"
+        f"{text}\n"
+        "---\n\n"
+        f"{focus}\n\n"
+        "Rends uniquement le résumé en texte continu, sans titre ni puces. [/INST]"
+    )
+
+
+def summarize_session(text: str, is_first_session: bool = False) -> str:
+    """Génère un résumé court (3-5 phrases) d'une séance. Bloquant, retourne le texte."""
+    if not _LLAMA_AVAILABLE or not _MODEL_PATH.exists() or not text.strip():
+        return ""
+
+    try:
+        llm = Llama(
+            model_path=str(_MODEL_PATH),
+            n_ctx=2048,
+            n_threads=8,
+            n_gpu_layers=-1,
+            verbose=False,
+        )
+    except Exception:
+        return ""
+
+    prompt = _build_summary_prompt(text, is_first_session)
+
+    try:
+        result = llm(
+            prompt,
+            max_tokens=300,
+            temperature=0.0,
+            repeat_penalty=1.1,
+            stop=["</s>", "[INST]"],
+            stream=False,
+            echo=False,
+        )
+        return result["choices"][0]["text"].strip()
+    except Exception:
+        return ""
+
+
 def _build_final_prompt(sessions: list[dict], final_text: str, template: Template) -> str:
     """Construit le prompt multi-séances pour le bilan final."""
     # Sections que le LLM ne doit pas rédiger (pré-remplies)

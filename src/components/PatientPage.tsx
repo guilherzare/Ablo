@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import "./PatientPage.css";
 import vocalRecord from "../assets/vocal-record.png";
+import { SessionDetailsModal } from "./SessionDetailsModal";
 
 export interface Patient {
   id: string;
@@ -19,6 +20,8 @@ export interface Session {
   autoeval: Record<string, number>;
   notes: string;
   filename: string;
+  summary?: string;
+  is_first_session?: boolean;
 }
 
 interface Bilan {
@@ -34,35 +37,17 @@ interface Props {
   onSessionsLoaded?: (count: number) => void;
 }
 
-const CRITERIA_SHORT: Record<string, string> = {
-  "État initial": "Init.",
-  "Envie de revenir": "Envie",
-  "Bien fait": "Fait",
-  "Beau": "Beau",
-  "Bon moment": "Mom.",
-  "État final": "Final",
-};
-
-const DOT_COLORS = ["#ef4444", "#f97316", "#eab308", "#84cc16", "#22c55e", "#16a34a"];
-
 function formatDate(iso: string): string {
   if (!iso) return "";
   const [y, m, d] = iso.split("-");
   return `${d}/${m}/${y}`;
 }
 
-function ScorePill({ value }: { value: number }) {
-  return (
-    <span className="score-pill" style={{ background: DOT_COLORS[value] ?? "#e5e7eb" }}>
-      {value}
-    </span>
-  );
-}
-
 export function PatientPage({ patient, onNewSession, onFinalBilan, onSessionsLoaded }: Props) {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [bilans, setBilans] = useState<Bilan[]>([]);
   const [loading, setLoading] = useState(true);
+  const [openedSession, setOpenedSession] = useState<{ session: Session; number: number } | null>(null);
 
   useEffect(() => {
     setLoading(true);
@@ -87,6 +72,15 @@ export function PatientPage({ patient, onNewSession, onFinalBilan, onSessionsLoa
 
   return (
     <div className="patient-view">
+
+      {openedSession && (
+        <SessionDetailsModal
+          session={openedSession.session}
+          sessionNumber={openedSession.number}
+          onClose={() => setOpenedSession(null)}
+        />
+      )}
+
 
       {/* Boutons d'action — uniquement si des séances existent */}
       {!loading && sessions.length > 0 && (
@@ -157,29 +151,39 @@ export function PatientPage({ patient, onNewSession, onFinalBilan, onSessionsLoa
           </div>
         ) : (
           <ul className="session-list">
-            {sessions.map((s, i) => (
-              <li key={s.filename} className="session-card">
-                <div className="session-card-left">
-                  <div className="session-card-top">
-                    <span className="session-num">Séance {i + 1}</span>
-                    <span className="session-date">{formatDate(s.date)}</span>
-                  </div>
-                  {s.notes && (
-                    <p className="session-notes">
-                      {s.notes.length > 120 ? s.notes.slice(0, 120) + "…" : s.notes}
-                    </p>
-                  )}
-                </div>
-                <div className="session-scores">
-                  {Object.entries(CRITERIA_SHORT).map(([full, short]) => (
-                    <div key={full} className="session-score-item">
-                      <span className="session-score-label">{short}</span>
-                      <ScorePill value={s.autoeval[full] ?? 0} />
+            {sessions.map((s, i) => {
+              const number = i + 1;
+              const excerpt = s.summary
+                ? (s.summary.length > 180 ? s.summary.slice(0, 180) + "…" : s.summary)
+                : "";
+              return (
+                <li
+                  key={s.filename}
+                  className="session-card session-card--clickable"
+                  onClick={() => setOpenedSession({ session: s, number })}
+                >
+                  <div className="session-card-left">
+                    <div className="session-card-top">
+                      <span className="session-num">
+                        {s.is_first_session ? "Première séance" : `Séance ${number}`}
+                      </span>
+                      <span className="session-date">{formatDate(s.date)}</span>
                     </div>
-                  ))}
-                </div>
-              </li>
-            ))}
+                    {excerpt ? (
+                      <p className="session-summary-excerpt">{excerpt}</p>
+                    ) : (
+                      <p className="session-summary-empty">Résumé non disponible.</p>
+                    )}
+                  </div>
+                  <button
+                    className="btn-view-summary"
+                    onClick={(e) => { e.stopPropagation(); setOpenedSession({ session: s, number }); }}
+                  >
+                    Voir le résumé
+                  </button>
+                </li>
+              );
+            })}
           </ul>
         )}
       </div>

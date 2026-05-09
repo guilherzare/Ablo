@@ -81,12 +81,18 @@ export function SessionAutoEvalView({ patientId, patientName, anonymizedText, on
 
       {error && <p className="session-save-error">❌ {error}</p>}
 
+      {saving && (
+        <p className="session-save-hint">
+          ⏳ Génération du résumé en cours… Cette opération peut prendre jusqu'à une minute.
+        </p>
+      )}
+
       <div className="session-auteval-footer">
         <button className="btn-cancel-session" onClick={onBack} disabled={saving}>
           ← Retour
         </button>
         <button className="btn-save-session" onClick={handleSave} disabled={saving}>
-          {saving ? "Enregistrement…" : "Enregistrer la séance"}
+          {saving ? "Génération du résumé…" : "Enregistrer la séance"}
         </button>
       </div>
     </div>

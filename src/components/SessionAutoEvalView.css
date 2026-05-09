@@ -73,6 +73,17 @@
   margin: 0;
 }
 
+.session-save-hint {
+  font-size: 0.875rem;
+  color: #6b7280;
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin: 0;
+  line-height: 1.5;
+}
+
 .session-auteval-footer {
   display: flex;
   align-items: center;
