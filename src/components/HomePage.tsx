@@ -190,7 +190,7 @@ return true;
                 </div>
                 <div className="patient-card-right">
                   {p.bilan_count > 0 && (
-                    <span className="patient-bilan-badge">✓ Bilan séances effectué</span>
+                    <span className="patient-bilan-badge">✓ Bilan réalisé</span>
                   )}
                   <span className="patient-chevron">›</span>
                 </div>
