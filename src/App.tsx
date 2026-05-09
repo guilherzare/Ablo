@@ -290,7 +290,7 @@ export default function App() {
 
         {appState === "session-audio" && (
           <section className="step-section">
-            <img src={sessionRecordImg} alt="" style={{ width: 160, height: 160, objectFit: "contain", marginBottom: 4 }} />
+            <img src={sessionRecordImg} alt="" style={{ width: 160, height: 160, objectFit: "contain", marginBottom: 4, display: "block", margin: "0 auto 4px" }} />
             <h1>Enregistrement de la séance</h1>
             <p className="step-desc">Résumez oralement la séance à voix haute.</p>
             <AudioRecorder onTranscriptionComplete={(text) => { setTranscription(text); setAppState("session-transcription"); }} />
