@@ -220,7 +220,7 @@ export function ReportEditor({ sections: initialSections, anonymizedText, onExpo
 
         <button
           className="btn-export"
-          disabled={!confirmed || hasBlockingErrors}
+          disabled={!confirmed}
           onClick={() => onExport(sections)}
         >
           Exporter →
