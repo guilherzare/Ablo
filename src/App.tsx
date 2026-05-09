@@ -233,7 +233,7 @@ export default function App() {
                   ← Retour
                 </button>
                 {steps && isSessionFlow && (
-                  <nav className="step-nav">
+                  <nav className="step-nav step-nav--centered">
                     {steps.map((label, i) => (
                       <span key={label} className={`step-pill ${i === stepIndex ? "active" : ""} ${i < stepIndex ? "done" : ""}`}>
                         {i < stepIndex ? "✓ " : ""}{label}

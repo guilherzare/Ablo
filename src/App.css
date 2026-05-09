@@ -66,6 +66,12 @@
   align-items: center;
 }
 
+.step-nav--centered {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
 .step-pill {
   font-size: 0.78rem;
   font-weight: 500;
