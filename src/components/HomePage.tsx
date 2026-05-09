@@ -33,6 +33,7 @@ export function HomePage({ onSelectPatient }: Props) {
   const [createError, setCreateError] = useState("");
   const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState<"all" | "bilan" | "date">("all");
   const [page, setPage] = useState(0);
 
   useEffect(() => {
@@ -44,7 +45,7 @@ export function HomePage({ onSelectPatient }: Props) {
 
   useEffect(() => {
     setPage(0);
-  }, [search]);
+  }, [search, filter]);
 
   async function handleCreate() {
     const name = newName.trim();
@@ -67,9 +68,17 @@ export function HomePage({ onSelectPatient }: Props) {
     }
   }
 
-  const filtered = patients.filter((p) =>
-    p.name.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = patients
+    .filter((p) => p.name.toLowerCase().includes(search.toLowerCase()))
+    .filter((p) => {
+      if (filter === "bilan") return p.bilan_count > 0;
+      if (filter === "date") return !!p.last_session_date;
+      return true;
+    })
+    .sort((a, b) => {
+      if (filter === "date") return (b.last_session_date ?? "").localeCompare(a.last_session_date ?? "");
+      return 0;
+    });
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
   const paginated = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
   const showPagination = filtered.length > PAGE_SIZE;
@@ -143,13 +152,30 @@ export function HomePage({ onSelectPatient }: Props) {
         </div>
       )}
 
-      <input
-        className="home-search"
-        type="text"
-        placeholder="Rechercher un patient…"
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-      />
+      <div className="home-search-row">
+        <div className="home-search-wrap">
+          <svg className="home-search-icon" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="9" cy="9" r="5.5" stroke="#9ca3af" strokeWidth="1.5"/>
+            <path d="M13.5 13.5L17 17" stroke="#9ca3af" strokeWidth="1.5" strokeLinecap="round"/>
+          </svg>
+          <input
+            className="home-search"
+            type="text"
+            placeholder="Rechercher un patient…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+        <select
+          className="home-filter"
+          value={filter}
+          onChange={(e) => setFilter(e.target.value as "all" | "bilan" | "date")}
+        >
+          <option value="all">Tous</option>
+          <option value="bilan">Bilan effectué</option>
+          <option value="date">Par date</option>
+        </select>
+      </div>
 
       {loading ? (
         <p className="home-empty">Chargement…</p>
