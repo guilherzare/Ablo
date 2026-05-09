@@ -336,7 +336,7 @@ export default function App() {
 
         {appState === "final-audio" && (
           <section className="step-section">
-            <p style={{ margin: "0 0 6px", fontSize: "0.8rem", color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em", textAlign: "center" }}>Optionnel</p>
+            <p style={{ margin: "0 0 6px", fontSize: "0.8rem", color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.05em", textAlign: "center" }}>Optionnel</p>
             <h1>Résumé oral final</h1>
             <p className="step-desc">Dictez un résumé global de la prise en charge pour enrichir le bilan.</p>
             <AudioRecorder onTranscriptionComplete={(text) => { setTranscription(text); setAppState("final-transcription"); }} />
