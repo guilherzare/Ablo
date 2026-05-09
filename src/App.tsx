@@ -230,7 +230,7 @@ export default function App() {
                   onClick={() => { resetTranscription(); setAppState(currentPatient ? "patient" : "home"); }}
                   title="Annuler et revenir"
                 >
-                  ←
+                  ← Retour
                 </button>
                 {steps && isSessionFlow && (
                   <nav className="step-nav">
