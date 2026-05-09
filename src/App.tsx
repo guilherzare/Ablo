@@ -143,7 +143,7 @@ export default function App() {
       setCurrentPatient(null);
       setDeleteConfirm(false);
       setAppState("home");
-    } catch { setDeleting(false); }
+    } catch {} finally { setDeleting(false); }
   }
 
   function goBackToHome() {
