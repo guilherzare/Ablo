@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import sessionRecordImg from "./assets/session-record.png";
 import { invoke } from "@tauri-apps/api/core";
 import { FirstRun } from "./components/FirstRun";
 import { HomePage } from "./components/HomePage";
@@ -289,6 +290,7 @@ export default function App() {
 
         {appState === "session-audio" && (
           <section className="step-section">
+            <img src={sessionRecordImg} alt="" style={{ width: 160, height: 160, objectFit: "contain", marginBottom: 4 }} />
             <h1>Enregistrement de la séance</h1>
             <p className="step-desc">Résumez oralement la séance à voix haute.</p>
             <AudioRecorder onTranscriptionComplete={(text) => { setTranscription(text); setAppState("session-transcription"); }} />
