@@ -100,10 +100,10 @@ def _export_docx(
     therapist_city = settings.get("therapist_city", "")
     date_str = datetime.date.today().strftime("%d/%m/%Y")
 
-    # En-tête : nom et email thérapeute
-    header = doc.sections[0].header
-    header.is_linked_to_previous = False
-    hp = header.paragraphs[0]
+    # En-tête : nom et email thérapeute sur la première page uniquement
+    section0 = doc.sections[0]
+    section0.different_first_page_header_footer = True
+    hp = section0.first_page_header.paragraphs[0]
     hp.alignment = WD_ALIGN_PARAGRAPH.LEFT
     if therapist_name:
         run = hp.add_run(therapist_name)
@@ -257,14 +257,19 @@ def _export_pdf(
         fontSize=9, textColor=HexColor("#374151"), alignment=2, spaceBefore=24,
     )
 
-    def on_page(canvas, doc):
+    def on_first_page(canvas, doc):
         canvas.saveState()
-        canvas.setFont("Helvetica-Bold", 9)
-        canvas.drawString(2.5 * cm, A4[1] - 1.5 * cm, therapist_name)
-        canvas.setFont("Helvetica", 8)
-        canvas.setFillColor(HexColor("#6B7280"))
-        canvas.drawString(2.5 * cm, A4[1] - 1.5 * cm - 12, therapist_email)
+        if therapist_name:
+            canvas.setFont("Helvetica-Bold", 9)
+            canvas.drawString(2.5 * cm, A4[1] - 1.5 * cm, therapist_name)
+        if therapist_email:
+            canvas.setFont("Helvetica", 8)
+            canvas.setFillColor(HexColor("#6B7280"))
+            canvas.drawString(2.5 * cm, A4[1] - 1.5 * cm - 12, therapist_email)
         canvas.restoreState()
+
+    def on_later_pages(canvas, doc):
+        pass
 
     doc = SimpleDocTemplate(
         str(dest), pagesize=A4,
@@ -354,7 +359,7 @@ def _export_pdf(
         closing_text += f"<br/>{therapist_name}"
     story.append(Paragraph(closing_text, closing_style))
 
-    doc.build(story, onFirstPage=on_page, onLaterPages=on_page)
+    doc.build(story, onFirstPage=on_first_page, onLaterPages=on_later_pages)
     return dest
 
 
