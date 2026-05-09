@@ -191,15 +191,6 @@
   margin: 0;
 }
 
-.home-version {
-  position: fixed;
-  bottom: 16px;
-  left: 0;
-  right: 0;
-  text-align: center;
-  font-size: 0.75rem;
-  color: #d1d5db;
-}
 
 .create-error {
   color: #dc2626;

@@ -403,6 +403,12 @@ export default function App() {
         )}
 
       </main>
+
+      {(appState === "home" || appState === "patient") && (
+        <footer className="app-footer">
+          <p className="app-version">Ablo v0.1.0 · 2026</p>
+        </footer>
+      )}
     </div>
   );
 }

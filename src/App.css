@@ -28,6 +28,16 @@
   min-height: 100vh;
 }
 
+.app-footer {
+  padding: 12px 16px;
+  text-align: center;
+}
+
+.app-version {
+  font-size: 0.75rem;
+  color: #d1d5db;
+}
+
 /* En-tête */
 .app-header {
   display: flex;
