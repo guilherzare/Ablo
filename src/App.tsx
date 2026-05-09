@@ -270,7 +270,7 @@ export default function App() {
         </div>
       )}
 
-      <main className="app-main">
+      <main className={`app-main${appState === "home" || appState === "patient" ? " app-main--top" : ""}`}>
 
         {appState === "home" && (
           <section className="step-section">

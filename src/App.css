@@ -328,6 +328,11 @@
   padding: 48px 24px;
 }
 
+.app-main--top {
+  align-items: flex-start;
+  padding-top: 40px;
+}
+
 .step-section {
   width: 100%;
   max-width: 680px;
