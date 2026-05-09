@@ -191,6 +191,14 @@
   margin: 0;
 }
 
+.home-version {
+  text-align: center;
+  font-size: 0.75rem;
+  color: #d1d5db;
+  margin-top: auto;
+  padding-top: 24px;
+}
+
 .create-error {
   color: #dc2626;
   font-size: 0.85rem;

@@ -151,6 +151,8 @@ export function HomePage({ onSelectPatient }: Props) {
           ))}
         </ul>
       )}
+
+      <p className="home-version">Ablo v0.1.0 · 2026</p>
     </div>
   );
 }
