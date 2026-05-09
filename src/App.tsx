@@ -322,12 +322,17 @@ export default function App() {
 
         {appState === "session-autoeval" && currentPatient && (
           <section className="step-section">
-            <h1>Autoévaluation</h1>
-            <p className="step-desc">Renseignez les scores du patient pour cette séance, puis enregistrez.</p>
+            <h1>{patientSessionCount === 0 ? "Première séance" : "Autoévaluation"}</h1>
+            <p className="step-desc">
+              {patientSessionCount === 0
+                ? "Ajoutez vos notes personnelles puis enregistrez la séance."
+                : "Renseignez les scores du patient pour cette séance, puis enregistrez."}
+            </p>
             <SessionAutoEvalView
               patientId={currentPatient.id}
               patientName={currentPatient.name}
               anonymizedText={anonymizedText}
+              isFirstSession={patientSessionCount === 0}
               onSaved={() => { resetTranscription(); setAppState("patient"); }}
               onBack={() => setAppState("session-anonymisation")}
             />

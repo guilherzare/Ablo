@@ -7,11 +7,12 @@ interface Props {
   patientId: string;
   patientName: string;
   anonymizedText: string;
+  isFirstSession: boolean;
   onSaved: () => void;
   onBack: () => void;
 }
 
-export function SessionAutoEvalView({ patientId, patientName, anonymizedText, onSaved, onBack }: Props) {
+export function SessionAutoEvalView({ patientId, patientName, anonymizedText, isFirstSession, onSaved, onBack }: Props) {
   const [scores, setScores] = useState<AutoEvalScores>({
     "État initial": 0,
     "Envie de revenir": 0,
@@ -55,16 +56,24 @@ export function SessionAutoEvalView({ patientId, patientName, anonymizedText, on
         Séance de <strong>{patientName}</strong>
       </p>
 
-      <section className="session-auteval-block">
-        <h2 className="session-auteval-section-title">Autoévaluation du patient</h2>
-        <p className="session-auteval-hint">
-          Demandez au patient de noter chaque critère de 0 à 5.
-        </p>
-        <AutoEvalEditor
-          content={serializeAutoEval(scores)}
-          onChange={handleAutoEvalChange}
-        />
-      </section>
+      {isFirstSession ? (
+        <section className="session-auteval-block">
+          <p className="session-auteval-hint">
+            Pas d'autoévaluation pour la première séance — elle est l'occasion d'identifier les objectifs de la prise en charge.
+          </p>
+        </section>
+      ) : (
+        <section className="session-auteval-block">
+          <h2 className="session-auteval-section-title">Autoévaluation du patient</h2>
+          <p className="session-auteval-hint">
+            Demandez au patient de noter chaque critère de 0 à 5.
+          </p>
+          <AutoEvalEditor
+            content={serializeAutoEval(scores)}
+            onChange={handleAutoEvalChange}
+          />
+        </section>
+      )}
 
       <section className="session-auteval-block">
         <h2 className="session-auteval-section-title">Notes du thérapeute <span className="optional-badge">optionnel</span></h2>

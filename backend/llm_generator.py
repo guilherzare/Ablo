@@ -195,8 +195,22 @@ def _build_summary_prompt(text: str, is_first_session: bool) -> str:
 
 def summarize_session(text: str, is_first_session: bool = False) -> str:
     """Génère un résumé court (3-5 phrases) d'une séance. Bloquant, retourne le texte."""
-    if not _LLAMA_AVAILABLE or not _MODEL_PATH.exists() or not text.strip():
+    import sys
+
+    def log(msg: str) -> None:
+        print(f"[summarize_session] {msg}", file=sys.stderr, flush=True)
+
+    if not _LLAMA_AVAILABLE:
+        log("ABORT: llama-cpp-python non installé")
         return ""
+    if not _MODEL_PATH.exists():
+        log(f"ABORT: modèle Mistral introuvable à {_MODEL_PATH}")
+        return ""
+    if not text.strip():
+        log("ABORT: texte vide")
+        return ""
+
+    log(f"START first={is_first_session} text_len={len(text)}")
 
     try:
         llm = Llama(
@@ -206,7 +220,9 @@ def summarize_session(text: str, is_first_session: bool = False) -> str:
             n_gpu_layers=-1,
             verbose=False,
         )
-    except Exception:
+        log("Modèle chargé")
+    except Exception as e:
+        log(f"ERREUR chargement modèle : {e}")
         return ""
 
     prompt = _build_summary_prompt(text, is_first_session)
@@ -221,8 +237,11 @@ def summarize_session(text: str, is_first_session: bool = False) -> str:
             stream=False,
             echo=False,
         )
-        return result["choices"][0]["text"].strip()
-    except Exception:
+        summary = result["choices"][0]["text"].strip()
+        log(f"OK summary_len={len(summary)}")
+        return summary
+    except Exception as e:
+        log(f"ERREUR génération : {e}")
         return ""
 
 
