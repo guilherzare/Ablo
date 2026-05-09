@@ -86,28 +86,6 @@ interface Props {
   onExport: (sections: Section[]) => void;
 }
 
-const ANON_MARKER_RE = /(\[[A-Z_]+_\d+\])/g;
-
-function escapeHtml(s: string): string {
-  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-}
-
-function buildHighlightHtml(text: string): string {
-  const parts = text.split(ANON_MARKER_RE);
-  return parts
-    .map((p, i) =>
-      i % 2 === 0
-        ? escapeHtml(p)
-        : `<mark class="anon-marker">${escapeHtml(p)}</mark>`
-    )
-    .join("");
-}
-
-function hasAnonMarkers(text: string): boolean {
-  ANON_MARKER_RE.lastIndex = 0;
-  return ANON_MARKER_RE.test(text);
-}
-
 function SectionTextarea({
   value,
   onChange,
@@ -117,41 +95,16 @@ function SectionTextarea({
   onChange: (v: string) => void;
   placeholder?: string;
 }) {
-  const showHighlight = hasAnonMarkers(value);
-
-  if (!showHighlight) {
-    return (
-      <textarea
-        className="section-textarea"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder ?? "Rédigez cette section…"}
-        rows={5}
-        lang="fr"
-        spellCheck
-      />
-    );
-  }
-
-  const html = buildHighlightHtml(value);
-
   return (
-    <div className="highlight-wrap">
-      <div
-        className="highlight-layer"
-        dangerouslySetInnerHTML={{ __html: html }}
-        aria-hidden
-      />
-      <textarea
-        className="section-textarea highlight-textarea"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder ?? "Rédigez cette section…"}
-        rows={5}
-        lang="fr"
-        spellCheck
-      />
-    </div>
+    <textarea
+      className="section-textarea"
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder={placeholder ?? "Rédigez cette section…"}
+      rows={5}
+      lang="fr"
+      spellCheck
+    />
   );
 }
 
@@ -200,22 +153,6 @@ export function ReportEditor({ sections: initialSections, anonymizedText, onExpo
         Relisez et corrigez chaque section. Les sections marquées <span className="required-badge">*</span> sont obligatoires.
       </p>
 
-      {validation && (
-        <div className={`validation-banner ${validation.valid ? "valid" : "invalid"}`}>
-          {validation.valid ? (
-            <p>✓ Bilan valide — prêt pour l'export.</p>
-          ) : (
-            <>
-              {validation.errors.map((e, i) => (
-                <p key={i}>❌ {e.replace(/^.*?—\s*/, "")}</p>
-              ))}
-            </>
-          )}
-          {validation.warnings.map((w, i) => (
-            <p key={`w${i}`} className="banner-warning">⚠ {w}</p>
-          ))}
-        </div>
-      )}
 
       <div className="sections-list">
         {sections.map((s) => {
