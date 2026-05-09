@@ -1,0 +1,251 @@
+.patient-view {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  width: 100%;
+}
+
+/* Boutons d'action principaux */
+.patient-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.btn-new-session {
+  flex: 1;
+  min-width: 160px;
+  padding: 12px 20px;
+  background: #ffffff;
+  border: 1.5px solid #4f46e5;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #4f46e5;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s;
+  text-align: center;
+}
+
+.btn-new-session:hover { background: #ede9fe; }
+
+.btn-final-bilan {
+  flex: 1;
+  min-width: 200px;
+  padding: 12px 20px;
+  background: #4f46e5;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: white;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.2s;
+  text-align: center;
+}
+
+.btn-final-bilan:hover:not(:disabled) { background: #4338ca; }
+.btn-final-bilan:disabled { background: #c7d2fe; cursor: not-allowed; color: #e0e7ff; }
+
+.btn-final-bilan--secondary {
+  background: transparent;
+  color: #6b7280;
+  border: 1px solid #d1d5db;
+  font-weight: 500;
+}
+.btn-final-bilan--secondary:hover:not(:disabled) { background: #f3f4f6; color: #374151; border-color: #9ca3af; }
+
+/* Section séances */
+.sessions-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sessions-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #9ca3af;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sessions-count {
+  background: #f3f4f6;
+  color: #6b7280;
+  border-radius: 99px;
+  padding: 1px 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.session-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.session-card {
+  padding: 14px 16px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 16px;
+}
+
+.session-card-left {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.session-card-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.session-num {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.session-date {
+  font-size: 0.8rem;
+  color: #9ca3af;
+}
+
+.session-scores {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+  align-self: center;
+}
+
+.session-score-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+
+.session-score-label {
+  font-size: 0.68rem;
+  color: #9ca3af;
+  text-align: center;
+}
+
+.score-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  color: white;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.session-notes {
+  font-size: 0.82rem;
+  color: #6b7280;
+  margin: 0;
+  font-style: italic;
+  line-height: 1.5;
+}
+
+.bilan-card {
+  padding: 12px 16px;
+  background: #ffffff;
+  border: 1px solid #e0e7ff;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.bilan-card-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.bilan-icon { font-size: 1.3rem; flex-shrink: 0; }
+
+.bilan-card-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.bilan-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #4f46e5;
+}
+
+.bilan-date {
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+.btn-open-bilan {
+  background: none;
+  border: 1px solid #c7d2fe;
+  border-radius: 6px;
+  padding: 5px 12px;
+  font-size: 0.8rem;
+  font-family: inherit;
+  color: #4f46e5;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.btn-open-bilan:hover { background: #ede9fe; }
+
+.sessions-empty-state {
+  text-align: center;
+  padding: 32px 16px;
+  background: #f9fafb;
+  border: 1px dashed #d1d5db;
+  border-radius: 10px;
+}
+
+.sessions-empty {
+  color: #6b7280;
+  font-size: 0.95rem;
+  margin: 0 0 4px;
+}
+
+.sessions-empty-hint {
+  color: #9ca3af;
+  font-size: 0.8rem;
+  margin: 0;
+}
+
+@media (prefers-color-scheme: dark) {
+  .btn-new-session { background: #1f2937; border-color: #818cf8; color: #818cf8; }
+  .btn-new-session:hover { background: #312e81; }
+  .btn-final-bilan:disabled { background: #312e81; color: #a5b4fc; }
+  .session-card { background: #1f2937; border-color: #374151; }
+  .session-num { color: #d1d5db; }
+  .sessions-count { background: #374151; color: #9ca3af; }
+  .sessions-empty-state { background: #1f2937; border-color: #374151; }
+}

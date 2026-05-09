@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { invoke } from "@tauri-apps/api/core";
+import { invoke, convertFileSrc } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { Section } from "./GenerationView";
 import "./ExportView.css";
@@ -16,11 +16,13 @@ interface ExportEvent {
 interface Props {
   sections: Section[];
   templateName: string;
+  patientId?: string;
+  patientName?: string;
   onRestart: () => void;
 }
 
-export function ExportView({ sections, templateName, onRestart }: Props) {
-  const [patientName, setPatientName] = useState("");
+export function ExportView({ sections, templateName, patientId, patientName: initialPatientName, onRestart }: Props) {
+  const [patientName, setPatientName] = useState(initialPatientName ?? "");
   const [started, setStarted] = useState(false);
   const [status, setStatus] = useState("Préparation de l'export…");
   const [result, setResult] = useState<{ docxPath: string; pdfPath: string; folderPath: string; filename: string } | null>(null);
@@ -45,7 +47,7 @@ export function ExportView({ sections, templateName, onRestart }: Props) {
       }
     });
 
-    invoke("start_export", { sections, templateName, patientName })
+    invoke("start_export", { sections, templateName, patientName, patientId: patientId ?? "" })
       .catch((e) => setError(String(e)));
 
     return () => { unlisten.then((fn) => fn()); };
@@ -105,6 +107,14 @@ export function ExportView({ sections, templateName, onRestart }: Props) {
       <h2>Export réussi !</h2>
       <p className="success-filename">{result.filename}</p>
 
+      {result.pdfPath && (
+        <iframe
+          className="pdf-preview"
+          src={convertFileSrc(result.pdfPath)}
+          title="Aperçu du bilan"
+        />
+      )}
+
       <div className="export-files">
         {result.docxPath && (
           <div className="export-file">
@@ -126,7 +136,7 @@ export function ExportView({ sections, templateName, onRestart }: Props) {
         <button className="btn-open-folder" onClick={() => invoke("open_folder", { path: result.folderPath })}>
           Ouvrir le dossier
         </button>
-        <button className="btn-restart" onClick={onRestart}>↩ Nouvelle séance</button>
+        <button className="btn-restart" onClick={onRestart}>← Retour aux patients</button>
       </div>
     </div>
   );

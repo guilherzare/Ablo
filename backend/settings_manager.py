@@ -1,16 +1,16 @@
 """
 Gestion des réglages utilisateur : template, dossier export, microphone.
-Persistés dans ~/.oralis/settings.json
+Persistés dans ~/.ablo/settings.json
 """
 import json
 from pathlib import Path
 from typing import Optional
 
-SETTINGS_PATH = Path.home() / ".oralis" / "settings.json"
+SETTINGS_PATH = Path.home() / ".ablo" / "settings.json"
 
 DEFAULTS: dict = {
     "template_path": None,
-    "export_folder": str(Path.home() / "Documents" / "Oralis"),
+    "export_folder": str(Path.home() / "Documents" / "Ablo"),
     "microphone_id": None,
     "therapist_name": "",
     "therapist_email": "",

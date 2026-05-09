@@ -68,9 +68,10 @@
 
 .recorder-actions {
   display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
 }
 
 .btn-record {
@@ -119,6 +120,38 @@
 .btn-secondary:hover {
   border-color: #4f46e5;
   color: #4f46e5;
+}
+
+.recorder-or {
+  font-size: 0.8rem;
+  color: #d1d5db;
+  user-select: none;
+  width: 100%;
+  text-align: center;
+}
+
+.btn-import-audio {
+  background: none;
+  border: none;
+  color: #9ca3af;
+  font-size: 0.875rem;
+  font-family: inherit;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.15s;
+  width: 100%;
+  text-align: center;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.btn-import-audio:hover { color: #4f46e5; }
+
+.recorder-btn-row {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
 }
 
 @media (prefers-color-scheme: dark) {

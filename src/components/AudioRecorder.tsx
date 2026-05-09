@@ -3,6 +3,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { writeFile } from "@tauri-apps/plugin-fs";
 import { join, tempDir } from "@tauri-apps/api/path";
+import { open } from "@tauri-apps/plugin-dialog";
 import "./AudioRecorder.css";
 
 type RecorderState = "idle" | "recording" | "paused" | "transcribing" | "done" | "error";
@@ -151,11 +152,29 @@ export function AudioRecorder({ onTranscriptionComplete }: Props) {
       const bytes = new Uint8Array(buffer);
 
       const tmp = await tempDir();
-      const audioPath = await join(tmp, "oralis_recording.webm");
+      const audioPath = await join(tmp, "ablo_recording.webm");
       await writeFile(audioPath, bytes);
 
       setStatusMsg("Chargement du modèle de transcription…");
       await invoke("start_transcription", { audioPath });
+    } catch (e) {
+      setState("error");
+      setErrorMsg(String(e));
+    }
+  }
+
+  async function importAudioFile() {
+    setErrorMsg("");
+    setPartialText("");
+    try {
+      const selected = await open({
+        multiple: false,
+        filters: [{ name: "Audio", extensions: ["mp3", "wav", "m4a", "ogg", "flac", "webm", "aac", "opus"] }],
+      });
+      if (!selected || typeof selected !== "string") return;
+      setState("transcribing");
+      setStatusMsg("Chargement du fichier audio…");
+      await invoke("start_transcription", { audioPath: selected });
     } catch (e) {
       setState("error");
       setErrorMsg(String(e));
@@ -206,21 +225,27 @@ export function AudioRecorder({ onTranscriptionComplete }: Props) {
       {/* Boutons */}
       <div className="recorder-actions">
         {state === "idle" && (
-          <button className="btn-record" onClick={startRecording}>
-            ● Enregistrer
-          </button>
+          <>
+            <button className="btn-record" onClick={startRecording}>
+              ● Enregistrer
+            </button>
+            <span className="recorder-or">ou</span>
+            <button className="btn-import-audio" onClick={importAudioFile}>
+              Importer un fichier audio
+            </button>
+          </>
         )}
         {state === "recording" && (
-          <>
+          <div className="recorder-btn-row">
             <button className="btn-secondary" onClick={pauseRecording}>⏸ Pause</button>
             <button className="btn-primary" onClick={stopAndTranscribe}>⏹ Arrêter et transcrire</button>
-          </>
+          </div>
         )}
         {state === "paused" && (
-          <>
+          <div className="recorder-btn-row">
             <button className="btn-record" onClick={resumeRecording}>● Reprendre</button>
             <button className="btn-primary" onClick={stopAndTranscribe}>⏹ Arrêter et transcrire</button>
-          </>
+          </div>
         )}
         {(state === "error" || state === "done") && (
           <button className="btn-secondary" onClick={reset}>↩ Recommencer</button>

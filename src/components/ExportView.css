@@ -4,6 +4,9 @@
   flex-direction: column;
   gap: 16px;
   max-width: 420px;
+  width: 100%;
+  align-items: center;
+  text-align: center;
 }
 
 .export-form-hint {
@@ -19,6 +22,8 @@
   font-size: 0.875rem;
   font-weight: 500;
   color: #374151;
+  width: 100%;
+  text-align: left;
 }
 
 .export-input {
@@ -49,7 +54,7 @@
   cursor: pointer;
   font-family: inherit;
   transition: background 0.2s;
-  align-self: flex-start;
+  align-self: center;
 }
 
 .btn-export-start:hover:not(:disabled) { background: #4338ca; }
@@ -78,6 +83,15 @@
 .export-loading p {
   color: #6b7280;
   font-size: 0.95rem;
+}
+
+.pdf-preview {
+  width: 100%;
+  max-width: 600px;
+  height: 480px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: #f9fafb;
 }
 
 /* Succès */

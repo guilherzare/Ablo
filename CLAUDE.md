@@ -1,4 +1,4 @@
-# Oralis
+# Ablo
 
 Application Windows desktop pour art-thérapeutes : dictée → transcription → anonymisation → rapport structuré, **100% offline**.
 
@@ -8,7 +8,7 @@ Voir [`CONTEXT.md`](./CONTEXT.md) pour le domaine, l'architecture et le vocabula
 
 ### Issue tracker
 
-Les issues vivent dans GitHub Issues à https://github.com/guilherzare/Oralis. Voir [`docs/agents/issue-tracker.md`](./docs/agents/issue-tracker.md).
+Les issues vivent dans GitHub Issues à https://github.com/guilherzare/Ablo. Voir [`docs/agents/issue-tracker.md`](./docs/agents/issue-tracker.md).
 
 ### Triage labels
 

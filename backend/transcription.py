@@ -38,7 +38,7 @@ def transcribe(audio_path: str) -> None:
             "small",
             device="cpu",
             compute_type="int8",
-            download_root=str(Path.home() / ".oralis" / "models" / "whisper"),
+            download_root=str(Path.home() / ".ablo" / "models" / "whisper"),
         )
     except Exception as e:
         _emit({"type": "error", "message": f"Impossible de charger le modèle Whisper : {e}"})

@@ -1,4 +1,4 @@
-# Oralis — Contexte projet
+# Ablo — Contexte projet
 
 Application Windows desktop pour art-thérapeutes : dictée vocale post-séance → transcription locale → anonymisation → rapport structuré exportable. **100% offline, local-first, privacy-first.**
 

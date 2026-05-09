@@ -1,5 +1,5 @@
 """
-Backend Python d'Oralis — point d'entrée du pont IPC.
+Backend Python d'Ablo — point d'entrée du pont IPC.
 Lit des commandes JSON sur stdin, écrit les réponses JSON sur stdout.
 """
 import sys
@@ -10,9 +10,11 @@ from template_engine import load as load_template, validate_file as validate_tem
 from model_manager import check_models, download_models
 from transcription import transcribe
 from anonymizer import anonymize
-from llm_generator import generate
+from llm_generator import generate, generate_final
 from report_validator import validate
 from exporter import export
+from patient_manager import list_patients, create_patient, update_patient, delete_patient, list_bilans
+from session_manager import save_session, list_sessions
 
 
 def handle(cmd: dict) -> dict | None:
@@ -97,6 +99,58 @@ def handle(cmd: dict) -> dict | None:
             sections=params.get("sections", []),
             template_name=params.get("template_name", "Bilan de séance"),
             patient_name=params.get("patient_name", ""),
+            patient_id=params.get("patient_id", ""),
+        )
+        return None
+
+    # --- Patients ---
+    if method == "list_patients":
+        return {"id": req_id, "result": list_patients()}
+
+    if method == "create_patient":
+        name = params.get("name", "").strip()
+        if not name:
+            return {"id": req_id, "error": "Nom du patient requis"}
+        return {"id": req_id, "result": create_patient(name)}
+
+    if method == "update_patient":
+        try:
+            return {"id": req_id, "result": update_patient(params.get("patient_id", ""), params.get("name", ""))}
+        except ValueError as e:
+            return {"id": req_id, "error": str(e)}
+
+    if method == "delete_patient":
+        try:
+            delete_patient(params.get("patient_id", ""))
+            return {"id": req_id, "result": True}
+        except ValueError as e:
+            return {"id": req_id, "error": str(e)}
+
+    # --- Séances ---
+    if method == "list_sessions":
+        return {"id": req_id, "result": list_sessions(params.get("patient_id", ""))}
+
+    if method == "list_bilans":
+        return {"id": req_id, "result": list_bilans(params.get("patient_id", ""))}
+
+    if method == "save_session":
+        try:
+            result = save_session(
+                patient_id=params.get("patient_id", ""),
+                anonymized_text=params.get("anonymized_text", ""),
+                autoeval=params.get("autoeval", {}),
+                notes=params.get("notes", ""),
+            )
+            return {"id": req_id, "result": result}
+        except ValueError as e:
+            return {"id": req_id, "error": str(e)}
+
+    # --- Génération bilan final (streaming, multi-séances) ---
+    if method == "generate_final":
+        generate_final(
+            sessions=params.get("sessions", []),
+            final_text=params.get("final_text", ""),
+            template_path=params.get("template_path"),
         )
         return None
 

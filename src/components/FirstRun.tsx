@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import "./FirstRun.css";
+import abloIcon from "../assets/ablo-icon.png";
 
 interface ModelStatus {
   present: boolean;
@@ -95,11 +96,11 @@ export function FirstRun({ onComplete }: Props) {
   return (
     <div className="firstrun">
       <div className="firstrun-card">
-        <h1>Bienvenue dans Oralis</h1>
+        <img src={abloIcon} alt="Ablo" className="firstrun-logo" />
+        <h1>Bienvenue dans Ablo</h1>
         <p className="firstrun-intro">
-          Pour fonctionner <strong>100% hors-ligne</strong>, Oralis a besoin de
-          télécharger deux modèles d'intelligence artificielle sur votre
-          ordinateur. Ce téléchargement s'effectue <strong>une seule fois</strong>.
+          Pour fonctionner <strong>100% hors-ligne</strong>, Ablo a besoin de
+          réaliser deux téléchargements sur votre ordinateur.
         </p>
 
         <div className="models-list">
@@ -133,15 +134,15 @@ export function FirstRun({ onComplete }: Props) {
         </div>
 
         <p className="firstrun-total">
-          Volume total : <strong>{formatBytes(totalBytes)}</strong> — une
-          connexion internet est nécessaire uniquement pour ce téléchargement.
+          Volume total : <strong>{formatBytes(totalBytes)}</strong><br />
+          Une connexion internet est nécessaire uniquement pour ce téléchargement.
         </p>
 
         {error && <p className="firstrun-error">❌ {error}</p>}
 
         {done ? (
           <p className="firstrun-success">
-            ✅ Modèles installés. Lancement d'Oralis…
+            ✅ Modèles installés. Lancement d'Ablo…
           </p>
         ) : (
           <button

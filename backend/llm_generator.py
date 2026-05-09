@@ -92,7 +92,7 @@ def generate(text: str, template_path: str | None = None) -> None:
             "type": "error",
             "message": (
                 f"Modèle Mistral introuvable. "
-                f"Téléchargez-le depuis l'écran d'accueil d'Oralis."
+                f"Téléchargez-le depuis l'écran d'accueil d'Ablo."
             ),
         })
         return
@@ -148,6 +148,135 @@ def generate(text: str, template_path: str | None = None) -> None:
             _emit({"type": "token", "text": token})
 
         sections = _parse_sections("".join(collected), template)
+        _emit({
+            "type": "complete",
+            "sections": sections,
+            "template_name": template.name,
+        })
+
+    except Exception as e:
+        _emit({"type": "error", "message": f"Erreur pendant la génération : {e}"})
+
+
+def _build_final_prompt(sessions: list[dict], final_text: str, template: Template) -> str:
+    """Construit le prompt multi-séances pour le bilan final."""
+    # Sections que le LLM ne doit pas rédiger (pré-remplies)
+    skip_titles = {"autoévaluations du patient"}
+
+    sections_desc = "\n\n".join(
+        f"## {s.title}\n"
+        f"{'[Obligatoire]' if s.required else '[Optionnel]'}"
+        f"{' — ' + s.constraint if s.constraint else ''}"
+        for s in template.sections
+        if s.title.lower() not in skip_titles
+    )
+
+    sessions_block = ""
+    for i, s in enumerate(sessions, 1):
+        date = s.get("date", f"Séance {i}")
+        text = s.get("anonymized_text", "").strip()
+        notes = s.get("notes", "").strip()
+        sessions_block += f"\n=== SÉANCE {i} — {date} ===\n{text}"
+        if notes:
+            sessions_block += f"\nNotes du thérapeute : {notes}"
+        sessions_block += "\n"
+
+    if final_text.strip():
+        sessions_block += f"\n=== RÉSUMÉ FINAL DU THÉRAPEUTE ===\n{final_text.strip()}\n"
+
+    return (
+        "<s>[INST] Tu es un assistant clinique pour art-thérapeutes. "
+        "Tu dois rédiger un bilan de prise en charge global en français, de façon factuelle et professionnelle.\n\n"
+        "RÈGLE ABSOLUE : utilise UNIQUEMENT les informations présentes dans les transcriptions ci-dessous. "
+        "Si une information n'est pas mentionnée, écris 'Non mentionné dans les transcriptions'. "
+        "Ne complète pas, n'extrapole pas, n'invente jamais.\n\n"
+        f"Transcriptions des séances ({len(sessions)} séance(s), "
+        "données personnelles remplacées par des marqueurs) :\n"
+        "---"
+        f"{sessions_block}"
+        "---\n\n"
+        "Rédige le bilan final avec exactement ces sections dans cet ordre. "
+        "Utilise ## pour chaque titre de section. Ne rajoute pas de sections supplémentaires.\n\n"
+        f"{sections_desc} [/INST]"
+    )
+
+
+def _inject_autoeval(sections: list[dict], sessions: list[dict]) -> list[dict]:
+    """Remplace le contenu de la section autoévaluation par le JSON multi-séances."""
+    autoeval_data = {
+        "type": "multi_session",
+        "sessions": [
+            {"date": s.get("date", ""), "scores": s.get("autoeval", {})}
+            for s in sessions
+        ],
+    }
+    return [
+        {**s, "content": json.dumps(autoeval_data, ensure_ascii=False)}
+        if "autoévaluation" in s["title"].lower()
+        else s
+        for s in sections
+    ]
+
+
+def generate_final(
+    sessions: list[dict],
+    final_text: str = "",
+    template_path: str | None = None,
+) -> None:
+    if not _LLAMA_AVAILABLE:
+        _emit({"type": "error", "message": "llama-cpp-python n'est pas installé."})
+        return
+
+    if not _MODEL_PATH.exists():
+        _emit({"type": "error", "message": "Modèle Mistral introuvable."})
+        return
+
+    if not sessions:
+        _emit({"type": "error", "message": "Aucune séance disponible pour générer le bilan."})
+        return
+
+    tpl_path = template_path or str(_DEFAULT_TEMPLATE)
+    try:
+        template = load_template(tpl_path)
+    except Exception as e:
+        _emit({"type": "error", "message": f"Template invalide : {e}"})
+        return
+
+    _emit({"type": "progress", "status": "loading_model", "message": "Chargement du modèle…"})
+
+    try:
+        llm = Llama(
+            model_path=str(_MODEL_PATH),
+            n_ctx=6144,  # contexte pour 5-6 séances (~4000 tokens utilisés)
+            n_threads=8,
+            n_gpu_layers=-1,
+            verbose=False,
+        )
+    except Exception as e:
+        _emit({"type": "error", "message": f"Impossible de charger le modèle : {e}"})
+        return
+
+    _emit({"type": "progress", "status": "generating", "message": "Génération du bilan final…"})
+
+    prompt = _build_final_prompt(sessions, final_text, template)
+
+    try:
+        collected: list[str] = []
+        for chunk in llm(
+            prompt,
+            max_tokens=1500,
+            temperature=0.0,
+            repeat_penalty=1.1,
+            stop=["</s>", "[INST]"],
+            stream=True,
+            echo=False,
+        ):
+            token = chunk["choices"][0]["text"]
+            collected.append(token)
+            _emit({"type": "token", "text": token})
+
+        sections = _parse_sections("".join(collected), template)
+        sections = _inject_autoeval(sections, sessions)
         _emit({
             "type": "complete",
             "sections": sections,

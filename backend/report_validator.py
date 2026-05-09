@@ -30,8 +30,8 @@ def validate(sections: list[dict], anonymized_source: str) -> ValidationResult:
 
         if _ANON_MARKER.search(content):
             errors.append(
-                f"Marqueur d'anonymisation résiduel dans « {title} » — "
-                "le LLM a recopié un marqueur au lieu de le paraphraser."
+                f"« {title} » — Un marqueur d'anonymisation encore présent. "
+                "Pensez à le remplacer avant d'exporter."
             )
 
         if _TEMPLATE_PLACEHOLDER.search(content):

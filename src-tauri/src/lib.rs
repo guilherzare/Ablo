@@ -101,8 +101,13 @@ fn start_generation(window: tauri::WebviewWindow, text: String) -> Result<(), St
 }
 
 #[tauri::command]
-fn start_export(window: tauri::WebviewWindow, sections: serde_json::Value, template_name: String, patient_name: String) -> Result<(), String> {
-    stream_backend(window, "export", serde_json::json!({"sections": sections, "template_name": template_name, "patient_name": patient_name}), "export-progress")
+fn start_final_generation(window: tauri::WebviewWindow, sessions: serde_json::Value, final_text: String) -> Result<(), String> {
+    stream_backend(window, "generate_final", serde_json::json!({"sessions": sessions, "final_text": final_text}), "generation-progress")
+}
+
+#[tauri::command]
+fn start_export(window: tauri::WebviewWindow, sections: serde_json::Value, template_name: String, patient_name: String, patient_id: String) -> Result<(), String> {
+    stream_backend(window, "export", serde_json::json!({"sections": sections, "template_name": template_name, "patient_name": patient_name, "patient_id": patient_id}), "export-progress")
 }
 
 #[tauri::command]
@@ -125,9 +130,10 @@ pub fn run() {
             start_model_download,
             start_transcription,
             start_generation,
+            start_final_generation,
             start_export,
             open_folder,
         ])
         .run(tauri::generate_context!())
-        .expect("Erreur au démarrage de Oralis");
+        .expect("Erreur au démarrage de Ablo");
 }

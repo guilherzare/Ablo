@@ -1,0 +1,112 @@
+.auteval {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 4px 0;
+}
+
+.auteval-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.auteval-label {
+  flex: 0 0 150px;
+  font-size: 0.875rem;
+  color: #374151;
+  font-weight: 500;
+  padding-top: 2px;
+}
+
+.auteval-slider-wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Slider */
+.auteval-slider {
+  width: 100%;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 6px;
+  border-radius: 99px;
+  background: var(--track-bg, #e5e7eb);
+  outline: none;
+  cursor: pointer;
+  transition: background 0.25s;
+}
+
+.auteval-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--thumb-color, #ef4444);
+  cursor: pointer;
+  border: 2.5px solid white;
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.25);
+  transition: background 0.25s, transform 0.1s;
+}
+
+.auteval-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+}
+
+/* Ligne de points avec chiffres */
+.auteval-dots {
+  display: flex;
+  justify-content: space-between;
+  padding: 0 2px;
+}
+
+.auteval-dot-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+
+.auteval-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  transition: background 0.2s, transform 0.15s, opacity 0.2s;
+}
+
+.auteval-dot.active {
+  transform: scale(1.4);
+}
+
+.auteval-dot-num {
+  font-size: 0.7rem;
+  color: #9ca3af;
+  font-weight: 500;
+  line-height: 1;
+  transition: color 0.2s;
+}
+
+/* Score à droite */
+.auteval-score {
+  flex: 0 0 40px;
+  text-align: right;
+  font-size: 1rem;
+  font-weight: 700;
+  transition: color 0.2s;
+  padding-top: 2px;
+}
+
+.auteval-max {
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: #9ca3af;
+}
+
+@media (prefers-color-scheme: dark) {
+  .auteval-label { color: #d1d5db; }
+  .auteval-dot-num { color: #6b7280; }
+  .auteval-max { color: #6b7280; }
+}

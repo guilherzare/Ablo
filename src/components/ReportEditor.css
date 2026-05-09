@@ -110,6 +110,110 @@
   box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
 }
 
+/* Tableau récapitulatif autoévaluation multi-séances */
+.auteval-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.auteval-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.auteval-th {
+  padding: 8px 10px;
+  background: #4f46e5;
+  color: white;
+  font-weight: 600;
+  text-align: center;
+  font-size: 0.8rem;
+}
+
+.auteval-th-criteria {
+  text-align: left;
+  width: 40%;
+}
+
+.auteval-th-date {
+  display: block;
+  font-size: 0.68rem;
+  font-weight: 400;
+  opacity: 0.8;
+}
+
+.auteval-td {
+  padding: 7px 10px;
+  border-bottom: 1px solid #f3f4f6;
+  text-align: center;
+}
+
+.auteval-td-label {
+  text-align: left;
+  font-weight: 500;
+  color: #374151;
+}
+
+.auteval-td-score { vertical-align: middle; }
+
+.auteval-score-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  color: white;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.auteval-summary-hint {
+  font-size: 0.78rem;
+  color: #9ca3af;
+  margin: 0;
+  font-style: italic;
+}
+
+/* Overlay de surbrillance des marqueurs d'anonymisation */
+.highlight-wrap {
+  position: relative;
+}
+
+.highlight-layer {
+  position: absolute;
+  inset: 0;
+  padding: 10px 12px; /* doit correspondre exactement à .section-textarea */
+  font-size: 0.9rem;
+  font-family: inherit;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow: hidden;
+  pointer-events: none;
+  color: transparent;
+  background: #ffffff;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  box-sizing: border-box;
+}
+
+.anon-marker {
+  background: rgba(239, 68, 68, 0.18);
+  border-radius: 3px;
+  outline: 1.5px solid rgba(239, 68, 68, 0.45);
+  color: transparent;
+}
+
+.highlight-textarea {
+  position: relative;
+  z-index: 1;
+  background: transparent !important;
+  caret-color: #1a1a2e;
+}
+
 /* Footer */
 .editor-footer {
   display: flex;
@@ -171,9 +275,18 @@
 
 @media (prefers-color-scheme: dark) {
   .section-block { background: #1f2937; border-color: #374151; }
+  .section-block.section-error { background: #450a0a; border-color: #7f1d1d; }
   .section-title { color: #f3f4f6; }
   .section-textarea { background: #1f2937; border-color: #374151; color: #f3f4f6; }
   .confirm-check { color: #d1d5db; }
   .editor-footer { border-color: #374151; }
   .btn-validate { background: #374151; border-color: #4b5563; color: #e5e7eb; }
+  /* Overlay de surbrillance en dark mode */
+  .highlight-layer { background: #1f2937; }
+  .highlight-textarea { caret-color: #f3f4f6; }
+  .btn-export:disabled { background: #312e81; color: #a5b4fc; }
+  /* Bannières de validation */
+  .validation-banner.valid { background: #052e16; border-color: #166534; color: #86efac; }
+  .validation-banner.invalid { background: #450a0a; border-color: #7f1d1d; color: #fca5a5; }
+  .banner-warning { color: #fcd34d !important; }
 }

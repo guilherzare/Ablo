@@ -20,9 +20,15 @@ interface GenerationEvent {
   template_name?: string;
 }
 
-// Messages affichés en séquence pendant la génération
+export interface SessionForGeneration {
+  date: string;
+  anonymized_text: string;
+  autoeval: Record<string, number>;
+  notes: string;
+}
+
 const PHASE_MESSAGES = [
-  "Analyse de l'enregistrement…",
+  "Analyse des séances…",
   "Extraction des informations clés…",
   "Identification des objectifs thérapeutiques…",
   "Structuration du bilan par sections…",
@@ -31,16 +37,16 @@ const PHASE_MESSAGES = [
   "Finalisation du bilan…",
 ];
 
-// Tokens attendus pour un rapport complet (estimation)
 const EXPECTED_TOKENS = 900;
 
 interface Props {
   anonymizedText: string;
+  sessions?: SessionForGeneration[];
   onComplete: (sections: Section[], templateName: string) => void;
   onSkip: () => void;
 }
 
-export function GenerationView({ anonymizedText, onComplete, onSkip }: Props) {
+export function GenerationView({ anonymizedText, sessions, onComplete, onSkip }: Props) {
   const [tokenCount, setTokenCount] = useState(0);
   const [phaseIndex, setPhaseIndex] = useState(0);
   const [modelLoading, setModelLoading] = useState(true);
@@ -48,7 +54,6 @@ export function GenerationView({ anonymizedText, onComplete, onSkip }: Props) {
   const tokenRef = useRef(0);
   const phaseTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Avancer les messages de phase toutes les 8 secondes
   useEffect(() => {
     phaseTimerRef.current = setInterval(() => {
       setPhaseIndex((i) => Math.min(i + 1, PHASE_MESSAGES.length - 1));
@@ -66,19 +71,24 @@ export function GenerationView({ anonymizedText, onComplete, onSkip }: Props) {
         setTokenCount(tokenRef.current);
       } else if (data.type === "complete" && data.sections) {
         if (phaseTimerRef.current) clearInterval(phaseTimerRef.current);
-        onComplete(data.sections, data.template_name ?? "Bilan de séance");
+        onComplete(data.sections, data.template_name ?? "Bilan de prise en charge en Art-thérapie");
       } else if (data.type === "error") {
         if (phaseTimerRef.current) clearInterval(phaseTimerRef.current);
         setError(data.message ?? "Erreur inconnue");
       }
     });
 
-    invoke("start_generation", { text: anonymizedText }).catch((e) => {
-      setError(String(e));
-    });
+    if (sessions && sessions.length > 0) {
+      invoke("start_final_generation", {
+        sessions,
+        finalText: anonymizedText,
+      }).catch((e) => setError(String(e)));
+    } else {
+      invoke("start_generation", { text: anonymizedText }).catch((e) => setError(String(e)));
+    }
 
     return () => { unlisten.then((fn) => fn()); };
-  }, [anonymizedText, onComplete]);
+  }, []);  // eslint-disable-line react-hooks/exhaustive-deps
 
   if (error) {
     return (
@@ -95,25 +105,20 @@ export function GenerationView({ anonymizedText, onComplete, onSkip }: Props) {
     );
   }
 
-  // Progression : 0–10% chargement modèle, 10–95% tokens, derniers 5% réservés au mapping
   const rawProgress = modelLoading
     ? 5
     : 10 + Math.min((tokenCount / EXPECTED_TOKENS) * 85, 85);
   const progress = Math.round(rawProgress);
-  const currentMessage = modelLoading
-    ? "Chargement du modèle…"
-    : PHASE_MESSAGES[phaseIndex];
+  const currentMessage = modelLoading ? "Chargement du modèle…" : PHASE_MESSAGES[phaseIndex];
 
   return (
     <div className="gen-view">
       <div className="gen-card">
         <p className="gen-phase">{currentMessage}</p>
-
         <div className="gen-bar-track">
           <div className="gen-bar-fill" style={{ width: `${progress}%` }} />
         </div>
         <p className="gen-percent">{progress} %</p>
-
         <p className="gen-hint">
           La génération prend 2 à 10 minutes selon la puissance de la machine.
         </p>

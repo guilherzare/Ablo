@@ -77,12 +77,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   background: none;
   border: none;
   border-radius: 8px;
-  font-size: 1.4rem;
+  font-size: 1.8rem;
   color: #6b7280;
   cursor: pointer;
   padding: 0;
@@ -96,11 +96,223 @@
   background: #ede9fe;
 }
 
+/* Header contextuel — fiche patient */
+.patient-header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+}
+
+.btn-back-header {
+  background: none;
+  border: none;
+  font-size: 1.1rem;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 4px 2px;
+  flex-shrink: 0;
+  line-height: 1;
+  transition: color 0.15s;
+}
+.btn-back-header:hover { color: #4f46e5; }
+
+.patient-header-name {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1a1a2e;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.patient-header-input {
+  font-size: 1rem;
+  font-weight: 700;
+  padding: 4px 8px;
+  border: 1.5px solid #4f46e5;
+  border-radius: 7px;
+  font-family: inherit;
+  color: #1a1a2e;
+  background: #ffffff;
+  outline: none;
+  flex: 1;
+  min-width: 0;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+.patient-header-rename-actions {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.btn-rename-save,
+.btn-rename-cancel {
+  background: none;
+  border: none;
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 6px;
+  line-height: 1;
+}
+.btn-rename-save { color: #16a34a; }
+.btn-rename-save:hover:not(:disabled) { background: #dcfce7; }
+.btn-rename-save:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn-rename-cancel { color: #9ca3af; }
+.btn-rename-cancel:hover { background: #f3f4f6; }
+
+/* Menu "..." */
+.patient-menu-wrap {
+  position: relative;
+  flex-shrink: 0;
+  margin-left: 8px;
+}
+
+.btn-patient-menu {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  background: none;
+  border: none;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  color: #6b7280;
+  cursor: pointer;
+  letter-spacing: -1px;
+  transition: color 0.15s, background 0.15s;
+}
+.btn-patient-menu:hover,
+.btn-patient-menu.open { color: #1a1a2e; background: #f3f4f6; }
+
+.patient-menu-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  min-width: 160px;
+  z-index: 50;
+  overflow: hidden;
+}
+
+.patient-menu-item {
+  display: block;
+  width: 100%;
+  padding: 10px 14px;
+  background: none;
+  border: none;
+  text-align: left;
+  font-size: 0.9rem;
+  font-family: inherit;
+  color: #374151;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.patient-menu-item:hover { background: #f9fafb; }
+.patient-menu-item.danger { color: #dc2626; }
+.patient-menu-item.danger:hover { background: #fef2f2; }
+
+/* Modal de confirmation de suppression */
+.delete-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.35);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.delete-modal {
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 28px 24px 20px;
+  max-width: 420px;
+  width: 100%;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.delete-modal-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1a1a2e;
+  margin: 0;
+}
+
+.delete-modal-msg {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin: 0;
+  line-height: 1.6;
+}
+
+.delete-modal-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.btn-modal-cancel {
+  padding: 8px 16px;
+  background: none;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-family: inherit;
+  color: #6b7280;
+  cursor: pointer;
+}
+.btn-modal-cancel:hover { background: #f3f4f6; }
+
+.btn-modal-delete {
+  padding: 8px 16px;
+  background: #dc2626;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  font-family: inherit;
+  color: white;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.btn-modal-delete:hover:not(:disabled) { background: #b91c1c; }
+.btn-modal-delete:disabled { opacity: 0.5; cursor: not-allowed; }
+
+@media (prefers-color-scheme: dark) {
+  .patient-header-name { color: #f9fafb; }
+  .patient-header-input { background: #111827; border-color: #818cf8; color: #f3f4f6; }
+  .btn-patient-menu:hover,
+  .btn-patient-menu.open { background: #374151; color: #f3f4f6; }
+  .patient-menu-dropdown { background: #1f2937; border-color: #374151; }
+  .patient-menu-item { color: #d1d5db; }
+  .patient-menu-item:hover { background: #374151; }
+  .patient-menu-item.danger { color: #f87171; }
+  .patient-menu-item.danger:hover { background: #450a0a; }
+  .delete-modal { background: #1f2937; }
+  .delete-modal-title { color: #f9fafb; }
+  .delete-modal-msg { color: #9ca3af; }
+  .btn-modal-cancel { border-color: #374151; color: #9ca3af; }
+  .btn-modal-cancel:hover { background: #374151; }
+}
+
 /* Contenu */
 .app-main {
   flex: 1;
   display: flex;
   justify-content: center;
+  align-items: center;
   padding: 48px 24px;
 }
 
@@ -114,6 +326,7 @@
   font-weight: 700;
   color: #1a1a2e;
   margin: 0 0 8px;
+  text-align: center;
 }
 
 .step-desc {
@@ -121,7 +334,23 @@
   font-size: 0.95rem;
   margin: 0 0 32px;
   line-height: 1.6;
+  text-align: center;
 }
+
+.btn-skip-audio {
+  display: block;
+  margin: 16px auto 0;
+  background: none;
+  border: none;
+  color: #6b7280;
+  font-size: 0.875rem;
+  cursor: pointer;
+  font-family: inherit;
+  padding: 0;
+  text-align: center;
+}
+
+.btn-skip-audio:hover { color: #4f46e5; text-decoration: underline; }
 
 @media (prefers-color-scheme: dark) {
   :root { color: #e5e7eb; background-color: #111827; }

@@ -14,7 +14,7 @@ try:
 except ImportError:
     _SSL_CTX = ssl.create_default_context()
 
-MODELS_DIR = Path.home() / ".oralis" / "models"
+MODELS_DIR = Path.home() / ".ablo" / "models"
 
 # URLs et métadonnées des modèles requis
 MODELS: dict = {
@@ -81,7 +81,7 @@ def _download(name: str, model: dict, dest: Path) -> None:
     expected = model["size_bytes"]
     tmp = dest.with_suffix(".tmp")
 
-    req = urllib.request.Request(url, headers={"User-Agent": "Oralis/0.1"})
+    req = urllib.request.Request(url, headers={"User-Agent": "Ablo/0.1"})
     with urllib.request.urlopen(req, timeout=60, context=_SSL_CTX) as resp:
         total = int(resp.headers.get("Content-Length", expected))
         downloaded = 0

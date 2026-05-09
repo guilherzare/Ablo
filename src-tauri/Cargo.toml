@@ -1,5 +1,5 @@
 [package]
-name = "oralis"
+name = "ablo"
 version = "0.1.0"
 description = "Application de transcription et rédaction de bilans pour art-thérapeutes"
 authors = ["Vincent Guilhermond"]

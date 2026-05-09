@@ -21,15 +21,39 @@ try:
     from reportlab.lib.pagesizes import A4
     from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
     from reportlab.lib.units import cm
-    from reportlab.lib.colors import HexColor
-    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
-    from reportlab.platypus.frames import Frame
-    from reportlab.platypus.doctemplate import PageTemplate, BaseDocTemplate
+    from reportlab.lib.colors import HexColor, black, white, lightgrey
+    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
     _PDF_AVAILABLE = True
 except ImportError:
     _PDF_AVAILABLE = False
 
 from settings_manager import get_settings
+from patient_manager import patient_dir_for, record_bilan
+
+AUTEVAL_CRITERIA = [
+    "État initial",
+    "Envie de revenir",
+    "Bien fait",
+    "Beau",
+    "Bon moment",
+    "État final",
+]
+
+DOT_LABELS = ["—", "Faible", "Passable", "Bien", "Très bien", "Excellent"]
+
+
+def _parse_auteval(content: str) -> dict | None:
+    """Retourne None si ce n'est pas de l'autoéval, sinon un dict typé."""
+    try:
+        parsed = json.loads(content)
+        if isinstance(parsed, dict):
+            if parsed.get("type") == "multi_session":
+                return parsed
+            else:
+                return {"type": "single", "scores": parsed}
+    except Exception:
+        pass
+    return None
 
 
 def _emit(payload: dict) -> None:
@@ -38,7 +62,7 @@ def _emit(payload: dict) -> None:
 
 def _output_dir() -> Path:
     settings = get_settings()
-    folder = settings.get("export_folder", "~/Documents/Oralis")
+    folder = settings.get("export_folder", "~/Documents/Ablo")
     path = Path(folder).expanduser()
     path.mkdir(parents=True, exist_ok=True)
     return path
@@ -46,6 +70,13 @@ def _output_dir() -> Path:
 
 def _make_filename(session_id: str) -> str:
     return f"bilan_{datetime.date.today().strftime('%Y%m%d')}_{session_id}"
+
+
+def _format_date(iso: str) -> str:
+    try:
+        return datetime.datetime.fromisoformat(iso).strftime("%d/%m/%Y")
+    except Exception:
+        return iso[:10] if len(iso) >= 10 else iso
 
 
 def _export_docx(
@@ -58,7 +89,6 @@ def _export_docx(
 ) -> Path:
     doc = Document()
 
-    # Marges
     for section in doc.sections:
         section.top_margin = Cm(2.5)
         section.bottom_margin = Cm(2.5)
@@ -70,7 +100,7 @@ def _export_docx(
     therapist_city = settings.get("therapist_city", "")
     date_str = datetime.date.today().strftime("%d/%m/%Y")
 
-    # En-tête : nom et email thérapeute (haut gauche)
+    # En-tête : nom et email thérapeute
     header = doc.sections[0].header
     header.is_linked_to_previous = False
     hp = header.paragraphs[0]
@@ -86,16 +116,17 @@ def _export_docx(
     title_para = doc.add_paragraph()
     title_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
     title_para.paragraph_format.space_before = Pt(12)
-    title_run = title_para.add_run(f"Bilan séances Art-thérapie")
+    title_run = title_para.add_run("Bilan séances Art-thérapie")
     title_run.bold = True
     title_run.font.size = Pt(14)
 
+    # Nom du patient — même style que le titre
     if patient_name:
         sub_para = doc.add_paragraph()
         sub_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
         sub_run = sub_para.add_run(patient_name)
-        sub_run.font.size = Pt(12)
-        sub_run.font.color.rgb = RGBColor(0x4F, 0x46, 0xE5)
+        sub_run.bold = True
+        sub_run.font.size = Pt(14)
 
     doc.add_paragraph()
 
@@ -106,7 +137,46 @@ def _export_docx(
         heading.runs[0].bold = True
 
         content = s.get("content", "").strip()
-        if content:
+        auteval = _parse_auteval(content) if "autoévaluation" in s["title"].lower() else None
+
+        if auteval is not None:
+            if auteval["type"] == "multi_session":
+                sessions = auteval["sessions"]
+                header_row = ["Critère"] + [
+                    f"S{i+1}\n{_format_date(sess.get('date', ''))}"
+                    for i, sess in enumerate(sessions)
+                ]
+                table = doc.add_table(rows=1, cols=len(header_row))
+                table.style = "Table Grid"
+                hdr_cells = table.rows[0].cells
+                for cell, text in zip(hdr_cells, header_row):
+                    run = cell.paragraphs[0].add_run(text)
+                    run.bold = True
+                    run.font.size = Pt(9)
+                for criterion in AUTEVAL_CRITERIA:
+                    row_cells = table.add_row().cells
+                    row_cells[0].paragraphs[0].add_run(criterion).font.size = Pt(9)
+                    for i, sess in enumerate(sessions):
+                        val = sess.get("scores", {}).get(criterion, 0)
+                        row_cells[i + 1].paragraphs[0].add_run(str(val)).font.size = Pt(9)
+            else:
+                scores = auteval["scores"]
+                table = doc.add_table(rows=1, cols=3)
+                table.style = "Table Grid"
+                hdr = table.rows[0].cells
+                for cell, text in zip(hdr, ["Critère", "Note /5", "Appréciation"]):
+                    run = cell.paragraphs[0].add_run(text)
+                    run.bold = True
+                    run.font.size = Pt(9)
+                for criterion in AUTEVAL_CRITERIA:
+                    val = scores.get(criterion, 0)
+                    row = table.add_row().cells
+                    row[0].paragraphs[0].add_run(criterion).font.size = Pt(9)
+                    row[1].paragraphs[0].add_run(str(val)).font.size = Pt(9)
+                    label = DOT_LABELS[val] if 0 <= val < len(DOT_LABELS) else ""
+                    row[2].paragraphs[0].add_run(label).font.size = Pt(9)
+
+        elif content:
             for line in content.split("\n"):
                 stripped = line.strip()
                 if not stripped:
@@ -124,18 +194,19 @@ def _export_docx(
 
         doc.add_paragraph()
 
-    # Pied de page : formule de clôture (bas droite)
-    footer = doc.sections[0].footer
-    footer.is_linked_to_previous = False
-    fp = footer.paragraphs[0]
-    fp.alignment = WD_ALIGN_PARAGRAPH.RIGHT
-    footer_text = "Merci de votre confiance"
+    # Formule de clôture en fin de document (dernière page uniquement)
+    closing_text = "Merci de votre confiance"
     if therapist_city:
-        footer_text += f", fait à {therapist_city}"
-    footer_text += f", le {date_str}."
+        closing_text += f", fait à {therapist_city}"
+    closing_text += f", le {date_str}."
     if therapist_name:
-        footer_text += f"\n{therapist_name}"
-    fp.add_run(footer_text).font.size = Pt(9)
+        closing_text += f"\n{therapist_name}"
+
+    closing_para = doc.add_paragraph()
+    closing_para.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+    closing_run = closing_para.add_run(closing_text)
+    closing_run.font.size = Pt(9)
+    closing_run.font.color.rgb = RGBColor(0x37, 0x41, 0x51)
 
     dest = out_dir / f"{filename}.docx"
     doc.save(str(dest))
@@ -164,9 +235,10 @@ def _export_pdf(
         "BoldTitle", parent=styles["Title"],
         fontSize=14, spaceAfter=4,
     )
+    # Nom du patient — même taille et couleur que le titre
     patient_style = ParagraphStyle(
         "PatientName", parent=styles["Normal"],
-        fontSize=12, textColor=indigo, spaceAfter=16, alignment=1,
+        fontSize=14, fontName="Helvetica-Bold", spaceAfter=16, alignment=1,
     )
     h1_style = ParagraphStyle(
         "SectionH1", parent=styles["Heading1"],
@@ -180,27 +252,18 @@ def _export_pdf(
         "Small", parent=styles["Normal"],
         fontSize=8, textColor=HexColor("#9CA3AF"), spaceAfter=2,
     )
+    closing_style = ParagraphStyle(
+        "Closing", parent=styles["Normal"],
+        fontSize=9, textColor=HexColor("#374151"), alignment=2, spaceBefore=24,
+    )
 
     def on_page(canvas, doc):
         canvas.saveState()
-        # En-tête haut gauche
         canvas.setFont("Helvetica-Bold", 9)
         canvas.drawString(2.5 * cm, A4[1] - 1.5 * cm, therapist_name)
         canvas.setFont("Helvetica", 8)
         canvas.setFillColor(HexColor("#6B7280"))
         canvas.drawString(2.5 * cm, A4[1] - 1.5 * cm - 12, therapist_email)
-
-        # Pied de page bas droite
-        footer_line1 = "Merci de votre confiance"
-        if therapist_city:
-            footer_line1 += f", fait à {therapist_city}, le {date_str}."
-        else:
-            footer_line1 += f", le {date_str}."
-        canvas.setFont("Helvetica", 8)
-        canvas.setFillColor(HexColor("#374151"))
-        canvas.drawRightString(A4[0] - 2.5 * cm, 1.5 * cm, footer_line1)
-        if therapist_name:
-            canvas.drawRightString(A4[0] - 2.5 * cm, 1.5 * cm - 12, therapist_name)
         canvas.restoreState()
 
     doc = SimpleDocTemplate(
@@ -218,7 +281,62 @@ def _export_pdf(
     for s in sections:
         story.append(Paragraph(s["title"], h1_style))
         content = s.get("content", "").strip()
-        if content:
+        auteval = _parse_auteval(content) if "autoévaluation" in s["title"].lower() else None
+
+        if auteval is not None:
+            if auteval["type"] == "multi_session":
+                sessions = auteval["sessions"]
+                header_row = ["Critère"] + [
+                    f"S{i+1}\n{_format_date(sess.get('date', ''))}"
+                    for i, sess in enumerate(sessions)
+                ]
+                table_data = [header_row]
+                for criterion in AUTEVAL_CRITERIA:
+                    row = [criterion]
+                    for sess in sessions:
+                        val = sess.get("scores", {}).get(criterion, 0)
+                        row.append(str(val))
+                    table_data.append(row)
+                n_cols = len(header_row)
+                crit_col = 5 * cm
+                score_col = (13.5 * cm - crit_col) / max(n_cols - 1, 1)
+                col_widths = [crit_col] + [score_col] * (n_cols - 1)
+                tbl = Table(table_data, colWidths=col_widths)
+                tbl.setStyle(TableStyle([
+                    ("BACKGROUND", (0, 0), (-1, 0), indigo),
+                    ("TEXTCOLOR", (0, 0), (-1, 0), white),
+                    ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                    ("FONTSIZE", (0, 0), (-1, -1), 9),
+                    ("ROWBACKGROUNDS", (0, 1), (-1, -1), [white, HexColor("#F9FAFB")]),
+                    ("GRID", (0, 0), (-1, -1), 0.5, lightgrey),
+                    ("ALIGN", (1, 0), (-1, -1), "CENTER"),
+                    ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                    ("TOPPADDING", (0, 0), (-1, -1), 5),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
+                ]))
+                story.append(tbl)
+            else:
+                scores = auteval["scores"]
+                table_data = [["Critère", "Note /5", "Appréciation"]]
+                for criterion in AUTEVAL_CRITERIA:
+                    val = scores.get(criterion, 0)
+                    label = DOT_LABELS[val] if 0 <= val < len(DOT_LABELS) else ""
+                    table_data.append([criterion, str(val), label])
+                tbl = Table(table_data, colWidths=[6 * cm, 2.5 * cm, 5 * cm])
+                tbl.setStyle(TableStyle([
+                    ("BACKGROUND", (0, 0), (-1, 0), indigo),
+                    ("TEXTCOLOR", (0, 0), (-1, 0), white),
+                    ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                    ("FONTSIZE", (0, 0), (-1, -1), 9),
+                    ("ROWBACKGROUNDS", (0, 1), (-1, -1), [white, HexColor("#F9FAFB")]),
+                    ("GRID", (0, 0), (-1, -1), 0.5, lightgrey),
+                    ("ALIGN", (1, 0), (1, -1), "CENTER"),
+                    ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                    ("TOPPADDING", (0, 0), (-1, -1), 5),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
+                ]))
+                story.append(tbl)
+        elif content:
             for line in content.split("\n"):
                 stripped = line.strip()
                 if stripped:
@@ -227,13 +345,30 @@ def _export_pdf(
             story.append(Paragraph("<i>[Section non renseignée]</i>", small_style))
         story.append(Spacer(1, 0.3 * cm))
 
+    # Formule de clôture en fin de document (dernière page uniquement)
+    closing_text = "Merci de votre confiance"
+    if therapist_city:
+        closing_text += f", fait à {therapist_city}"
+    closing_text += f", le {date_str}."
+    if therapist_name:
+        closing_text += f"<br/>{therapist_name}"
+    story.append(Paragraph(closing_text, closing_style))
+
     doc.build(story, onFirstPage=on_page, onLaterPages=on_page)
     return dest
 
 
-def export(sections: list[dict], template_name: str, patient_name: str = "") -> None:
+def export(sections: list[dict], template_name: str, patient_name: str = "", patient_id: str = "") -> None:
     session_id = uuid.uuid4().hex[:8]
-    out_dir = _output_dir()
+
+    # Dossier Bilan/ dans le dossier du patient si possible, sinon dossier général
+    patient_dir = patient_dir_for(patient_id) if patient_id else None
+    if patient_dir:
+        out_dir = patient_dir / "Bilan"
+        out_dir.mkdir(parents=True, exist_ok=True)
+    else:
+        out_dir = _output_dir()
+
     filename = _make_filename(session_id)
     settings = get_settings()
 
@@ -259,6 +394,13 @@ def export(sections: list[dict], template_name: str, patient_name: str = "") -> 
             return
     else:
         _emit({"type": "warning", "message": "reportlab non disponible."})
+
+    # Enregistrement du bilan dans le dossier patient
+    if patient_id and (docx_path or pdf_path):
+        try:
+            record_bilan(patient_id, docx_path or "", pdf_path or "")
+        except Exception:
+            pass
 
     _emit({
         "type": "complete",
