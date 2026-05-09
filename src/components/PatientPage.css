@@ -229,11 +229,11 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
+  gap: 0;
 }
 
 .btn-new-session--empty {
-  margin-top: 12px;
+  margin-top: 32px;
   flex: unset;
   min-width: unset;
   width: auto;
