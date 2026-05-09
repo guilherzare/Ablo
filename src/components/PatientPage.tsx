@@ -153,15 +153,8 @@ export function PatientPage({ patient, onNewSession, onFinalBilan, onSessionsLoa
           <ul className="session-list">
             {sessions.map((s, i) => {
               const number = i + 1;
-              const excerpt = s.summary
-                ? (s.summary.length > 180 ? s.summary.slice(0, 180) + "…" : s.summary)
-                : "";
               return (
-                <li
-                  key={s.filename}
-                  className="session-card session-card--clickable"
-                  onClick={() => setOpenedSession({ session: s, number })}
-                >
+                <li key={s.filename} className="session-card">
                   <div className="session-card-left">
                     <div className="session-card-top">
                       <span className="session-num">
@@ -169,15 +162,10 @@ export function PatientPage({ patient, onNewSession, onFinalBilan, onSessionsLoa
                       </span>
                       <span className="session-date">{formatDate(s.date)}</span>
                     </div>
-                    {excerpt ? (
-                      <p className="session-summary-excerpt">{excerpt}</p>
-                    ) : (
-                      <p className="session-summary-empty">Résumé non disponible.</p>
-                    )}
                   </div>
                   <button
                     className="btn-view-summary"
-                    onClick={(e) => { e.stopPropagation(); setOpenedSession({ session: s, number }); }}
+                    onClick={() => setOpenedSession({ session: s, number })}
                   >
                     Voir le résumé
                   </button>
