@@ -33,6 +33,7 @@ export function SessionAutoEvalView({ patientId, patientName, anonymizedText, is
 
   async function handleSave() {
     flushSync(() => setSaving(true));
+    await new Promise((r) => requestAnimationFrame(r));
     setError("");
     try {
       await invoke("call_backend", {
