@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { Section } from "./GenerationView";
 import { AutoEvalEditor, AUTEVAL_CRITERIA } from "./AutoEvalEditor";
@@ -86,6 +86,22 @@ interface Props {
   onExport: (sections: Section[]) => void;
 }
 
+const ANON_MARKER_RE = /(\[[A-Z_]+_\d+\])/g;
+
+function escapeHtml(s: string): string {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+function buildHighlightHtml(text: string): string {
+  return text.split(ANON_MARKER_RE)
+    .map((p, i) =>
+      i % 2 === 0
+        ? escapeHtml(p)
+        : `<mark class="anon-marker">${escapeHtml(p)}</mark>`
+    )
+    .join("");
+}
+
 function SectionTextarea({
   value,
   onChange,
@@ -95,16 +111,52 @@ function SectionTextarea({
   onChange: (v: string) => void;
   placeholder?: string;
 }) {
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const layerRef = useRef<HTMLDivElement>(null);
+
+  ANON_MARKER_RE.lastIndex = 0;
+  const hasMarkers = ANON_MARKER_RE.test(value);
+
+  function syncScroll() {
+    if (layerRef.current && textareaRef.current) {
+      layerRef.current.scrollTop = textareaRef.current.scrollTop;
+    }
+  }
+
+  if (!hasMarkers) {
+    return (
+      <textarea
+        className="section-textarea"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder ?? "Rédigez cette section…"}
+        rows={5}
+        lang="fr"
+        spellCheck
+      />
+    );
+  }
+
   return (
-    <textarea
-      className="section-textarea"
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      placeholder={placeholder ?? "Rédigez cette section…"}
-      rows={5}
-      lang="fr"
-      spellCheck
-    />
+    <div className="highlight-wrap">
+      <div
+        ref={layerRef}
+        className="highlight-layer"
+        dangerouslySetInnerHTML={{ __html: buildHighlightHtml(value) }}
+        aria-hidden
+      />
+      <textarea
+        ref={textareaRef}
+        className="section-textarea highlight-textarea"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        onScroll={syncScroll}
+        placeholder={placeholder ?? "Rédigez cette section…"}
+        rows={5}
+        lang="fr"
+        spellCheck
+      />
+    </div>
   );
 }
 
