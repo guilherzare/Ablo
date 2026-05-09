@@ -10,11 +10,6 @@ interface Settings {
   export_folder: string;
 }
 
-interface DictEntry {
-  wrong: string;
-  correct: string;
-}
-
 interface Props {
   onClose: () => void;
 }
@@ -26,15 +21,11 @@ export function SettingsPanel({ onClose }: Props) {
     therapist_city: "",
     export_folder: "",
   });
-  const [dictionary, setDictionary] = useState<DictEntry[]>([]);
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
     invoke<{ result: Settings }>("call_backend", { method: "get_settings", params: {} })
       .then((res) => setSettings(res.result as Settings))
-      .catch(() => {});
-    invoke<{ result: DictEntry[] }>("call_backend", { method: "get_dictionary", params: {} })
-      .then((res) => setDictionary(res.result ?? []))
       .catch(() => {});
   }, []);
 
@@ -42,10 +33,6 @@ export function SettingsPanel({ onClose }: Props) {
     await invoke("call_backend", {
       method: "update_settings",
       params: settings,
-    });
-    await invoke("call_backend", {
-      method: "update_dictionary",
-      params: { entries: dictionary },
     });
     setSaved(true);
     setTimeout(() => { setSaved(false); onClose(); }, 800);
@@ -61,21 +48,6 @@ export function SettingsPanel({ onClose }: Props) {
 
   function update(key: keyof Settings, value: string) {
     setSettings((s) => ({ ...s, [key]: value }));
-    setSaved(false);
-  }
-
-  function addEntry() {
-    setDictionary((d) => [...d, { wrong: "", correct: "" }]);
-    setSaved(false);
-  }
-
-  function updateEntry(index: number, field: keyof DictEntry, value: string) {
-    setDictionary((d) => d.map((e, i) => i === index ? { ...e, [field]: value } : e));
-    setSaved(false);
-  }
-
-  function removeEntry(index: number) {
-    setDictionary((d) => d.filter((_, i) => i !== index));
     setSaved(false);
   }
 
@@ -142,51 +114,6 @@ export function SettingsPanel({ onClose }: Props) {
               </button>
             </div>
           </div>
-        </div>
-
-        <div className="settings-section">
-          <h3>Corrections de transcription</h3>
-          <p className="settings-hint">
-            Corrigez les mots que Whisper transcrit mal. Chaque correction sera appliquée automatiquement après la transcription.
-          </p>
-
-          {dictionary.length > 0 && (
-            <div className="dict-header-row">
-              <span className="dict-col-label">Mot incorrect</span>
-              <span className="dict-col-label">Correction</span>
-            </div>
-          )}
-
-          <div className="dict-list">
-            {dictionary.map((entry, i) => (
-              <div key={i} className="dict-row">
-                <input
-                  className="settings-input dict-input"
-                  type="text"
-                  placeholder="ex : argotérapie"
-                  value={entry.wrong}
-                  onChange={(e) => updateEntry(i, "wrong", e.target.value)}
-                  lang="fr"
-                  spellCheck={false}
-                />
-                <span className="dict-arrow">→</span>
-                <input
-                  className="settings-input dict-input"
-                  type="text"
-                  placeholder="ex : art-thérapie"
-                  value={entry.correct}
-                  onChange={(e) => updateEntry(i, "correct", e.target.value)}
-                  lang="fr"
-                  spellCheck={false}
-                />
-                <button className="btn-dict-remove" onClick={() => removeEntry(i)} title="Supprimer">×</button>
-              </div>
-            ))}
-          </div>
-
-          <button className="btn-add-entry" onClick={addEntry}>
-            + Ajouter une correction
-          </button>
         </div>
 
         <div className="settings-footer">

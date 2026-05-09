@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Prévisualisation — Corrections de transcription</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f5f5f7;
+      display: flex;
+      justify-content: center;
+      padding: 40px 24px;
+    }
+
+    .view {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      width: 100%;
+      max-width: 680px;
+    }
+
+    h2 { font-size: 1.1rem; font-weight: 600; color: #1a1a2e; margin: 0 0 4px; }
+    .hint { font-size: 0.875rem; color: #6b7280; margin: 0; }
+
+    .textarea {
+      width: 100%;
+      min-height: 180px;
+      padding: 14px;
+      font-size: 0.95rem;
+      line-height: 1.7;
+      border: 1px solid #d1d5db;
+      border-radius: 10px;
+      font-family: inherit;
+      color: #1a1a2e;
+      background: #ffffff;
+      resize: vertical;
+    }
+
+    /* Panneau corrections */
+    .corrections-panel {
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .corrections-panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .corrections-panel-title {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #6b7280;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .corrections-count {
+      background: #e0e7ff;
+      color: #4f46e5;
+      border-radius: 99px;
+      padding: 1px 7px;
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+
+    .corrections-panel-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-apply {
+      background: #4f46e5;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 5px 12px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .btn-add {
+      background: none;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      padding: 5px 10px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: #6b7280;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .corrections-list {
+      list-style: none;
+      padding: 0;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .correction-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+      padding: 4px 8px 4px 10px;
+      font-size: 0.8rem;
+    }
+
+    .wrong { color: #dc2626; text-decoration: line-through; font-family: ui-monospace, monospace; }
+    .arrow { color: #9ca3af; font-size: 0.75rem; }
+    .correct { color: #059669; font-family: ui-monospace, monospace; }
+    .btn-rm { background: none; border: none; color: #d1d5db; cursor: pointer; padding: 0 0 0 4px; font-size: 0.9rem; }
+
+    .add-form {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding-top: 8px;
+      border-top: 1px solid #e5e7eb;
+    }
+
+    .correction-input {
+      flex: 1;
+      min-width: 0;
+      padding: 6px 10px;
+      font-size: 0.85rem;
+      font-family: inherit;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      background: #ffffff;
+      color: #1a1a2e;
+    }
+    .correction-input:focus { outline: none; border-color: #4f46e5; box-shadow: 0 0 0 3px rgba(79,70,229,.1); }
+
+    .btn-confirm {
+      background: #4f46e5;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 6px 14px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      white-space: nowrap;
+    }
+
+    /* Footer */
+    .footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .word-count { font-size: 0.82rem; color: #9ca3af; }
+    .btn-continue {
+      background: #4f46e5;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 24px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+    }
+  </style>
+</head>
+<body>
+  <div class="view">
+    <div>
+      <h2>Transcription brute</h2>
+      <p class="hint">Relisez et corrigez les éventuelles erreurs de reconnaissance avant de continuer.</p>
+    </div>
+
+    <textarea class="textarea" spellcheck="true" lang="fr">La patiente a débuté la séance avec une activité de argotérapie en utilisant des pastels. Elle a exprimé ressentir de l'anxiété avant de commencer, mais son état final était plus apaisé. Le thérapeute a proposé un cadre de masage doux pour accompagner la médiation artistique.</textarea>
+
+    <!-- Panneau corrections (avec entrées existantes) -->
+    <div class="corrections-panel">
+      <div class="corrections-panel-header">
+        <span class="corrections-panel-title">
+          Corrections automatiques
+          <span class="corrections-count">2</span>
+        </span>
+        <div class="corrections-panel-actions">
+          <button class="btn-apply">Appliquer</button>
+          <button class="btn-add">+ Ajouter</button>
+        </div>
+      </div>
+
+      <ul class="corrections-list">
+        <li class="correction-item">
+          <span class="wrong">argotérapie</span>
+          <span class="arrow">→</span>
+          <span class="correct">art-thérapie</span>
+          <button class="btn-rm">×</button>
+        </li>
+        <li class="correction-item">
+          <span class="wrong">masage</span>
+          <span class="arrow">→</span>
+          <span class="correct">massage</span>
+          <button class="btn-rm">×</button>
+        </li>
+      </ul>
+
+      <!-- Formulaire ajout (état ouvert) -->
+      <div class="add-form">
+        <input class="correction-input" type="text" placeholder="Mot incorrect" value="méditation" spellcheck="false" style="border-color:#4f46e5;box-shadow:0 0 0 3px rgba(79,70,229,.1)" />
+        <span class="arrow">→</span>
+        <input class="correction-input" type="text" placeholder="Correction" spellcheck="false" />
+        <button class="btn-confirm">Ajouter</button>
+      </div>
+    </div>
+
+    <div class="footer">
+      <span class="word-count">78 mots</span>
+      <button class="btn-continue">Continuer → Anonymisation</button>
+    </div>
+  </div>
+</body>
+</html>
