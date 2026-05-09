@@ -7,6 +7,7 @@
   width: 100%;
   align-items: center;
   text-align: center;
+  margin: 0 auto;
 }
 
 .export-form-hint {
