@@ -88,10 +88,15 @@ export function FirstRun({ onComplete }: Props) {
     }
   }
 
-  const totalBytes = Object.values(models).reduce(
-    (acc, m) => acc + m.size_bytes,
-    0
-  );
+  const modelList = Object.values(models);
+  const totalBytes = modelList.reduce((acc, m) => acc + m.size_bytes, 0);
+
+  const pending = modelList.filter((m) => !m.present);
+  const overallPercent = downloading && pending.length > 0
+    ? pending.reduce((acc, m) => acc + (m.status === "done" ? 100 : m.percent ?? 0), 0) / pending.length
+    : 0;
+
+  const activeModel = modelList.find((m) => m.status === "downloading");
 
   return (
     <div className="firstrun">
@@ -104,34 +109,54 @@ export function FirstRun({ onComplete }: Props) {
         </p>
 
         <div className="models-list">
-          {Object.entries(models).map(([name, model]) => (
-            <div key={name} className="model-item">
-              <div className="model-header">
-                <span className="model-label">{model.label}</span>
-                <span className="model-size">{formatBytes(model.size_bytes)}</span>
-              </div>
-              {downloading || model.present ? (
-                <div className="model-progress">
-                  <div
-                    className="model-progress-bar"
-                    style={{
-                      width: `${model.present && !downloading ? 100 : model.percent ?? 0}%`,
-                    }}
-                  />
+          {Object.entries(models).map(([name, model]) => {
+            const pct = model.present && !downloading ? 100 : model.percent ?? 0;
+            const indeterminate = downloading && !model.present && model.status === "downloading" && pct === 0;
+            return (
+              <div key={name} className="model-item">
+                <div className="model-header">
+                  <span className="model-label">{model.label}</span>
+                  <span className="model-size">{formatBytes(model.size_bytes)}</span>
                 </div>
-              ) : null}
-              <span className="model-state">
-                {model.present
-                  ? "✅ Déjà installé"
-                  : model.status === "downloading"
-                  ? `${model.percent ?? 0}%…`
-                  : model.status === "done"
-                  ? "✅ Terminé"
-                  : "En attente"}
-              </span>
-            </div>
-          ))}
+                {downloading || model.present ? (
+                  <div className="model-progress">
+                    <div
+                      className={`model-progress-bar${indeterminate ? " model-progress-bar--indeterminate" : ""}`}
+                      style={{ width: indeterminate ? "100%" : `${pct}%` }}
+                    />
+                  </div>
+                ) : null}
+                <span className="model-state">
+                  {model.present
+                    ? "✅ Déjà installé"
+                    : model.status === "downloading"
+                    ? `${pct}%`
+                    : model.status === "done"
+                    ? "✅ Terminé"
+                    : downloading ? "En attente…" : ""}
+                </span>
+              </div>
+            );
+          })}
         </div>
+
+        {downloading && (
+          <div className="firstrun-overall">
+            <div className="firstrun-overall-bar">
+              <div
+                className={`firstrun-overall-fill${overallPercent === 0 ? " model-progress-bar--indeterminate" : ""}`}
+                style={{ width: overallPercent === 0 ? "100%" : `${overallPercent}%` }}
+              />
+            </div>
+            <p className="firstrun-overall-label">
+              {activeModel
+                ? `Téléchargement de ${activeModel.label}… ${activeModel.percent ?? 0}%`
+                : overallPercent > 0
+                ? `${Math.round(overallPercent)}% terminé`
+                : "Initialisation…"}
+            </p>
+          </div>
+        )}
 
         <p className="firstrun-total">
           Volume total : <strong>{formatBytes(totalBytes)}</strong><br />
@@ -141,18 +166,14 @@ export function FirstRun({ onComplete }: Props) {
         {error && <p className="firstrun-error">❌ {error}</p>}
 
         {done ? (
-          <p className="firstrun-success">
-            ✅ Modèles installés. Lancement d'Ablo…
-          </p>
+          <p className="firstrun-success">✅ Modèles installés. Lancement d'Ablo…</p>
         ) : (
           <button
             className="firstrun-btn"
             onClick={startDownload}
             disabled={downloading}
           >
-            {downloading
-              ? "Téléchargement en cours…"
-              : "Télécharger et installer les modèles"}
+            {downloading ? "Téléchargement en cours…" : "Télécharger et installer les modèles"}
           </button>
         )}
       </div>

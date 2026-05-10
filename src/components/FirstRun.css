@@ -73,9 +73,9 @@
 }
 
 .model-progress {
-  height: 6px;
+  height: 8px;
   background: #e5e7eb;
-  border-radius: 3px;
+  border-radius: 4px;
   overflow: hidden;
   margin-bottom: 6px;
 }
@@ -83,13 +83,60 @@
 .model-progress-bar {
   height: 100%;
   background: #4f46e5;
-  border-radius: 3px;
-  transition: width 0.3s ease;
+  border-radius: 4px;
+  transition: width 0.4s ease;
+}
+
+@keyframes shimmer {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.model-progress-bar--indeterminate {
+  background: #4f46e5;
+  position: relative;
+  overflow: hidden;
+}
+
+.model-progress-bar--indeterminate::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.35) 50%, transparent 100%);
+  animation: shimmer 1.4s infinite;
 }
 
 .model-state {
   font-size: 0.8rem;
   color: #6b7280;
+}
+
+/* Barre de progression globale */
+.firstrun-overall {
+  margin: 8px 0 4px;
+}
+
+.firstrun-overall-bar {
+  height: 10px;
+  background: #e5e7eb;
+  border-radius: 5px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.firstrun-overall-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #4f46e5, #818cf8);
+  border-radius: 5px;
+  transition: width 0.4s ease;
+}
+
+.firstrun-overall-label {
+  font-size: 0.85rem;
+  color: #4f46e5;
+  font-weight: 500;
+  text-align: center;
+  margin: 0 0 12px;
 }
 
 .firstrun-total {
