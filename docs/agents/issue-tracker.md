@@ -1,6 +1,6 @@
 # Issue tracker : GitHub
 
-Les issues et PRDs vivent dans GitHub Issues du dépôt `guilherzare/Oralis`. Utiliser la CLI `gh` pour toutes les opérations.
+Les issues et PRDs vivent dans GitHub Issues du dépôt `guilherzare/Ablo`. Utiliser la CLI `gh` pour toutes les opérations.
 
 ## Conventions
 

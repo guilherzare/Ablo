@@ -3,6 +3,6 @@
 <plist version="1.0">
 <dict>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>Oralis a besoin du microphone pour enregistrer les notes de séance.</string>
+	<string>Ablo a besoin du microphone pour enregistrer les notes de séance.</string>
 </dict>
 </plist>
