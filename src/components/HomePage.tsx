@@ -6,6 +6,7 @@ import folderEmpty from "../assets/folder-empty.png";
 interface Patient {
   id: string;
   name: string;
+  label?: string;
   session_count: number;
   last_session_date: string;
   bilan_count: number;
@@ -29,11 +30,13 @@ export function HomePage({ onSelectPatient }: Props) {
   const [patients, setPatients] = useState<Patient[]>([]);
   const [creating, setCreating] = useState(false);
   const [newName, setNewName] = useState("");
+  const [newLabel, setNewLabel] = useState("");
   const [loading, setLoading] = useState(true);
   const [createError, setCreateError] = useState("");
   const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<"all" | "bilan">("all");
+  const [labelFilter, setLabelFilter] = useState<string | null>(null);
   const [page, setPage] = useState(0);
 
   useEffect(() => {
@@ -45,11 +48,12 @@ export function HomePage({ onSelectPatient }: Props) {
 
   useEffect(() => {
     setPage(0);
-  }, [search, filter]);
+  }, [search, filter, labelFilter]);
 
   function closeModal() {
     setCreating(false);
     setNewName("");
+    setNewLabel("");
     setCreateError("");
   }
 
@@ -61,10 +65,11 @@ export function HomePage({ onSelectPatient }: Props) {
     try {
       const res = await invoke<{ result: Patient }>("call_backend", {
         method: "create_patient",
-        params: { name },
+        params: { name, label: newLabel.trim() },
       });
       setPatients((prev) => [{ ...res.result, session_count: 0, last_session_date: "" }, ...prev]);
       setNewName("");
+      setNewLabel("");
       setCreating(false);
       onSelectPatient(res.result);
     } catch (e) {
@@ -74,10 +79,18 @@ export function HomePage({ onSelectPatient }: Props) {
     }
   }
 
+  const availableLabels = Array.from(
+    new Set(patients.map((p) => p.label).filter((l): l is string => !!l))
+  ).sort();
+
   const filtered = patients
     .filter((p) => p.name.toLowerCase().includes(search.toLowerCase()))
     .filter((p) => {
       if (filter === "bilan") return p.bilan_count > 0;
+      return true;
+    })
+    .filter((p) => {
+      if (labelFilter) return p.label === labelFilter;
       return true;
     })
     .sort(() => 0);
@@ -105,6 +118,17 @@ export function HomePage({ onSelectPatient }: Props) {
                 if (e.key === "Escape") closeModal();
               }}
               autoFocus
+            />
+            <input
+              className="new-patient-input"
+              type="text"
+              placeholder="Cabinet ou lieu (optionnel, ex : Lyon)"
+              value={newLabel}
+              onChange={(e) => setNewLabel(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleCreate();
+                if (e.key === "Escape") closeModal();
+              }}
             />
             {createError && <p className="create-error">❌ {createError}</p>}
             <div className="new-patient-actions">
@@ -161,6 +185,26 @@ export function HomePage({ onSelectPatient }: Props) {
             </select>
           </div>
 
+          {availableLabels.length > 0 && (
+            <div className="label-chips">
+              <button
+                className={`label-chip${labelFilter === null ? " label-chip--active" : ""}`}
+                onClick={() => setLabelFilter(null)}
+              >
+                Tous
+              </button>
+              {availableLabels.map((lbl) => (
+                <button
+                  key={lbl}
+                  className={`label-chip${labelFilter === lbl ? " label-chip--active" : ""}`}
+                  onClick={() => setLabelFilter(labelFilter === lbl ? null : lbl)}
+                >
+                  {lbl}
+                </button>
+              ))}
+            </div>
+          )}
+
           {loading ? (
             <p className="home-empty">Chargement…</p>
           ) : filtered.length === 0 ? (
@@ -171,7 +215,10 @@ export function HomePage({ onSelectPatient }: Props) {
                 {paginated.map((p) => (
                   <li key={p.id} className="patient-card" onClick={() => onSelectPatient(p)}>
                     <div className="patient-card-main">
-                      <span className="patient-name">{p.name}</span>
+                      <div className="patient-name-row">
+                        <span className="patient-name">{p.name}</span>
+                        {p.label && <span className="patient-label-badge">{p.label}</span>}
+                      </div>
                       <span className="patient-meta">
                         {p.session_count} séance{p.session_count !== 1 ? "s" : ""}
                         {p.last_session_date ? ` · Dernière : ${formatDate(p.last_session_date)}` : ""}

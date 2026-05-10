@@ -198,8 +198,6 @@ export function ReportEditor({ sections: initialSections, anonymizedText, onExpo
       .map((e) => e.replace(/^.*?—\s*/, ""));
   };
 
-  const hasBlockingErrors = validation ? validation.errors.length > 0 : false;
-
   return (
     <div className="editor-view">
       <p className="editor-hint">

@@ -27,7 +27,7 @@ def _slug(name: str) -> str:
     return s.strip("-")[:20]
 
 
-def create_patient(name: str) -> dict:
+def create_patient(name: str, label: str = "") -> dict:
     pid = uuid.uuid4().hex[:8]
     folder_name = f"{_slug(name)}_{pid}"
     patient_dir = _patients_dir() / folder_name
@@ -35,6 +35,7 @@ def create_patient(name: str) -> dict:
     data = {
         "id": pid,
         "name": name,
+        "label": label.strip(),
         "folder": folder_name,
         "created_at": datetime.date.today().isoformat(),
     }
@@ -75,13 +76,15 @@ def list_patients() -> list[dict]:
     return result
 
 
-def update_patient(patient_id: str, name: str) -> dict:
+def update_patient(patient_id: str, name: str, label: str | None = None) -> dict:
     pdir = patient_dir_for(patient_id)
     if not pdir:
         raise ValueError(f"Patient '{patient_id}' introuvable")
     pf = pdir / "patient.json"
     data = json.loads(pf.read_text(encoding="utf-8"))
     data["name"] = name.strip()
+    if label is not None:
+        data["label"] = label.strip()
     pf.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
     return data
 
