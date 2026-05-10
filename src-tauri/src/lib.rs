@@ -49,11 +49,19 @@ fn backend_command() -> Result<Command, String> {
 }
 
 fn spawn_backend() -> Result<std::process::Child, String> {
-    backend_command()?
-        .stdin(Stdio::piped())
+    let mut cmd = backend_command()?;
+    cmd.stdin(Stdio::piped())
         .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()
+        .stderr(Stdio::piped());
+
+    // Sur Windows : cache la fenêtre de terminal console
+    #[cfg(target_os = "windows")]
+    {
+        use std::os::windows::process::CommandExt;
+        cmd.creation_flags(0x08000000); // CREATE_NO_WINDOW
+    }
+
+    cmd.spawn()
         .map_err(|e| format!("Impossible de démarrer le backend : {}", e))
 }
 
