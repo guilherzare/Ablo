@@ -2,22 +2,40 @@ use std::io::{BufRead, Write};
 use std::process::{Command, Stdio};
 use tauri::Emitter;
 
-fn backend_path() -> std::path::PathBuf {
-    std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-        .parent()
-        .expect("Impossible de trouver la racine du projet")
-        .join("backend")
-        .join("main.py")
+fn backend_command() -> Result<Command, String> {
+    if cfg!(debug_assertions) {
+        // Mode développement : python3 + script source
+        let script = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .parent()
+            .expect("Impossible de trouver la racine du projet")
+            .join("backend")
+            .join("main.py");
+        let mut cmd = Command::new("python3");
+        cmd.arg(script);
+        Ok(cmd)
+    } else {
+        // Mode production : binaire compilé placé à côté de l'exécutable
+        let exe_dir = std::env::current_exe()
+            .map_err(|e| e.to_string())?
+            .parent()
+            .ok_or_else(|| "Impossible de localiser le dossier de l'application".to_string())?
+            .to_path_buf();
+        let binary_name = if cfg!(target_os = "windows") {
+            "ablo-backend.exe"
+        } else {
+            "ablo-backend"
+        };
+        Ok(Command::new(exe_dir.join(binary_name)))
+    }
 }
 
 fn spawn_backend() -> Result<std::process::Child, String> {
-    Command::new("python3")
-        .arg(backend_path())
+    backend_command()?
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .spawn()
-        .map_err(|e| format!("Impossible de démarrer le backend Python : {}", e))
+        .map_err(|e| format!("Impossible de démarrer le backend : {}", e))
 }
 
 // Commande simple : envoie une requête JSON, attend une réponse JSON
@@ -112,7 +130,10 @@ fn start_export(window: tauri::WebviewWindow, sections: serde_json::Value, templ
 
 #[tauri::command]
 fn open_folder(path: String) -> Result<(), String> {
-    std::process::Command::new("open")
+    let cmd = if cfg!(target_os = "windows") { "explorer" }
+              else if cfg!(target_os = "macos") { "open" }
+              else { "xdg-open" };
+    std::process::Command::new(cmd)
         .arg(&path)
         .spawn()
         .map_err(|e| e.to_string())?;

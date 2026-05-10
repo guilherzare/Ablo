@@ -8,6 +8,7 @@ build/
 # Tauri
 src-tauri/target/
 src-tauri/WixTools/
+src-tauri/binaries/
 
 # Python
 __pycache__/

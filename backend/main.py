@@ -3,7 +3,14 @@ Backend Python d'Ablo — point d'entrée du pont IPC.
 Lit des commandes JSON sur stdin, écrit les réponses JSON sur stdout.
 """
 import sys
+import os
 import json
+
+# En mode packagé (PyInstaller), ajouter le dossier d'extraction au PATH
+# pour que ffmpeg et autres binaires inclus soient trouvables.
+if getattr(sys, 'frozen', False):
+    _bundle_dir = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
+    os.environ['PATH'] = _bundle_dir + os.pathsep + os.environ.get('PATH', '')
 
 from settings_manager import get_settings, update_settings
 from dictionary_manager import get_dictionary, update_dictionary, apply_dictionary
