@@ -16,6 +16,7 @@ interface Patient {
 
 interface Props {
   onSelectPatient: (patient: Patient) => void;
+  lieuRefreshKey?: number;
 }
 
 function formatDate(iso: string): string {
@@ -42,7 +43,7 @@ export function getLabelColor(label: string) {
   return LABEL_COLORS[hash % LABEL_COLORS.length];
 }
 
-export function HomePage({ onSelectPatient }: Props) {
+export function HomePage({ onSelectPatient, lieuRefreshKey }: Props) {
   const [patients, setPatients] = useState<Patient[]>([]);
   const [storedLieux, setStoredLieux] = useState<string[]>([]);
   const [creating, setCreating] = useState(false);
@@ -69,7 +70,7 @@ export function HomePage({ onSelectPatient }: Props) {
     invoke<{ result: string[] }>("call_backend", { method: "list_lieux", params: {} })
       .then((res) => setStoredLieux(res.result))
       .catch(() => {});
-  }, []);
+  }, [lieuRefreshKey]);
 
   useEffect(() => {
     setPage(0);
@@ -169,18 +170,29 @@ export function HomePage({ onSelectPatient }: Props) {
                   + Ajouter un lieu
                 </button>
               ) : (
-                <input
-                  className="new-patient-input"
-                  type="text"
-                  placeholder="Ex : Lyon, Cabinet 2…"
-                  value={newLabel}
-                  onChange={(e) => setNewLabel(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") handleCreate();
-                    if (e.key === "Escape") closeModal();
-                  }}
-                  autoFocus
-                />
+                <div style={{ display: "flex", gap: "8px", alignItems: "stretch" }}>
+                  <input
+                    className="new-patient-input"
+                    style={{ flex: 1 }}
+                    type="text"
+                    placeholder="Ex : Lyon, Cabinet 2…"
+                    value={newLabel}
+                    onChange={(e) => setNewLabel(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleCreate();
+                      if (e.key === "Escape") closeModal();
+                    }}
+                    autoFocus
+                  />
+                  <button
+                    type="button"
+                    className="lieu-btn lieu-btn--primary"
+                    onClick={() => setShowLabelPicker(false)}
+                    disabled={!newLabel.trim()}
+                  >
+                    Ajouter
+                  </button>
+                </div>
               )
             ) : (
               <div className="lieu-section">
@@ -208,18 +220,29 @@ export function HomePage({ onSelectPatient }: Props) {
                   )}
                 </div>
                 {showLabelPicker && (
-                  <input
-                    className="new-patient-input"
-                    type="text"
-                    placeholder="Créer un nouveau lieu…"
-                    value={availableLabels.includes(newLabel) ? "" : newLabel}
-                    onChange={(e) => setNewLabel(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") handleCreate();
-                      if (e.key === "Escape") closeModal();
-                    }}
-                    autoFocus
-                  />
+                  <div style={{ display: "flex", gap: "8px", alignItems: "stretch" }}>
+                    <input
+                      className="new-patient-input"
+                      style={{ flex: 1 }}
+                      type="text"
+                      placeholder="Créer un nouveau lieu…"
+                      value={availableLabels.includes(newLabel) ? "" : newLabel}
+                      onChange={(e) => setNewLabel(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") handleCreate();
+                        if (e.key === "Escape") closeModal();
+                      }}
+                      autoFocus
+                    />
+                    <button
+                      type="button"
+                      className="lieu-btn lieu-btn--primary"
+                      onClick={() => setShowLabelPicker(false)}
+                      disabled={!newLabel.trim() || availableLabels.includes(newLabel)}
+                    >
+                      Ajouter
+                    </button>
+                  </div>
                 )}
               </div>
             )}

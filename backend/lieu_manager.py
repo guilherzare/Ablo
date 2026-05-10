@@ -31,7 +31,19 @@ def _save(lieux: list[str]) -> None:
 
 
 def list_lieux() -> list[str]:
-    return _load()
+    stored = set(_load())
+    from patient_manager import _patients_dir
+    for d in _patients_dir().iterdir():
+        pf = d / "patient.json"
+        if not pf.exists():
+            continue
+        try:
+            label = json.loads(pf.read_text(encoding="utf-8")).get("label", "").strip()
+            if label:
+                stored.add(label)
+        except Exception:
+            pass
+    return sorted(stored)
 
 
 def create_lieu(name: str) -> list[str]:
@@ -42,7 +54,7 @@ def create_lieu(name: str) -> list[str]:
     if name not in lieux:
         lieux.append(name)
         _save(lieux)
-    return sorted(lieux)
+    return list_lieux()
 
 
 def rename_lieu(old_name: str, new_name: str) -> list[str]:
@@ -53,14 +65,14 @@ def rename_lieu(old_name: str, new_name: str) -> list[str]:
     lieux = [new_name if l == old_name else l for l in lieux]
     _save(lieux)
     _update_patients_label(old_name, new_name)
-    return sorted(lieux)
+    return list_lieux()
 
 
 def delete_lieu(name: str) -> list[str]:
     lieux = [l for l in _load() if l != name]
     _save(lieux)
     _update_patients_label(name, "")
-    return sorted(lieux)
+    return list_lieux()
 
 
 def _update_patients_label(old_label: str, new_label: str) -> None:

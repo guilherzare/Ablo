@@ -14,7 +14,6 @@ DEFAULTS: dict = {
     "microphone_id": None,
     "therapist_name": "",
     "therapist_email": "",
-    "therapist_city": "",
 }
 
 

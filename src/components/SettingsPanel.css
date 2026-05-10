@@ -214,6 +214,8 @@
 }
 
 .lieu-btn {
+  display: flex;
+  align-items: center;
   padding: 4px 10px;
   border: 1px solid #d1d5db;
   border-radius: 6px;
@@ -246,7 +248,7 @@
 .lieu-create-row {
   display: flex;
   gap: 8px;
-  align-items: center;
+  align-items: stretch;
 }
 
 .lieu-create-row .settings-input {

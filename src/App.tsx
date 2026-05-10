@@ -53,6 +53,7 @@ export default function App() {
   const [isAnonymizing, setIsAnonymizing] = useState(false);
   const [anonymizeError, setAnonymizeError] = useState("");
   const [showSettings, setShowSettings] = useState(false);
+  const [lieuRefreshKey, setLieuRefreshKey] = useState(0);
 
   // Header patient — menu "..."
   const [menuOpen, setMenuOpen] = useState(false);
@@ -120,14 +121,11 @@ export default function App() {
   async function startEditPatient() {
     setEditName(currentPatient?.name ?? "");
     setEditLabel(currentPatient?.label ?? "");
-    setEditShowLabelPicker(!!(currentPatient?.label));
+    setEditShowLabelPicker(false);
     setMenuOpen(false);
     try {
-      const res = await invoke<{ result: Patient[] }>("call_backend", { method: "list_patients", params: {} });
-      const labels = Array.from(
-        new Set(res.result.map((p) => p.label).filter((l): l is string => !!l))
-      ).sort();
-      setEditAvailableLabels(labels);
+      const res = await invoke<{ result: string[] }>("call_backend", { method: "list_lieux", params: {} });
+      setEditAvailableLabels(res.result);
     } catch {}
     setEditingPatient(true);
   }
@@ -246,7 +244,7 @@ export default function App() {
         )}
       </header>
 
-      {showSettings && <SettingsPanel onClose={() => setShowSettings(false)} />}
+      {showSettings && <SettingsPanel onClose={() => { setShowSettings(false); setLieuRefreshKey((k) => k + 1); }} />}
 
       {/* ── Modal édition patient ── */}
       {editingPatient && currentPatient && (
@@ -267,39 +265,80 @@ export default function App() {
               />
             </div>
 
-            {!editShowLabelPicker ? (
-              <button type="button" className="btn-edit-add-label" onClick={() => setEditShowLabelPicker(true)}>
-                + Ajouter un lieu
-              </button>
+            {editAvailableLabels.length === 0 ? (
+              !editShowLabelPicker ? (
+                <button type="button" className="btn-add-label" onClick={() => setEditShowLabelPicker(true)}>
+                  + Ajouter un lieu
+                </button>
+              ) : (
+                <div style={{ display: "flex", gap: "8px", alignItems: "stretch" }}>
+                  <input
+                    className="edit-patient-input"
+                    style={{ flex: 1 }}
+                    type="text"
+                    placeholder="Ex : Lyon, Cabinet 2…"
+                    value={editLabel}
+                    onChange={(e) => setEditLabel(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Escape") setEditingPatient(false); }}
+                    autoFocus
+                  />
+                  <button
+                    type="button"
+                    className="lieu-btn lieu-btn--primary"
+                    onClick={() => setEditShowLabelPicker(false)}
+                    disabled={!editLabel.trim()}
+                  >
+                    Ajouter
+                  </button>
+                </div>
+              )
             ) : (
-              <div className="edit-label-picker">
-                {editAvailableLabels.length > 0 && (
-                  <div className="edit-label-picker-existing">
-                    {editAvailableLabels.map((lbl) => {
-                      const color = getLabelColor(lbl);
-                      const active = editLabel === lbl;
-                      return (
-                        <button
-                          key={lbl}
-                          type="button"
-                          className={`edit-label-picker-chip${active ? " edit-label-picker-chip--active" : ""}`}
-                          style={active ? { background: color.bg, color: color.text, borderColor: color.text } : {}}
-                          onClick={() => setEditLabel(active ? "" : lbl)}
-                        >
-                          {lbl}
-                        </button>
-                      );
-                    })}
+              <div className="lieu-section">
+                <div className="lieu-section-row">
+                  <span className="lieu-section-label">Lieu :</span>
+                  {editAvailableLabels.map((lbl) => {
+                    const color = getLabelColor(lbl);
+                    const active = editLabel === lbl;
+                    return (
+                      <button
+                        key={lbl}
+                        type="button"
+                        className={`label-picker-chip${active ? " label-picker-chip--active" : ""}`}
+                        style={active ? { background: color.bg, color: color.text, borderColor: color.text } : {}}
+                        onClick={() => setEditLabel(active ? "" : lbl)}
+                      >
+                        {active && <span>✓ </span>}{lbl}
+                      </button>
+                    );
+                  })}
+                  {!editShowLabelPicker && (
+                    <button type="button" className="btn-add-label" onClick={() => setEditShowLabelPicker(true)}>
+                      + Ajouter un lieu
+                    </button>
+                  )}
+                </div>
+                {editShowLabelPicker && (
+                  <div style={{ display: "flex", gap: "8px", alignItems: "stretch" }}>
+                    <input
+                      className="edit-patient-input"
+                      style={{ flex: 1 }}
+                      type="text"
+                      placeholder="Créer un nouveau lieu…"
+                      value={editAvailableLabels.includes(editLabel) ? "" : editLabel}
+                      onChange={(e) => setEditLabel(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === "Escape") setEditingPatient(false); }}
+                      autoFocus
+                    />
+                    <button
+                      type="button"
+                      className="lieu-btn lieu-btn--primary"
+                      onClick={() => setEditShowLabelPicker(false)}
+                      disabled={!editLabel.trim() || editAvailableLabels.includes(editLabel)}
+                    >
+                      Ajouter
+                    </button>
                   </div>
                 )}
-                <input
-                  className="edit-patient-input"
-                  type="text"
-                  placeholder={editAvailableLabels.length > 0 ? "Créer un nouveau lieu…" : "Ex : Lyon, Cabinet 2…"}
-                  value={editAvailableLabels.includes(editLabel) ? "" : editLabel}
-                  onChange={(e) => setEditLabel(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === "Escape") setEditingPatient(false); }}
-                />
               </div>
             )}
 
@@ -337,7 +376,7 @@ export default function App() {
 
         {appState === "home" && (
           <section className="step-section">
-            <HomePage onSelectPatient={(p) => { setCurrentPatient(p); setPatientSessionCount(0); setAppState("patient"); }} />
+            <HomePage onSelectPatient={(p) => { setCurrentPatient(p); setPatientSessionCount(0); setAppState("patient"); }} lieuRefreshKey={lieuRefreshKey} />
           </section>
         )}
 

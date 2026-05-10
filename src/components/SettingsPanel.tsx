@@ -7,7 +7,6 @@ import "./SettingsPanel.css";
 interface Settings {
   therapist_name: string;
   therapist_email: string;
-  therapist_city: string;
   export_folder: string;
 }
 
@@ -19,12 +18,12 @@ export function SettingsPanel({ onClose }: Props) {
   const [settings, setSettings] = useState<Settings>({
     therapist_name: "",
     therapist_email: "",
-    therapist_city: "",
     export_folder: "",
   });
   const [saved, setSaved] = useState(false);
   const [lieux, setLieux] = useState<string[]>([]);
   const [newLieu, setNewLieu] = useState("");
+  const [showCreateLieu, setShowCreateLieu] = useState(false);
   const [editingLieu, setEditingLieu] = useState<{ name: string; value: string } | null>(null);
   const [confirmDeleteLieu, setConfirmDeleteLieu] = useState<string | null>(null);
 
@@ -65,6 +64,7 @@ export function SettingsPanel({ onClose }: Props) {
     const res = await invoke<{ result: string[] }>("call_backend", { method: "create_lieu", params: { name } });
     setLieux(res.result);
     setNewLieu("");
+    setShowCreateLieu(false);
   }
 
   async function handleRenameLieu() {
@@ -121,31 +121,6 @@ export function SettingsPanel({ onClose }: Props) {
             />
           </label>
 
-          <label className="settings-label">
-            Ville (pour le pied de page)
-            <input
-              className="settings-input"
-              type="text"
-              placeholder="ex : Grenoble"
-              value={settings.therapist_city}
-              onChange={(e) => update("therapist_city", e.target.value)}
-            />
-          </label>
-        </div>
-
-        <div className="settings-section">
-          <h3>Export</h3>
-          <div className="settings-label">
-            Dossier de destination
-            <div className="folder-picker">
-              <span className="folder-name">
-                {folderName ?? <span className="folder-placeholder">Aucun dossier sélectionné</span>}
-              </span>
-              <button className="btn-pick-folder" onClick={pickFolder}>
-                {settings.export_folder ? "Changer de dossier" : "Choisir un dossier"}
-              </button>
-            </div>
-          </div>
         </div>
 
         <div className="settings-section">
@@ -197,17 +172,40 @@ export function SettingsPanel({ onClose }: Props) {
             })}
           </div>
 
-          <div className="lieu-create-row">
-            <input
-              className="settings-input"
-              type="text"
-              placeholder="Nouveau lieu…"
-              value={newLieu}
-              onChange={(e) => setNewLieu(e.target.value)}
-              onKeyDown={(e) => { if (e.key === "Enter") handleCreateLieu(); }}
-            />
-            <button className="lieu-btn lieu-btn--primary" onClick={handleCreateLieu} disabled={!newLieu.trim()}>
-              Ajouter
+          {!showCreateLieu ? (
+            <button type="button" className="btn-add-label" onClick={() => setShowCreateLieu(true)}>
+              + Nouveau lieu
+            </button>
+          ) : (
+            <div className="lieu-create-row">
+              <input
+                className="settings-input"
+                type="text"
+                placeholder="Nouveau lieu…"
+                value={newLieu}
+                onChange={(e) => setNewLieu(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleCreateLieu();
+                  if (e.key === "Escape") { setShowCreateLieu(false); setNewLieu(""); }
+                }}
+                autoFocus
+              />
+              <button className="lieu-btn lieu-btn--primary" onClick={handleCreateLieu} disabled={!newLieu.trim()}>
+                Ajouter
+              </button>
+            </div>
+          )}
+        </div>
+
+        <div className="settings-section">
+          <h3>Dossier d'export</h3>
+          <p className="settings-hint">Dossier où seront enregistrés les exports Word et PDF.</p>
+          <div className="folder-picker">
+            <div className={folderName ? "folder-name" : "folder-name folder-placeholder"}>
+              {folderName ?? "Aucun dossier sélectionné"}
+            </div>
+            <button className="btn-pick-folder" onClick={pickFolder}>
+              Choisir un dossier…
             </button>
           </div>
         </div>
