@@ -63,7 +63,7 @@ def download_models() -> None:
             continue
 
         _emit({"type": "progress", "model": name, "status": "starting", "percent": 0,
-               "label": model["label"]})
+               "label": model["label"], "size_bytes": model["size_bytes"]})
         try:
             _download(name, model, path)
         except Exception as e:

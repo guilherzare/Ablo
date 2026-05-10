@@ -24,6 +24,7 @@ function formatBytes(bytes: number): string {
 
 export function FirstRun({ onComplete }: Props) {
   const [models, setModels] = useState<Record<string, ModelStatus>>({});
+  const [modelsLoaded, setModelsLoaded] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
@@ -35,7 +36,8 @@ export function FirstRun({ onComplete }: Props) {
       params: {},
     })
       .then((res) => setModels(res.result))
-      .catch((e) => setError(`Erreur au démarrage du backend : ${e}`));
+      .catch((e) => setError(`Erreur au démarrage du backend : ${e}`))
+      .finally(() => setModelsLoaded(true));
   }, []);
 
   useEffect(() => {
@@ -46,6 +48,8 @@ export function FirstRun({ onComplete }: Props) {
       percent?: number;
       status?: string;
       message?: string;
+      label?: string;
+      size_bytes?: number;
     }>("model-download-progress", (event) => {
       const data = event.payload;
 
@@ -70,14 +74,21 @@ export function FirstRun({ onComplete }: Props) {
       }
 
       if (data.type === "progress" && data.model) {
-        setModels((prev) => ({
-          ...prev,
-          [data.model!]: {
-            ...prev[data.model!],
-            percent: data.percent ?? 0,
-            status: data.status,
-          },
-        }));
+        setModels((prev) => {
+          const existing = prev[data.model!] ?? {
+            present: false,
+            label: data.label ?? data.model!,
+            size_bytes: data.size_bytes ?? 0,
+          };
+          return {
+            ...prev,
+            [data.model!]: {
+              ...existing,
+              percent: data.percent ?? 0,
+              status: data.status,
+            },
+          };
+        });
       }
     });
 
@@ -180,9 +191,13 @@ export function FirstRun({ onComplete }: Props) {
           <button
             className="firstrun-btn"
             onClick={startDownload}
-            disabled={downloading}
+            disabled={!modelsLoaded || downloading}
           >
-            {downloading ? "Téléchargement en cours…" : "Télécharger et installer les modèles"}
+            {!modelsLoaded
+              ? "Démarrage du backend…"
+              : downloading
+              ? "Téléchargement en cours…"
+              : "Télécharger et installer les modèles"}
           </button>
         )}
       </div>
