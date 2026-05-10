@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Inter', Helvetica, Arial, sans-serif;
+    background: #eef0f5;
+    color: #1a1a2e;
+    padding: 40px 24px;
+  }
+
+  .page-label {
+    text-align: center;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #9ca3af;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 32px;
+  }
+
+  .screens-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  /* Chaque écran est une mini fenêtre d'app */
+  .screen {
+    background: #f8f9fc;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.07);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .screen-name {
+    text-align: center;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #9ca3af;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 10px;
+    background: #eef0f5;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  /* Header */
+  .app-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    background: #ffffff;
+    border-bottom: 1px solid #e5e7eb;
+    width: 100%;
+  }
+  .app-logo { font-size: 1rem; font-weight: 700; color: #4f46e5; }
+  .btn-settings { font-size: 1.2rem; color: #6b7280; }
+  .btn-back { font-size: 0.95rem; color: #6b7280; margin-right: 6px; }
+  .patient-header-name { font-size: 0.875rem; font-weight: 700; color: #1a1a2e; }
+  .step-pills { display: flex; gap: 4px; }
+  .step-pill {
+    font-size: 0.65rem; font-weight: 500;
+    padding: 3px 8px; border-radius: 20px;
+    color: #9ca3af; background: #f3f4f6;
+  }
+  .step-pill.active { background: #ede9fe; color: #4f46e5; }
+  .step-pill.done { background: #dcfce7; color: #16a34a; }
+
+  /* Main content */
+  .screen-body {
+    flex: 1;
+    padding: 16px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .screen-body--center {
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 10px;
+    padding: 24px 14px;
+  }
+
+  /* Titres avec Fraunces */
+  .title {
+    font-family: 'Fraunces', serif;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #1a1a2e;
+  }
+
+  .subtitle {
+    font-size: 0.8rem;
+    color: #6b7280;
+    line-height: 1.5;
+  }
+
+  /* Illustration placeholder */
+  .illus {
+    width: 72px; height: 72px;
+    background: #ede9fe;
+    border-radius: 16px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 2rem;
+    flex-shrink: 0;
+  }
+
+  /* Boutons */
+  .btn-primary {
+    background: #4f46e5; color: white;
+    border: none; border-radius: 8px;
+    padding: 8px 16px; font-size: 0.8rem; font-weight: 600;
+    font-family: 'Inter', sans-serif; cursor: default;
+    white-space: nowrap;
+  }
+  .btn-secondary {
+    background: none; color: #4f46e5;
+    border: 1.5px solid #4f46e5; border-radius: 8px;
+    padding: 7px 16px; font-size: 0.8rem; font-weight: 600;
+    font-family: 'Inter', sans-serif; cursor: default;
+  }
+
+  /* Home header row */
+  .home-header { display: flex; align-items: center; justify-content: space-between; }
+
+  /* Search */
+  .search-row { display: flex; gap: 6px; }
+  .search-input {
+    flex: 1; padding: 7px 10px 7px 28px;
+    border: 1px solid #e5e7eb; border-radius: 8px;
+    font-size: 0.75rem; color: #9ca3af;
+    background: #fff; position: relative;
+  }
+  .filter-select {
+    padding: 7px 10px; border: 1px solid #e5e7eb;
+    border-radius: 8px; font-size: 0.75rem;
+    color: #1a1a2e; background: #fff;
+  }
+
+  /* Patient cards */
+  .patient-card {
+    display: flex; align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    background: #fff; border: 1px solid #e5e7eb;
+    border-radius: 8px;
+  }
+  .patient-name { font-size: 0.85rem; font-weight: 600; color: #1a1a2e; }
+  .patient-meta { font-size: 0.7rem; color: #9ca3af; margin-top: 1px; }
+  .badge {
+    font-size: 0.65rem; font-weight: 600;
+    color: #4f46e5; background: #ede9fe;
+    border-radius: 99px; padding: 2px 6px;
+  }
+  .chevron { color: #d1d5db; font-size: 1rem; }
+
+  /* Session cards */
+  .session-card {
+    display: flex; align-items: flex-start;
+    gap: 10px; padding: 10px 12px;
+    background: #fff; border: 1px solid #e5e7eb;
+    border-radius: 8px;
+  }
+  .session-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: #4f46e5; margin-top: 5px; flex-shrink: 0;
+  }
+  .session-title { font-size: 0.82rem; font-weight: 600; color: #1a1a2e; }
+  .session-date { font-size: 0.7rem; color: #9ca3af; margin-top: 1px; }
+
+  /* Recording */
+  .record-btn {
+    width: 64px; height: 64px; border-radius: 50%;
+    background: #dc2626; border: none;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.6rem; cursor: default; margin: 4px auto;
+  }
+
+  /* First run */
+  .model-row {
+    display: flex; align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: #fff; border: 1px solid #e5e7eb;
+    border-radius: 8px;
+  }
+  .model-name { font-size: 0.8rem; font-weight: 600; color: #1a1a2e; }
+  .model-size { font-size: 0.7rem; color: #9ca3af; }
+  .progress-bar {
+    height: 4px; background: #e5e7eb;
+    border-radius: 2px; overflow: hidden; margin-top: 4px;
+  }
+  .progress-fill { height: 100%; background: #4f46e5; border-radius: 2px; }
+
+  /* Success */
+  .success-illus {
+    width: 80px; height: 80px;
+    background: #dcfce7; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 2.5rem;
+  }
+
+  /* Footer */
+  .app-footer { padding: 8px; text-align: center; }
+  .app-version { font-size: 0.65rem; color: #d1d5db; }
+</style>
+</head>
+<body>
+
+<p class="page-label">Aperçu — Fraunces sur tous les écrans</p>
+
+<div class="screens-grid">
+
+  <!-- 1. Patients liste -->
+  <div class="screen">
+    <div class="screen-name">Liste patients</div>
+    <div class="app-header">
+      <span class="app-logo">Ablo</span>
+      <span class="btn-settings">⚙</span>
+    </div>
+    <div class="screen-body">
+      <div class="home-header">
+        <h1 class="title">Patients</h1>
+        <button class="btn-primary">+ Nouveau</button>
+      </div>
+      <div class="search-row">
+        <div style="flex:1;position:relative;">
+          <input class="search-input" style="width:100%" placeholder="🔍  Rechercher…" readonly />
+        </div>
+        <select class="filter-select"><option>Tous</option></select>
+      </div>
+      <div class="patient-card">
+        <div>
+          <div class="patient-name">Marine B-M.</div>
+          <div class="patient-meta">6 séances · 05/05/2026</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span class="badge">✓ Bilan réalisé</span>
+          <span class="chevron">›</span>
+        </div>
+      </div>
+      <div class="patient-card">
+        <div>
+          <div class="patient-name">Lucas M.</div>
+          <div class="patient-meta">3 séances · 02/05/2026</div>
+        </div>
+        <span class="chevron">›</span>
+      </div>
+      <div class="patient-card">
+        <div>
+          <div class="patient-name">Sophie Renard</div>
+          <div class="patient-meta">1 séance · 28/04/2026</div>
+        </div>
+        <span class="chevron">›</span>
+      </div>
+    </div>
+    <div class="app-footer"><p class="app-version">Ablo v0.1.0 · 2026</p></div>
+  </div>
+
+  <!-- 2. Fiche patient -->
+  <div class="screen">
+    <div class="screen-name">Fiche patient</div>
+    <div class="app-header">
+      <div style="display:flex;align-items:center;">
+        <span class="btn-back">←</span>
+        <span class="patient-header-name">Lucas M.</span>
+      </div>
+      <span class="btn-settings" style="font-size:1rem;color:#6b7280">•••</span>
+    </div>
+    <div class="screen-body">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <h1 class="title">Séances</h1>
+        <button class="btn-primary">+ Nouvelle séance</button>
+      </div>
+      <div class="session-card">
+        <div class="session-dot"></div>
+        <div>
+          <div class="session-title">Séance du 02/05/2026</div>
+          <div class="session-date">Résumé disponible</div>
+        </div>
+      </div>
+      <div class="session-card">
+        <div class="session-dot" style="background:#d1d5db"></div>
+        <div>
+          <div class="session-title">Séance du 15/04/2026</div>
+          <div class="session-date">Résumé disponible</div>
+        </div>
+      </div>
+      <div class="session-card">
+        <div class="session-dot" style="background:#d1d5db"></div>
+        <div>
+          <div class="session-title">Séance du 01/04/2026</div>
+          <div class="session-date">Résumé disponible</div>
+        </div>
+      </div>
+    </div>
+    <div class="app-footer"><p class="app-version">Ablo v0.1.0 · 2026</p></div>
+  </div>
+
+  <!-- 3. Patient vide -->
+  <div class="screen">
+    <div class="screen-name">Patient sans séance</div>
+    <div class="app-header">
+      <div style="display:flex;align-items:center;">
+        <span class="btn-back">←</span>
+        <span class="patient-header-name">Sophie Renard</span>
+      </div>
+    </div>
+    <div class="screen-body screen-body--center">
+      <div class="illus">🎙</div>
+      <h1 class="title">Séances</h1>
+      <p class="subtitle" style="font-weight:600;color:#1a1a2e;font-size:0.85rem">Aucune séance enregistrée.</p>
+      <p class="subtitle">Démarrez la première séance<br>de ce patient.</p>
+      <button class="btn-primary">+ Nouvelle séance</button>
+    </div>
+    <div class="app-footer"><p class="app-version">Ablo v0.1.0 · 2026</p></div>
+  </div>
+
+  <!-- 4. Enregistrement -->
+  <div class="screen">
+    <div class="screen-name">Enregistrement</div>
+    <div class="app-header">
+      <span class="app-logo">Ablo</span>
+      <div class="step-pills">
+        <span class="step-pill done">Enreg.</span>
+        <span class="step-pill active">Analyse</span>
+        <span class="step-pill">Export</span>
+      </div>
+    </div>
+    <div class="screen-body screen-body--center">
+      <div class="illus">🎤</div>
+      <h1 class="title">Enregistrement de la séance</h1>
+      <p class="subtitle">Résumez oralement la séance à voix haute.</p>
+      <div class="record-btn">⏹</div>
+      <p class="subtitle" style="color:#dc2626;font-size:0.75rem">● 02:34</p>
+    </div>
+  </div>
+
+  <!-- 5. Export / Génération -->
+  <div class="screen">
+    <div class="screen-name">Génération du bilan</div>
+    <div class="app-header">
+      <span class="app-logo">Ablo</span>
+      <div class="step-pills">
+        <span class="step-pill done">Enreg.</span>
+        <span class="step-pill done">Analyse</span>
+        <span class="step-pill active">Export</span>
+      </div>
+    </div>
+    <div class="screen-body screen-body--center">
+      <div class="success-illus">✓</div>
+      <h1 class="title">Bilan généré !</h1>
+      <p class="subtitle">Votre bilan de séances a été<br>créé avec succès.</p>
+      <button class="btn-primary">Ouvrir le dossier</button>
+      <button class="btn-secondary" style="background:none">Retour aux patients</button>
+    </div>
+  </div>
+
+  <!-- 6. First Run -->
+  <div class="screen">
+    <div class="screen-name">Premier lancement</div>
+    <div class="app-header">
+      <span class="app-logo">Ablo</span>
+    </div>
+    <div class="screen-body screen-body--center">
+      <div class="illus" style="background:#ede9fe;border-radius:18px;font-size:2rem">🅰</div>
+      <h1 class="title">Bienvenue sur Ablo</h1>
+      <p class="subtitle">Pour fonctionner <strong>100% hors-ligne</strong>, Ablo a besoin de réaliser deux téléchargements.</p>
+      <div style="width:100%;display:flex;flex-direction:column;gap:8px">
+        <div class="model-row">
+          <div>
+            <div class="model-name">Whisper</div>
+            <div class="model-size">Transcription · 1,5 Go</div>
+            <div class="progress-bar"><div class="progress-fill" style="width:70%"></div></div>
+          </div>
+        </div>
+        <div class="model-row">
+          <div>
+            <div class="model-name">Mistral 7B</div>
+            <div class="model-size">Analyse IA · 4,1 Go</div>
+            <div class="progress-bar"><div class="progress-fill" style="width:20%"></div></div>
+          </div>
+        </div>
+      </div>
+      <button class="btn-primary">Lancer le téléchargement</button>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

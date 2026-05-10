@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import "./HomePage.css";
 import folderEmpty from "../assets/folder-empty.png";
@@ -44,6 +44,7 @@ export function getLabelColor(label: string) {
 
 export function HomePage({ onSelectPatient }: Props) {
   const [patients, setPatients] = useState<Patient[]>([]);
+  const [storedLieux, setStoredLieux] = useState<string[]>([]);
   const [creating, setCreating] = useState(false);
   const [newName, setNewName] = useState("");
   const [newLabel, setNewLabel] = useState("");
@@ -52,20 +53,36 @@ export function HomePage({ onSelectPatient }: Props) {
   const [createError, setCreateError] = useState("");
   const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState<"all" | "bilan">("all");
+  const [filter, setFilter] = useState<"all" | "en-cours" | "bilan">("all");
   const [labelFilter, setLabelFilter] = useState<string | null>(null);
+  const [lieuMenuOpen, setLieuMenuOpen] = useState(false);
+  const [seanceMenuOpen, setSeanceMenuOpen] = useState(false);
   const [page, setPage] = useState(0);
+  const lieuMenuRef = useRef<HTMLDivElement>(null);
+  const seanceMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     invoke<{ result: Patient[] }>("call_backend", { method: "list_patients", params: {} })
       .then((res) => setPatients(res.result))
       .catch(() => {})
       .finally(() => setLoading(false));
+    invoke<{ result: string[] }>("call_backend", { method: "list_lieux", params: {} })
+      .then((res) => setStoredLieux(res.result))
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
     setPage(0);
   }, [search, filter, labelFilter]);
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (lieuMenuRef.current && !lieuMenuRef.current.contains(e.target as Node)) setLieuMenuOpen(false);
+      if (seanceMenuRef.current && !seanceMenuRef.current.contains(e.target as Node)) setSeanceMenuOpen(false);
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
 
   function closeModal() {
     setCreating(false);
@@ -98,13 +115,17 @@ export function HomePage({ onSelectPatient }: Props) {
   }
 
   const availableLabels = Array.from(
-    new Set(patients.map((p) => p.label).filter((l): l is string => !!l))
+    new Set([
+      ...storedLieux,
+      ...patients.map((p) => p.label).filter((l): l is string => !!l),
+    ])
   ).sort();
 
   const filtered = patients
     .filter((p) => p.name.toLowerCase().includes(search.toLowerCase()))
     .filter((p) => {
       if (filter === "bilan") return p.bilan_count > 0;
+      if (filter === "en-cours") return p.bilan_count === 0;
       return true;
     })
     .filter((p) => {
@@ -127,7 +148,7 @@ export function HomePage({ onSelectPatient }: Props) {
             <p className="new-patient-modal-title">Nouveau patient</p>
 
             <div className="new-patient-field">
-              <label className="new-patient-field-label">Prénom NOM du patient</label>
+              <label className="new-patient-field-label">Nom du patient</label>
               <input
                 className="new-patient-input"
                 type="text"
@@ -142,36 +163,17 @@ export function HomePage({ onSelectPatient }: Props) {
               />
             </div>
 
-            {!showLabelPicker ? (
-              <button type="button" className="btn-add-label" onClick={() => setShowLabelPicker(true)}>
-                + Ajouter un lieu
-              </button>
-            ) : (
-              <div className="label-picker">
-                {availableLabels.length > 0 && (
-                  <div className="label-picker-existing">
-                    {availableLabels.map((lbl) => {
-                      const color = getLabelColor(lbl);
-                      const active = newLabel === lbl;
-                      return (
-                        <button
-                          key={lbl}
-                          type="button"
-                          className={`label-picker-chip${active ? " label-picker-chip--active" : ""}`}
-                          style={active ? { background: color.bg, color: color.text, borderColor: color.text } : {}}
-                          onClick={() => setNewLabel(active ? "" : lbl)}
-                        >
-                          {lbl}
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
+            {availableLabels.length === 0 ? (
+              !showLabelPicker ? (
+                <button type="button" className="btn-add-label" onClick={() => setShowLabelPicker(true)}>
+                  + Ajouter un lieu
+                </button>
+              ) : (
                 <input
                   className="new-patient-input"
                   type="text"
-                  placeholder={availableLabels.length > 0 ? "Créer un nouveau lieu…" : "Ex : Lyon, Cabinet 2…"}
-                  value={availableLabels.includes(newLabel) ? "" : newLabel}
+                  placeholder="Ex : Lyon, Cabinet 2…"
+                  value={newLabel}
                   onChange={(e) => setNewLabel(e.target.value)}
                   onKeyDown={(e) => {
                     if (e.key === "Enter") handleCreate();
@@ -179,6 +181,46 @@ export function HomePage({ onSelectPatient }: Props) {
                   }}
                   autoFocus
                 />
+              )
+            ) : (
+              <div className="lieu-section">
+                <div className="lieu-section-row">
+                  <span className="lieu-section-label">Lieu :</span>
+                  {availableLabels.map((lbl) => {
+                    const color = getLabelColor(lbl);
+                    const active = newLabel === lbl;
+                    return (
+                      <button
+                        key={lbl}
+                        type="button"
+                        className={`label-picker-chip${active ? " label-picker-chip--active" : ""}`}
+                        style={active ? { background: color.bg, color: color.text, borderColor: color.text } : {}}
+                        onClick={() => setNewLabel(active ? "" : lbl)}
+                      >
+                        {active && <span>✓ </span>}{lbl}
+                      </button>
+                    );
+                  })}
+                  {!showLabelPicker && (
+                    <button type="button" className="btn-add-label" onClick={() => setShowLabelPicker(true)}>
+                      + Ajouter un lieu
+                    </button>
+                  )}
+                </div>
+                {showLabelPicker && (
+                  <input
+                    className="new-patient-input"
+                    type="text"
+                    placeholder="Créer un nouveau lieu…"
+                    value={availableLabels.includes(newLabel) ? "" : newLabel}
+                    onChange={(e) => setNewLabel(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleCreate();
+                      if (e.key === "Escape") closeModal();
+                    }}
+                    autoFocus
+                  />
+                )}
               </div>
             )}
 
@@ -227,40 +269,76 @@ export function HomePage({ onSelectPatient }: Props) {
                 onChange={(e) => setSearch(e.target.value)}
               />
             </div>
-            <select
-              className="home-filter"
-              value={filter}
-              onChange={(e) => setFilter(e.target.value as "all" | "bilan")}
-            >
-              <option value="all">Tous</option>
-              <option value="bilan">Bilan réalisé</option>
-            </select>
           </div>
 
-          {availableLabels.length > 0 && (
-            <div className="label-chips">
+          <div className="filter-bar">
+              <span className="filter-bar-label">Filtrer par :</span>
+            {availableLabels.length > 0 && (
+              <div className="filter-dropdown-wrap" ref={lieuMenuRef}>
+                <button
+                  className={`filter-btn${labelFilter ? " filter-btn--active" : ""}`}
+                  style={labelFilter ? { background: getLabelColor(labelFilter).bg, color: getLabelColor(labelFilter).text, borderColor: getLabelColor(labelFilter).text } : {}}
+                  onClick={() => { setLieuMenuOpen((o) => !o); setSeanceMenuOpen(false); }}
+                >
+                  {labelFilter ?? "Lieu"} ▾
+                </button>
+                {lieuMenuOpen && (
+                  <div className="filter-dropdown-menu">
+                    <button
+                      className={`filter-option${labelFilter === null ? " filter-option--active" : ""}`}
+                      onClick={() => { setLabelFilter(null); setLieuMenuOpen(false); }}
+                    >
+                      Tous les lieux
+                    </button>
+                    {availableLabels.map((lbl) => {
+                      const color = getLabelColor(lbl);
+                      return (
+                        <button
+                          key={lbl}
+                          className={`filter-option${labelFilter === lbl ? " filter-option--active" : ""}`}
+                          onClick={() => { setLabelFilter(labelFilter === lbl ? null : lbl); setLieuMenuOpen(false); }}
+                        >
+                          <span className="filter-option-dot" style={{ background: color.bg, borderColor: color.text }} />
+                          {lbl}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+
+            <div className="filter-dropdown-wrap" ref={seanceMenuRef}>
               <button
-                className={`label-chip${labelFilter === null ? " label-chip--active" : ""}`}
-                onClick={() => setLabelFilter(null)}
+                className={`filter-btn${filter !== "all" ? " filter-btn--active" : ""}`}
+                onClick={() => { setSeanceMenuOpen((o) => !o); setLieuMenuOpen(false); }}
               >
-                Tous
+                {filter === "bilan" ? "Bilan réalisé" : filter === "en-cours" ? "En cours" : "Séance"} ▾
               </button>
-              {availableLabels.map((lbl) => {
-                const color = getLabelColor(lbl);
-                const active = labelFilter === lbl;
-                return (
+              {seanceMenuOpen && (
+                <div className="filter-dropdown-menu">
                   <button
-                    key={lbl}
-                    className={`label-chip${active ? " label-chip--active" : ""}`}
-                    style={active ? { background: color.bg, color: color.text, borderColor: color.text } : {}}
-                    onClick={() => setLabelFilter(active ? null : lbl)}
+                    className={`filter-option${filter === "all" ? " filter-option--active" : ""}`}
+                    onClick={() => { setFilter("all"); setSeanceMenuOpen(false); }}
                   >
-                    {lbl}
+                    Toutes
                   </button>
-                );
-              })}
+                  <button
+                    className={`filter-option${filter === "en-cours" ? " filter-option--active" : ""}`}
+                    onClick={() => { setFilter("en-cours"); setSeanceMenuOpen(false); }}
+                  >
+                    En cours
+                  </button>
+                  <button
+                    className={`filter-option${filter === "bilan" ? " filter-option--active" : ""}`}
+                    onClick={() => { setFilter("bilan"); setSeanceMenuOpen(false); }}
+                  >
+                    Bilan réalisé
+                  </button>
+                </div>
+              )}
             </div>
-          )}
+          </div>
 
           {loading ? (
             <p className="home-empty">Chargement…</p>

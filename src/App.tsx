@@ -255,7 +255,7 @@ export default function App() {
             <p className="edit-patient-modal-title">Éditer le patient</p>
 
             <div className="edit-patient-field">
-              <label className="edit-patient-field-label">Prénom NOM du patient</label>
+              <label className="edit-patient-field-label">Nom du patient</label>
               <input
                 className="edit-patient-input"
                 type="text"
