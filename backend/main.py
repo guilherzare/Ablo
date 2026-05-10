@@ -122,7 +122,8 @@ def handle(cmd: dict) -> dict | None:
         name = params.get("name", "").strip()
         if not name:
             return {"id": req_id, "error": "Nom du patient requis"}
-        return {"id": req_id, "result": create_patient(name)}
+        label = params.get("label", "")
+        return {"id": req_id, "result": create_patient(name, label)}
 
     if method == "update_patient":
         try:
