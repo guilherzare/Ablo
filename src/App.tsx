@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import sessionRecordImg from "./assets/session-record.png";
 import { invoke } from "@tauri-apps/api/core";
 import { FirstRun } from "./components/FirstRun";
-import { HomePage } from "./components/HomePage";
+import { HomePage, getLabelColor } from "./components/HomePage";
 import { PatientPage, Patient, Session } from "./components/PatientPage";
 import { AudioRecorder } from "./components/AudioRecorder";
 import { TranscriptionView } from "./components/TranscriptionView";
@@ -56,14 +56,16 @@ export default function App() {
 
   // Header patient — menu "..."
   const [menuOpen, setMenuOpen] = useState(false);
-  const [renaming, setRenaming] = useState(false);
+  const [editingPatient, setEditingPatient] = useState(false);
   const [editName, setEditName] = useState("");
-  const [renameSaving, setRenameSaving] = useState(false);
+  const [editLabel, setEditLabel] = useState("");
+  const [editShowLabelPicker, setEditShowLabelPicker] = useState(false);
+  const [editAvailableLabels, setEditAvailableLabels] = useState<string[]>([]);
+  const [editSaving, setEditSaving] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [patientSessionCount, setPatientSessionCount] = useState(0);
   const menuRef = useRef<HTMLDivElement>(null);
-  const renameInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     invoke<{ result: Record<string, { present: boolean }> }>("call_backend", {
@@ -88,9 +90,6 @@ export default function App() {
     return () => document.removeEventListener("mousedown", handleClick);
   }, [menuOpen]);
 
-  useEffect(() => {
-    if (renaming) renameInputRef.current?.focus();
-  }, [renaming]);
 
   function resetTranscription() {
     setTranscription(""); setAnonymizedText(""); setAnonSpans([]); setReportSections([]); setAnonymizeError("");
@@ -118,23 +117,33 @@ export default function App() {
 
   // ── Actions header patient ──────────────────────────────────────────────────
 
-  function startRename() {
+  async function startEditPatient() {
     setEditName(currentPatient?.name ?? "");
-    setRenaming(true);
+    setEditLabel(currentPatient?.label ?? "");
+    setEditShowLabelPicker(!!(currentPatient?.label));
     setMenuOpen(false);
+    try {
+      const res = await invoke<{ result: Patient[] }>("call_backend", { method: "list_patients", params: {} });
+      const labels = Array.from(
+        new Set(res.result.map((p) => p.label).filter((l): l is string => !!l))
+      ).sort();
+      setEditAvailableLabels(labels);
+    } catch {}
+    setEditingPatient(true);
   }
 
-  async function saveRename() {
+  async function saveEditPatient() {
     const name = editName.trim();
-    if (!name || name === currentPatient?.name) { setRenaming(false); return; }
-    setRenameSaving(true);
+    if (!name) return;
+    setEditSaving(true);
     try {
       const res = await invoke<{ result: Patient }>("call_backend", {
-        method: "update_patient", params: { patient_id: currentPatient!.id, name },
+        method: "update_patient",
+        params: { patient_id: currentPatient!.id, name, label: editLabel.trim() },
       });
       setCurrentPatient(res.result);
-      setRenaming(false);
-    } catch {} finally { setRenameSaving(false); }
+      setEditingPatient(false);
+    } catch {} finally { setEditSaving(false); }
   }
 
   async function handleDelete() {
@@ -148,7 +157,7 @@ export default function App() {
   }
 
   function goBackToHome() {
-    setCurrentPatient(null); setRenaming(false); setMenuOpen(false);
+    setCurrentPatient(null); setEditingPatient(false); setMenuOpen(false);
     setPatientSessionCount(0);
     setAppState("home");
   }
@@ -176,49 +185,34 @@ export default function App() {
           <>
             <div className="patient-header-left">
               <button className="btn-back-header" onClick={goBackToHome}>←</button>
-
-              {renaming ? (
-                <>
-                  <input
-                    ref={renameInputRef}
-                    className="patient-header-input"
-                    value={editName}
-                    onChange={(e) => setEditName(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") saveRename();
-                      if (e.key === "Escape") setRenaming(false);
-                    }}
-                    disabled={renameSaving}
-                  />
-                  <div className="patient-header-rename-actions">
-                    <button className="btn-rename-save" onClick={saveRename} disabled={renameSaving || !editName.trim()}>✓</button>
-                    <button className="btn-rename-cancel" onClick={() => setRenaming(false)}>✕</button>
-                  </div>
-                </>
-              ) : (
-                <span className="patient-header-name">{currentPatient.name}</span>
+              <span className="patient-header-name">{currentPatient.name}</span>
+              {currentPatient.label && (
+                <span
+                  className="patient-header-label"
+                  style={{ background: getLabelColor(currentPatient.label).bg, color: getLabelColor(currentPatient.label).text }}
+                >
+                  {currentPatient.label}
+                </span>
               )}
             </div>
 
-            {!renaming && (
-              <div className="patient-menu-wrap" ref={menuRef}>
-                <button
-                  className={`btn-patient-menu ${menuOpen ? "open" : ""}`}
-                  onClick={() => setMenuOpen((o) => !o)}
-                  title="Options"
-                >
-                  •••
-                </button>
-                {menuOpen && (
-                  <div className="patient-menu-dropdown">
-                    <button className="patient-menu-item" onClick={startRename}>Renommer</button>
-                    <button className="patient-menu-item danger" onClick={() => { setDeleteConfirm(true); setMenuOpen(false); }}>
-                      Supprimer
-                    </button>
-                  </div>
-                )}
-              </div>
-            )}
+            <div className="patient-menu-wrap" ref={menuRef}>
+              <button
+                className={`btn-patient-menu ${menuOpen ? "open" : ""}`}
+                onClick={() => setMenuOpen((o) => !o)}
+                title="Options"
+              >
+                •••
+              </button>
+              {menuOpen && (
+                <div className="patient-menu-dropdown">
+                  <button className="patient-menu-item" onClick={startEditPatient}>Éditer le patient</button>
+                  <button className="patient-menu-item danger" onClick={() => { setDeleteConfirm(true); setMenuOpen(false); }}>
+                    Supprimer
+                  </button>
+                </div>
+              )}
+            </div>
           </>
         ) : (
           // Header standard
@@ -253,6 +247,73 @@ export default function App() {
       </header>
 
       {showSettings && <SettingsPanel onClose={() => setShowSettings(false)} />}
+
+      {/* ── Modal édition patient ── */}
+      {editingPatient && currentPatient && (
+        <div className="edit-patient-backdrop" onClick={() => !editSaving && setEditingPatient(false)}>
+          <div className="edit-patient-modal" onClick={(e) => e.stopPropagation()}>
+            <p className="edit-patient-modal-title">Éditer le patient</p>
+
+            <div className="edit-patient-field">
+              <label className="edit-patient-field-label">Prénom NOM du patient</label>
+              <input
+                className="edit-patient-input"
+                type="text"
+                placeholder="ex : Lucas M."
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Escape") setEditingPatient(false); }}
+                autoFocus
+              />
+            </div>
+
+            {!editShowLabelPicker ? (
+              <button type="button" className="btn-edit-add-label" onClick={() => setEditShowLabelPicker(true)}>
+                + Ajouter un lieu
+              </button>
+            ) : (
+              <div className="edit-label-picker">
+                {editAvailableLabels.length > 0 && (
+                  <div className="edit-label-picker-existing">
+                    {editAvailableLabels.map((lbl) => {
+                      const color = getLabelColor(lbl);
+                      const active = editLabel === lbl;
+                      return (
+                        <button
+                          key={lbl}
+                          type="button"
+                          className={`edit-label-picker-chip${active ? " edit-label-picker-chip--active" : ""}`}
+                          style={active ? { background: color.bg, color: color.text, borderColor: color.text } : {}}
+                          onClick={() => setEditLabel(active ? "" : lbl)}
+                        >
+                          {lbl}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+                <input
+                  className="edit-patient-input"
+                  type="text"
+                  placeholder={editAvailableLabels.length > 0 ? "Créer un nouveau lieu…" : "Ex : Lyon, Cabinet 2…"}
+                  value={editAvailableLabels.includes(editLabel) ? "" : editLabel}
+                  onChange={(e) => setEditLabel(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Escape") setEditingPatient(false); }}
+                />
+              </div>
+            )}
+
+            <div className="edit-patient-actions">
+              <button className="btn-cancel" onClick={() => setEditingPatient(false)} disabled={editSaving}>
+                Annuler
+              </button>
+              <button className="btn-confirm" onClick={saveEditPatient} disabled={!editName.trim() || editSaving}>
+                {editSaving ? "Mise à jour…" : "Mettre à jour"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Modal suppression ── */}
       {deleteConfirm && currentPatient && (

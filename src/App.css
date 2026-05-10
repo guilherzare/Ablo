@@ -146,6 +146,15 @@
   text-overflow: ellipsis;
 }
 
+.patient-header-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  border-radius: 4px;
+  padding: 1px 6px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
 .patient-header-input {
   font-size: 1rem;
   font-weight: 700;
@@ -375,6 +384,117 @@
 }
 
 .btn-skip-audio:hover { color: #4f46e5; text-decoration: underline; }
+
+/* ── Modale édition patient ── */
+.edit-patient-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 15, 30, 0.4);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.edit-patient-modal {
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 24px;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.18);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.edit-patient-modal-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1a1a2e;
+  margin: 0;
+}
+
+.edit-patient-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.edit-patient-field-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #6b7280;
+}
+
+.edit-patient-input {
+  padding: 10px 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-family: inherit;
+  color: #1a1a2e;
+  background: #ffffff;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.edit-patient-input:focus {
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+.btn-edit-add-label {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 0.85rem;
+  font-family: inherit;
+  color: #4f46e5;
+  cursor: pointer;
+  text-align: left;
+  width: fit-content;
+}
+
+.btn-edit-add-label:hover { text-decoration: underline; }
+
+.edit-label-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.edit-label-picker-existing {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.edit-label-picker-chip {
+  padding: 4px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-family: inherit;
+  font-weight: 500;
+  color: #374151;
+  background: #f9fafb;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.edit-label-picker-chip:hover { border-color: #4f46e5; color: #4f46e5; }
+
+.edit-label-picker-chip--active { font-weight: 600; }
+
+.edit-patient-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
 
 @media (prefers-color-scheme: dark) {
   :root { color: #e5e7eb; background-color: #111827; }

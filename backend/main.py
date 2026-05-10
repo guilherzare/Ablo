@@ -127,7 +127,11 @@ def handle(cmd: dict) -> dict | None:
 
     if method == "update_patient":
         try:
-            return {"id": req_id, "result": update_patient(params.get("patient_id", ""), params.get("name", ""))}
+            return {"id": req_id, "result": update_patient(
+                params.get("patient_id", ""),
+                params.get("name", ""),
+                params.get("label"),
+            )}
         except ValueError as e:
             return {"id": req_id, "error": str(e)}
 
