@@ -1,5 +1,6 @@
 use std::io::{BufRead, Write};
 use std::process::{Command, Stdio};
+use std::sync::{Arc, Mutex};
 use tauri::Emitter;
 
 fn backend_command() -> Result<Command, String> {
@@ -92,16 +93,47 @@ fn stream_backend(window: tauri::WebviewWindow, method: &str, params: serde_json
         stdin.write_all(request_str.as_bytes()).map_err(|e| e.to_string())?;
     }
     let stdout = child.stdout.take().ok_or("stdout introuvable")?;
+    let stderr = child.stderr.take().ok_or("stderr introuvable")?;
+
+    // Capture stderr dans un thread dédié
+    let stderr_buf: Arc<Mutex<Vec<String>>> = Arc::new(Mutex::new(Vec::new()));
+    let stderr_buf_writer = Arc::clone(&stderr_buf);
+    std::thread::spawn(move || {
+        let reader = std::io::BufReader::new(stderr);
+        for line in reader.lines().flatten() {
+            if let Ok(mut buf) = stderr_buf_writer.lock() {
+                buf.push(line);
+            }
+        }
+    });
+
     std::thread::spawn(move || {
         let reader = std::io::BufReader::new(stdout);
-        for line in reader.lines() {
-            if let Ok(line) = line {
-                if let Ok(event) = serde_json::from_str::<serde_json::Value>(&line) {
-                    let _ = window.emit(event_name, &event);
-                }
+        let mut got_output = false;
+        for line in reader.lines().flatten() {
+            got_output = true;
+            if let Ok(event) = serde_json::from_str::<serde_json::Value>(&line) {
+                let _ = window.emit(event_name, &event);
             }
         }
         let _ = child.wait();
+        // Si aucune ligne reçue, le backend a crashé : émet l'erreur avec le stderr
+        if !got_output {
+            std::thread::sleep(std::time::Duration::from_millis(300));
+            let msg = stderr_buf.lock()
+                .map(|buf| {
+                    if buf.is_empty() {
+                        "Le backend s'est arrêté sans réponse (crash silencieux)".to_string()
+                    } else {
+                        format!("Crash backend : {}", buf.join(" | "))
+                    }
+                })
+                .unwrap_or_else(|_| "Erreur inconnue".to_string());
+            let _ = window.emit(event_name, serde_json::json!({
+                "type": "error",
+                "message": msg
+            }));
+        }
     });
     Ok(())
 }

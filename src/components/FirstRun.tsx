@@ -33,7 +33,9 @@ export function FirstRun({ onComplete }: Props) {
     invoke<{ result: Record<string, ModelStatus> }>("call_backend", {
       method: "check_models",
       params: {},
-    }).then((res) => setModels(res.result));
+    })
+      .then((res) => setModels(res.result))
+      .catch((e) => setError(`Erreur au démarrage du backend : ${e}`));
   }, []);
 
   useEffect(() => {
@@ -56,6 +58,13 @@ export function FirstRun({ onComplete }: Props) {
 
       if (data.type === "error") {
         setError(data.message ?? "Erreur inconnue");
+        setDownloading(false);
+        return;
+      }
+
+      // Format d'exception Python renvoyé par main() : {"id": null, "error": "..."}
+      if (!data.type && (data as any).error) {
+        setError(String((data as any).error));
         setDownloading(false);
         return;
       }
