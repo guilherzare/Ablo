@@ -24,6 +24,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install pyinstaller certifi python-docx reportlab faster-whisper
+          $env:CMAKE_ARGS = "-DLLAMA_BLAS=OFF -DLLAMA_CUDA=OFF -DLLAMA_METAL=OFF"
           pip install llama-cpp-python
         shell: pwsh
 
@@ -52,6 +53,30 @@ jobs:
           Copy-Item dist\ablo-backend.exe ..\src-tauri\binaries\ablo-backend-x86_64-pc-windows-msvc.exe
         shell: pwsh
 
+      - name: Verify backend binary size
+        run: |
+          $bin = "src-tauri\binaries\ablo-backend-x86_64-pc-windows-msvc.exe"
+          if (-not (Test-Path $bin)) {
+            Write-Error "ERREUR : $bin introuvable !"
+            exit 1
+          }
+          $size = (Get-Item $bin).Length
+          $sizeMB = [math]::Round($size / 1MB, 1)
+          Write-Host "Taille du backend : $size octets ($sizeMB Mo)"
+          if ($size -lt 30MB) {
+            Write-Error "ERREUR : binaire trop petit ($sizeMB Mo), la compilation a probablement echoue"
+            exit 1
+          }
+          Write-Host "OK - binaire valide"
+        shell: pwsh
+
+      - name: Upload backend binary (diagnostic)
+        uses: actions/upload-artifact@v4
+        with:
+          name: ablo-backend-windows
+          path: src-tauri/binaries/ablo-backend-x86_64-pc-windows-msvc.exe
+          if-no-files-found: error
+
       - name: Setup Node.js 20
         uses: actions/setup-node@v4
         with:
@@ -72,6 +97,21 @@ jobs:
 
       - name: Build Tauri app
         run: npm run tauri build
+
+      - name: Verify installer contains backend binary
+        run: |
+          $nsisDir = "src-tauri\target\release\bundle\nsis"
+          $installer = Get-ChildItem $nsisDir -Filter "*.exe" | Select-Object -First 1
+          if ($null -eq $installer) {
+            Write-Error "Aucun installeur NSIS trouve"
+            exit 1
+          }
+          $sizeMB = [math]::Round($installer.Length / 1MB, 1)
+          Write-Host "Installeur : $($installer.Name) ($sizeMB Mo)"
+          if ($installer.Length -lt 50MB) {
+            Write-Warning "Attention : installeur petit ($sizeMB Mo), le backend est peut-etre absent"
+          }
+        shell: pwsh
 
       - name: Upload Windows installer
         uses: actions/upload-artifact@v4

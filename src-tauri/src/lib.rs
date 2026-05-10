@@ -25,7 +25,25 @@ fn backend_command() -> Result<Command, String> {
         } else {
             "ablo-backend"
         };
-        Ok(Command::new(exe_dir.join(binary_name)))
+        let binary_path = exe_dir.join(binary_name);
+        if !binary_path.exists() {
+            let dir_contents = std::fs::read_dir(&exe_dir)
+                .map(|entries| {
+                    entries
+                        .filter_map(|e| e.ok())
+                        .map(|e| e.file_name().to_string_lossy().to_string())
+                        .collect::<Vec<_>>()
+                        .join(", ")
+                })
+                .unwrap_or_else(|_| "impossible de lire le dossier".to_string());
+            return Err(format!(
+                "Backend introuvable : {}  |  Fichiers présents dans {} : [{}]",
+                binary_path.display(),
+                exe_dir.display(),
+                dir_contents
+            ));
+        }
+        Ok(Command::new(binary_path))
     }
 }
 
@@ -91,20 +109,6 @@ fn stream_backend(window: tauri::WebviewWindow, method: &str, params: serde_json
 // Commande streaming : télécharge les modèles et émet des événements Tauri de progression
 #[tauri::command]
 fn start_model_download(window: tauri::WebviewWindow) -> Result<(), String> {
-    let mut child = spawn_backend()?;
-
-    let request = serde_json::json!({"method": "download_models", "params": {}, "id": 1});
-    let request_str = serde_json::to_string(&request).unwrap() + "\n";
-
-    {
-        let mut stdin = child.stdin.take().ok_or("stdin introuvable")?;
-        stdin
-            .write_all(request_str.as_bytes())
-            .map_err(|e| e.to_string())?;
-        // stdin se ferme ici pour signaler EOF à Python
-    }
-
-    // Lit stdout ligne par ligne dans un thread dédié et émet des événements
     stream_backend(window, "download_models", serde_json::json!({}), "model-download-progress")
 }
 
