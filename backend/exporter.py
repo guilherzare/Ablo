@@ -86,6 +86,7 @@ def _export_docx(
     out_dir: Path,
     filename: str,
     settings: dict,
+    patient_label: str = "",
 ) -> Path:
     doc = Document()
 
@@ -97,7 +98,6 @@ def _export_docx(
 
     therapist_name = settings.get("therapist_name", "")
     therapist_email = settings.get("therapist_email", "")
-    therapist_city = settings.get("therapist_city", "")
     date_str = datetime.date.today().strftime("%d/%m/%Y")
 
     # En-tête : nom et email thérapeute sur la première page uniquement
@@ -204,19 +204,32 @@ def _export_docx(
 
         doc.add_paragraph()
 
-    # Formule de clôture en fin de document (dernière page uniquement)
-    closing_text = "Merci de votre confiance"
-    if therapist_city:
-        closing_text += f", fait à {therapist_city}"
-    closing_text += f", le {date_str}."
-    if therapist_name:
-        closing_text += f"\n{therapist_name}"
-
+    # Formule de clôture — lieu du patient (tag) ou placeholder rouge si absent
     closing_para = doc.add_paragraph()
     closing_para.alignment = WD_ALIGN_PARAGRAPH.RIGHT
-    closing_run = closing_para.add_run(closing_text)
-    closing_run.font.size = Pt(9)
-    closing_run.font.color.rgb = RGBColor(0x37, 0x41, 0x51)
+    gray = RGBColor(0x37, 0x41, 0x51)
+
+    r1 = closing_para.add_run("Merci de votre confiance, fait à ")
+    r1.font.size = Pt(9)
+    r1.font.color.rgb = gray
+
+    if patient_label:
+        r2 = closing_para.add_run(patient_label)
+        r2.font.size = Pt(9)
+        r2.font.color.rgb = gray
+    else:
+        r2 = closing_para.add_run("[Lieu]")
+        r2.font.size = Pt(9)
+        r2.font.color.rgb = RGBColor(0xDC, 0x26, 0x26)
+
+    r3 = closing_para.add_run(f", le {date_str}.")
+    r3.font.size = Pt(9)
+    r3.font.color.rgb = gray
+
+    if therapist_name:
+        r4 = closing_para.add_run(f"\n{therapist_name}")
+        r4.font.size = Pt(9)
+        r4.font.color.rgb = gray
 
     dest = out_dir / f"{filename}.docx"
     doc.save(str(dest))
@@ -230,12 +243,12 @@ def _export_pdf(
     out_dir: Path,
     filename: str,
     settings: dict,
+    patient_label: str = "",
 ) -> Path:
     dest = out_dir / f"{filename}.pdf"
 
     therapist_name = settings.get("therapist_name", "")
     therapist_email = settings.get("therapist_email", "")
-    therapist_city = settings.get("therapist_city", "")
     date_str = datetime.date.today().strftime("%d/%m/%Y")
 
     styles = getSampleStyleSheet()
@@ -366,11 +379,12 @@ def _export_pdf(
             story.append(Paragraph("<i>[Section non renseignée]</i>", small_style))
         story.append(Spacer(1, 0.3 * cm))
 
-    # Formule de clôture en fin de document (dernière page uniquement)
-    closing_text = "Merci de votre confiance"
-    if therapist_city:
-        closing_text += f", fait à {therapist_city}"
-    closing_text += f", le {date_str}."
+    # Formule de clôture — lieu du patient (tag) ou placeholder rouge si absent
+    if patient_label:
+        lieu_part = patient_label
+    else:
+        lieu_part = '<font color="#DC2626">[Lieu]</font>'
+    closing_text = f"Merci de votre confiance, fait à {lieu_part}, le {date_str}."
     if therapist_name:
         closing_text += f"<br/>{therapist_name}"
     story.append(Paragraph(closing_text, closing_style))
@@ -390,6 +404,15 @@ def export(sections: list[dict], template_name: str, patient_name: str = "", pat
     else:
         out_dir = _output_dir()
 
+    # Récupérer le tag lieu du patient
+    patient_label = ""
+    if patient_dir and (patient_dir / "patient.json").exists():
+        try:
+            data = json.loads((patient_dir / "patient.json").read_text(encoding="utf-8"))
+            patient_label = data.get("label", "").strip()
+        except Exception:
+            pass
+
     filename = _make_filename(session_id)
     settings = get_settings()
 
@@ -399,7 +422,7 @@ def export(sections: list[dict], template_name: str, patient_name: str = "", pat
     if _DOCX_AVAILABLE:
         _emit({"type": "progress", "status": "docx", "message": "Génération du fichier Word…"})
         try:
-            docx_path = str(_export_docx(sections, template_name, patient_name, out_dir, filename, settings))
+            docx_path = str(_export_docx(sections, template_name, patient_name, out_dir, filename, settings, patient_label))
         except Exception as e:
             _emit({"type": "error", "message": f"Erreur Word : {e}"})
             return
@@ -409,7 +432,7 @@ def export(sections: list[dict], template_name: str, patient_name: str = "", pat
     if _PDF_AVAILABLE:
         _emit({"type": "progress", "status": "pdf", "message": "Génération du PDF…"})
         try:
-            pdf_path = str(_export_pdf(sections, template_name, patient_name, out_dir, filename, settings))
+            pdf_path = str(_export_pdf(sections, template_name, patient_name, out_dir, filename, settings, patient_label))
         except Exception as e:
             _emit({"type": "error", "message": f"Erreur PDF : {e}"})
             return

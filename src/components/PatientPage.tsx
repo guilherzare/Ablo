@@ -7,6 +7,7 @@ import { SessionDetailsModal } from "./SessionDetailsModal";
 export interface Patient {
   id: string;
   name: string;
+  label?: string;
   session_count: number;
   last_session_date: string;
   bilan_count: number;

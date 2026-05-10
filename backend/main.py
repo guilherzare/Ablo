@@ -16,6 +16,7 @@ from report_validator import validate
 from exporter import export
 from patient_manager import list_patients, create_patient, update_patient, delete_patient, list_bilans
 from session_manager import save_session, list_sessions
+from lieu_manager import list_lieux, create_lieu, rename_lieu, delete_lieu
 
 
 def handle(cmd: dict) -> dict | None:
@@ -122,11 +123,16 @@ def handle(cmd: dict) -> dict | None:
         name = params.get("name", "").strip()
         if not name:
             return {"id": req_id, "error": "Nom du patient requis"}
-        return {"id": req_id, "result": create_patient(name)}
+        label = params.get("label", "")
+        return {"id": req_id, "result": create_patient(name, label)}
 
     if method == "update_patient":
         try:
-            return {"id": req_id, "result": update_patient(params.get("patient_id", ""), params.get("name", ""))}
+            return {"id": req_id, "result": update_patient(
+                params.get("patient_id", ""),
+                params.get("name", ""),
+                params.get("label"),
+            )}
         except ValueError as e:
             return {"id": req_id, "error": str(e)}
 
@@ -136,6 +142,25 @@ def handle(cmd: dict) -> dict | None:
             return {"id": req_id, "result": True}
         except ValueError as e:
             return {"id": req_id, "error": str(e)}
+
+    # --- Lieux ---
+    if method == "list_lieux":
+        return {"id": req_id, "result": list_lieux()}
+
+    if method == "create_lieu":
+        try:
+            return {"id": req_id, "result": create_lieu(params.get("name", ""))}
+        except ValueError as e:
+            return {"id": req_id, "error": str(e)}
+
+    if method == "rename_lieu":
+        try:
+            return {"id": req_id, "result": rename_lieu(params.get("old_name", ""), params.get("new_name", ""))}
+        except ValueError as e:
+            return {"id": req_id, "error": str(e)}
+
+    if method == "delete_lieu":
+        return {"id": req_id, "result": delete_lieu(params.get("name", ""))}
 
     # --- Séances ---
     if method == "list_sessions":
