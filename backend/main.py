@@ -62,12 +62,17 @@ from lieu_manager import list_lieux, create_lieu, rename_lieu, delete_lieu
 
 _log("tous les imports OK")
 
-# Rebind sys.stdout sur fd 1 (le vrai pipe vers Rust).
-# Sous Windows + PyInstaller + CREATE_NO_WINDOW, le sys.stdout d'origine
-# peut ne pas écrire sur fd 1. On crée un wrapper propre qui garantit que
-# TOUS les print() ultérieurs (main(), _emit() dans les sous-modules…)
-# écrivent bien dans le pipe que Rust écoute.
+# Rebind sys.stdin et sys.stdout sur les fd 0/1 avec encodage UTF-8 explicite.
+# Sous Windows + PyInstaller, l'encodage par défaut est cp1252 :
+# les caractères non-ASCII envoyés par Rust en UTF-8 (ex : é = 0xC3 0xA9)
+# étaient décodés en deux caractères cp1252 (Ã + ©).
+# io.FileIO(n, closefd=False) crée un accès direct au fd sans le fermer.
 import io
+sys.stdin = io.TextIOWrapper(
+    io.FileIO(0, mode='rb', closefd=False),
+    encoding='utf-8',
+    errors='replace',
+)
 sys.stdout = io.TextIOWrapper(
     io.FileIO(1, mode='wb', closefd=False),
     encoding='utf-8',
