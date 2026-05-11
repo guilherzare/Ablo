@@ -185,7 +185,7 @@ export function PatientPage({ patient, onNewSession, onFinalBilan, onSessionsLoa
                 <div className="bilan-card-actions">
                   {b.docx_path && (
                     <button
-                      className="btn-open-bilan"
+                      className="btn-view-summary"
                       onClick={() => invoke("open_folder", { path: b.docx_path.split("/").slice(0, -1).join("/") })}
                       title="Ouvrir le dossier"
                     >
