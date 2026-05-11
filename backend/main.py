@@ -12,6 +12,12 @@ if getattr(sys, 'frozen', False):
     _bundle_dir = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
     os.environ['PATH'] = _bundle_dir + os.pathsep + os.environ.get('PATH', '')
 
+# Certaines bibliothèques (ctranslate2, llama_cpp) écrivent sur stdout pendant
+# leur import, ce qui corromprait le canal IPC JSON avec Tauri.
+# On redirige stdout vers stderr pendant toute la phase d'import.
+_real_stdout = sys.stdout
+sys.stdout = sys.stderr
+
 from settings_manager import get_settings, update_settings
 from dictionary_manager import get_dictionary, update_dictionary, apply_dictionary
 from template_engine import load as load_template, validate_file as validate_template
@@ -24,6 +30,9 @@ from exporter import export
 from patient_manager import list_patients, create_patient, update_patient, delete_patient, list_bilans
 from session_manager import save_session, list_sessions
 from lieu_manager import list_lieux, create_lieu, rename_lieu, delete_lieu
+
+# Tous les imports sont faits : on rétablit stdout pour les échanges IPC avec Tauri.
+sys.stdout = _real_stdout
 
 
 def handle(cmd: dict) -> dict | None:
