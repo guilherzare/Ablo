@@ -34,6 +34,8 @@ def _build_prompt(text: str, template: Template) -> str:
     return (
         "<s>[INST] Tu es un assistant clinique pour art-thérapeutes. "
         "Tu dois rédiger un bilan de prise en charge en français, de façon factuelle et professionnelle.\n\n"
+        "LANGUE : tu dois répondre EXCLUSIVEMENT en français. "
+        "N'utilise jamais l'anglais, même si la transcription contient des mots anglais.\n\n"
         "RÈGLE ABSOLUE : utilise UNIQUEMENT les informations présentes dans la transcription ci-dessous. "
         "Si une information n'est pas mentionnée, écris exactement 'Non mentionné dans la transcription' "
         "pour cette partie. Ne complète pas, n'extrapole pas, n'invente jamais.\n\n"
@@ -184,6 +186,8 @@ def _build_summary_prompt(text: str, is_first_session: bool) -> str:
     return (
         "<s>[INST] Tu es un assistant clinique pour art-thérapeutes. "
         "Tu dois résumer une séance en français, de façon factuelle et professionnelle.\n\n"
+        "LANGUE : tu dois répondre EXCLUSIVEMENT en français. "
+        "N'utilise jamais l'anglais, même si la transcription contient des mots anglais.\n\n"
         "RÈGLE ABSOLUE : utilise UNIQUEMENT les informations présentes dans la transcription. "
         "Si une information demandée n'est pas mentionnée, ne la mentionne pas. "
         "N'invente rien, n'extrapole pas.\n\n"
@@ -279,6 +283,8 @@ def _build_final_prompt(sessions: list[dict], final_text: str, template: Templat
     return (
         "<s>[INST] Tu es un assistant clinique pour art-thérapeutes. "
         "Tu dois rédiger un bilan de prise en charge global en français, de façon factuelle et professionnelle.\n\n"
+        "LANGUE : tu dois répondre EXCLUSIVEMENT en français. "
+        "N'utilise jamais l'anglais, même si les transcriptions contiennent des mots anglais.\n\n"
         "RÈGLE ABSOLUE : utilise UNIQUEMENT les informations présentes dans les transcriptions ci-dessous. "
         "Si une information n'est pas mentionnée, écris 'Non mentionné dans les transcriptions'. "
         "Ne complète pas, n'extrapole pas, n'invente jamais.\n\n"

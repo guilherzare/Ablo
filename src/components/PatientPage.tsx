@@ -101,7 +101,12 @@ export function PatientPage({ patient, onNewSession, onFinalBilan, onSessionsLoa
   }
 
   function handleSessionSaved(updated: Session) {
-    setSessions((prev) => prev.map((s) => s.filename === updated.filename ? updated : s));
+    setSessions((prev) => {
+      const next = prev.map((s) => s.filename === updated.filename ? updated : s);
+      next.sort((a, b) => a.date.localeCompare(b.date));
+      next.forEach((s, i) => { s.is_first_session = i === 0; });
+      return next;
+    });
     setEditingSession(null);
   }
 
@@ -180,7 +185,7 @@ export function PatientPage({ patient, onNewSession, onFinalBilan, onSessionsLoa
                 <div className="bilan-card-actions">
                   {b.docx_path && (
                     <button
-                      className="btn-open-bilan"
+                      className="btn-view-summary"
                       onClick={() => invoke("open_folder", { path: b.docx_path.split("/").slice(0, -1).join("/") })}
                       title="Ouvrir le dossier"
                     >
