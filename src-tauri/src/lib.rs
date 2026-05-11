@@ -1,11 +1,12 @@
-use std::io::{BufRead, Write};
+use std::io::{BufRead, BufReader, Write};
 use std::process::{Command, Stdio};
-use std::sync::{Arc, Mutex};
+use std::sync::mpsc::{self, Sender};
 use tauri::Emitter;
+
+// ---------- Commande Python ----------
 
 fn backend_command() -> Result<Command, String> {
     if cfg!(debug_assertions) {
-        // Mode développement : python3 + script source
         let script = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
             .parent()
             .expect("Impossible de trouver la racine du projet")
@@ -15,7 +16,6 @@ fn backend_command() -> Result<Command, String> {
         cmd.arg(script);
         Ok(cmd)
     } else {
-        // Mode production : binaire compilé placé à côté de l'exécutable
         let exe_dir = std::env::current_exe()
             .map_err(|e| e.to_string())?
             .parent()
@@ -54,7 +54,6 @@ fn spawn_backend() -> Result<std::process::Child, String> {
         .stdout(Stdio::piped())
         .stderr(Stdio::piped());
 
-    // Sur Windows : cache la fenêtre de terminal console
     #[cfg(target_os = "windows")]
     {
         use std::os::windows::process::CommandExt;
@@ -65,118 +64,199 @@ fn spawn_backend() -> Result<std::process::Child, String> {
         .map_err(|e| format!("Impossible de démarrer le backend : {}", e))
 }
 
-// Commande simple : envoie une requête JSON, attend une réponse JSON
-#[tauri::command]
-fn call_backend(method: String, params: serde_json::Value) -> Result<serde_json::Value, String> {
-    let mut child = spawn_backend()?;
+// ---------- Backend persistant (thread dédié) ----------
 
-    let request = serde_json::json!({"method": method, "params": params, "id": 1});
-    let request_str = serde_json::to_string(&request).unwrap() + "\n";
-
-    child
-        .stdin
-        .as_mut()
-        .ok_or("stdin introuvable")?
-        .write_all(request_str.as_bytes())
-        .map_err(|e| e.to_string())?;
-
-    let output = child.wait_with_output().map_err(|e| e.to_string())?;
-    let stdout = String::from_utf8(output.stdout).map_err(|e| e.to_string())?;
-
-    if stdout.trim().is_empty() {
-        let stderr = String::from_utf8_lossy(&output.stderr).to_string();
-        return Err(format!("Aucune réponse du backend. Erreur : {}", stderr));
-    }
-
-    serde_json::from_str(stdout.trim()).map_err(|e| format!("Réponse invalide : {}", e))
+struct BackendHandle {
+    stdin: std::process::ChildStdin,
+    stdout: BufReader<std::process::ChildStdout>,
 }
 
-// Commande streaming générique : envoie une méthode au backend et émet les lignes de stdout comme événements
-fn stream_backend(window: tauri::WebviewWindow, method: &str, params: serde_json::Value, event_name: &'static str) -> Result<(), String> {
-    let mut child = spawn_backend()?;
-    let request = serde_json::json!({"method": method, "params": params, "id": 1});
-    let request_str = serde_json::to_string(&request).unwrap() + "\n";
-    {
-        let mut stdin = child.stdin.take().ok_or("stdin introuvable")?;
-        stdin.write_all(request_str.as_bytes()).map_err(|e| e.to_string())?;
-    }
-    let stdout = child.stdout.take().ok_or("stdout introuvable")?;
-    let stderr = child.stderr.take().ok_or("stderr introuvable")?;
+enum BackendRequest {
+    Simple {
+        payload: String,
+        tx: mpsc::SyncSender<Result<serde_json::Value, String>>,
+    },
+    Stream {
+        payload: String,
+        window: tauri::WebviewWindow,
+        event_name: &'static str,
+    },
+}
 
-    // Capture stderr dans un thread dédié
-    let stderr_buf: Arc<Mutex<Vec<String>>> = Arc::new(Mutex::new(Vec::new()));
-    let stderr_buf_writer = Arc::clone(&stderr_buf);
-    std::thread::spawn(move || {
-        let reader = std::io::BufReader::new(stderr);
-        for line in reader.lines().flatten() {
-            if let Ok(mut buf) = stderr_buf_writer.lock() {
-                buf.push(line);
-            }
-        }
-    });
+struct AppState {
+    tx: Sender<BackendRequest>,
+}
 
-    std::thread::spawn(move || {
-        let reader = std::io::BufReader::new(stdout);
-        let mut got_output = false;
-        for line in reader.lines().flatten() {
-            got_output = true;
-            if let Ok(event) = serde_json::from_str::<serde_json::Value>(&line) {
-                let _ = window.emit(event_name, &event);
-            }
-        }
-        let _ = child.wait();
-        // Si aucune ligne reçue, le backend a crashé : émet l'erreur avec le stderr
-        if !got_output {
-            std::thread::sleep(std::time::Duration::from_millis(300));
-            let msg = stderr_buf.lock()
-                .map(|buf| {
-                    if buf.is_empty() {
-                        "Le backend s'est arrêté sans réponse (crash silencieux)".to_string()
-                    } else {
-                        format!("Crash backend : {}", buf.join(" | "))
+fn run_backend_thread(mut handle: BackendHandle, rx: mpsc::Receiver<BackendRequest>) {
+    for req in rx {
+        match req {
+            BackendRequest::Simple { payload, tx } => {
+                let result = (|| -> Result<serde_json::Value, String> {
+                    handle
+                        .stdin
+                        .write_all(payload.as_bytes())
+                        .map_err(|e| e.to_string())?;
+                    let mut line = String::new();
+                    handle
+                        .stdout
+                        .read_line(&mut line)
+                        .map_err(|e| e.to_string())?;
+                    if line.trim().is_empty() {
+                        return Err("Aucune réponse du backend".to_string());
                     }
-                })
-                .unwrap_or_else(|_| "Erreur inconnue".to_string());
-            let _ = window.emit(event_name, serde_json::json!({
-                "type": "error",
-                "message": msg
-            }));
+                    serde_json::from_str(line.trim())
+                        .map_err(|e| format!("Réponse invalide : {}", e))
+                })();
+                let _ = tx.send(result);
+            }
+
+            BackendRequest::Stream { payload, window, event_name } => {
+                if let Err(e) = handle.stdin.write_all(payload.as_bytes()) {
+                    let _ = window.emit(
+                        event_name,
+                        serde_json::json!({"type": "error", "message": e.to_string()}),
+                    );
+                    continue;
+                }
+                loop {
+                    let mut line = String::new();
+                    match handle.stdout.read_line(&mut line) {
+                        Ok(0) | Err(_) => break,
+                        Ok(_) => {}
+                    }
+                    let trimmed = line.trim();
+                    if trimmed.is_empty() {
+                        continue;
+                    }
+                    if let Ok(event) = serde_json::from_str::<serde_json::Value>(trimmed) {
+                        let ty = event
+                            .get("type")
+                            .and_then(|t| t.as_str())
+                            .unwrap_or("");
+                        let _ = window.emit(event_name, &event);
+                        if ty == "complete" || ty == "error" {
+                            break;
+                        }
+                    }
+                }
+            }
         }
-    });
-    Ok(())
+    }
 }
 
-// Commande streaming : télécharge les modèles et émet des événements Tauri de progression
+// ---------- Commandes Tauri ----------
+
 #[tauri::command]
-fn start_model_download(window: tauri::WebviewWindow) -> Result<(), String> {
-    stream_backend(window, "download_models", serde_json::json!({}), "model-download-progress")
+fn call_backend(
+    state: tauri::State<AppState>,
+    method: String,
+    params: serde_json::Value,
+) -> Result<serde_json::Value, String> {
+    let (tx, rx) = mpsc::sync_channel(1);
+    let payload = format!(
+        "{}\n",
+        serde_json::json!({"method": method, "params": params, "id": 1})
+    );
+    state
+        .tx
+        .send(BackendRequest::Simple { payload, tx })
+        .map_err(|_| "Backend non disponible".to_string())?;
+    rx.recv()
+        .map_err(|_| "Pas de réponse du backend".to_string())?
 }
 
 #[tauri::command]
-fn start_transcription(window: tauri::WebviewWindow, audio_path: String) -> Result<(), String> {
-    stream_backend(window, "transcribe", serde_json::json!({"audio_path": audio_path}), "transcription-progress")
+fn start_model_download(
+    state: tauri::State<AppState>,
+    window: tauri::WebviewWindow,
+) -> Result<(), String> {
+    let payload = format!(
+        "{}\n",
+        serde_json::json!({"method": "download_models", "params": {}, "id": 1})
+    );
+    state
+        .tx
+        .send(BackendRequest::Stream { payload, window, event_name: "model-download-progress" })
+        .map_err(|_| "Backend non disponible".to_string())
 }
 
 #[tauri::command]
-fn start_generation(window: tauri::WebviewWindow, text: String) -> Result<(), String> {
-    stream_backend(window, "generate", serde_json::json!({"text": text}), "generation-progress")
+fn start_transcription(
+    state: tauri::State<AppState>,
+    window: tauri::WebviewWindow,
+    audio_path: String,
+) -> Result<(), String> {
+    let payload = format!(
+        "{}\n",
+        serde_json::json!({"method": "transcribe", "params": {"audio_path": audio_path}, "id": 1})
+    );
+    state
+        .tx
+        .send(BackendRequest::Stream { payload, window, event_name: "transcription-progress" })
+        .map_err(|_| "Backend non disponible".to_string())
 }
 
 #[tauri::command]
-fn start_final_generation(window: tauri::WebviewWindow, sessions: serde_json::Value, final_text: String) -> Result<(), String> {
-    stream_backend(window, "generate_final", serde_json::json!({"sessions": sessions, "final_text": final_text}), "generation-progress")
+fn start_generation(
+    state: tauri::State<AppState>,
+    window: tauri::WebviewWindow,
+    text: String,
+) -> Result<(), String> {
+    let payload = format!(
+        "{}\n",
+        serde_json::json!({"method": "generate", "params": {"text": text}, "id": 1})
+    );
+    state
+        .tx
+        .send(BackendRequest::Stream { payload, window, event_name: "generation-progress" })
+        .map_err(|_| "Backend non disponible".to_string())
 }
 
 #[tauri::command]
-fn start_export(window: tauri::WebviewWindow, sections: serde_json::Value, template_name: String, patient_name: String, patient_id: String) -> Result<(), String> {
-    stream_backend(window, "export", serde_json::json!({"sections": sections, "template_name": template_name, "patient_name": patient_name, "patient_id": patient_id}), "export-progress")
+fn start_final_generation(
+    state: tauri::State<AppState>,
+    window: tauri::WebviewWindow,
+    sessions: serde_json::Value,
+    final_text: String,
+) -> Result<(), String> {
+    let payload = format!(
+        "{}\n",
+        serde_json::json!({"method": "generate_final", "params": {"sessions": sessions, "final_text": final_text}, "id": 1})
+    );
+    state
+        .tx
+        .send(BackendRequest::Stream { payload, window, event_name: "generation-progress" })
+        .map_err(|_| "Backend non disponible".to_string())
+}
+
+#[tauri::command]
+fn start_export(
+    state: tauri::State<AppState>,
+    window: tauri::WebviewWindow,
+    sections: serde_json::Value,
+    template_name: String,
+    patient_name: String,
+    patient_id: String,
+) -> Result<(), String> {
+    let payload = format!(
+        "{}\n",
+        serde_json::json!({"method": "export", "params": {"sections": sections, "template_name": template_name, "patient_name": patient_name, "patient_id": patient_id}, "id": 1})
+    );
+    state
+        .tx
+        .send(BackendRequest::Stream { payload, window, event_name: "export-progress" })
+        .map_err(|_| "Backend non disponible".to_string())
 }
 
 #[tauri::command]
 fn open_folder(path: String) -> Result<(), String> {
-    let cmd = if cfg!(target_os = "windows") { "explorer" }
-              else if cfg!(target_os = "macos") { "open" }
-              else { "xdg-open" };
+    let cmd = if cfg!(target_os = "windows") {
+        "explorer"
+    } else if cfg!(target_os = "macos") {
+        "open"
+    } else {
+        "xdg-open"
+    };
     std::process::Command::new(cmd)
         .arg(&path)
         .spawn()
@@ -184,12 +264,37 @@ fn open_folder(path: String) -> Result<(), String> {
     Ok(())
 }
 
+// ---------- Point d'entrée ----------
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_dialog::init())
+        .setup(|app| {
+            let mut child = spawn_backend()
+                .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?;
+
+            // Lit stderr dans un thread séparé pour éviter le blocage du pipe
+            let stderr = child.stderr.take().unwrap();
+            std::thread::spawn(move || {
+                let reader = BufReader::new(stderr);
+                for line in reader.lines().flatten() {
+                    eprintln!("[backend] {}", line);
+                }
+            });
+
+            let handle = BackendHandle {
+                stdin: child.stdin.take().unwrap(),
+                stdout: BufReader::new(child.stdout.take().unwrap()),
+            };
+
+            let (tx, rx) = mpsc::channel::<BackendRequest>();
+            std::thread::spawn(move || run_backend_thread(handle, rx));
+            app.manage(AppState { tx });
+            Ok(())
+        })
         .invoke_handler(tauri::generate_handler![
             call_backend,
             start_model_download,
