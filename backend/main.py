@@ -61,10 +61,19 @@ _log("import lieu_manager…")
 from lieu_manager import list_lieux, create_lieu, rename_lieu, delete_lieu
 
 _log("tous les imports OK — envoi du signal ready")
-# Rétablir sys.stdout et signaler à Rust que le backend est prêt.
+# Rétablir sys.stdout
 sys.stdout = _real_stdout
-print('{"type":"ready"}', flush=True)
-_log("signal ready envoyé")
+# Écrire directement sur fd 1 (le pipe vers Rust) via os.write.
+# Plus fiable que print() sous Windows + PyInstaller + CREATE_NO_WINDOW,
+# où sys.stdout peut être un flux spécial qui ne correspond pas à fd 1.
+try:
+    os.write(1, b'{"type":"ready"}\n')
+    _log("signal ready envoyé via os.write(1)")
+except Exception as _e:
+    # Fallback si fd 1 n'est pas accessible directement
+    _real_stdout.write('{"type":"ready"}\n')
+    _real_stdout.flush()
+    _log(f"signal ready envoyé via sys.stdout (fallback, err={_e})")
 
 
 def handle(cmd: dict) -> dict | None:
