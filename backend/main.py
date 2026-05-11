@@ -56,7 +56,7 @@ from exporter import export
 _log("import patient_manager…")
 from patient_manager import list_patients, create_patient, update_patient, delete_patient, list_bilans
 _log("import session_manager…")
-from session_manager import save_session, update_session, delete_session, list_sessions
+from session_manager import save_session, generate_session_summary, update_session, delete_session, list_sessions
 _log("import lieu_manager…")
 from lieu_manager import list_lieux, create_lieu, rename_lieu, delete_lieu
 
@@ -249,6 +249,16 @@ def handle(cmd: dict) -> dict | None:
                 autoeval=params.get("autoeval", {}),
                 notes=params.get("notes", ""),
                 date=params.get("date", ""),
+            )
+            return {"id": req_id, "result": result}
+        except ValueError as e:
+            return {"id": req_id, "error": str(e)}
+
+    if method == "generate_session_summary":
+        try:
+            result = generate_session_summary(
+                patient_id=params.get("patient_id", ""),
+                filename=params.get("filename", ""),
             )
             return {"id": req_id, "result": result}
         except ValueError as e:

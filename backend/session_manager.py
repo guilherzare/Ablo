@@ -24,22 +24,36 @@ def save_session(
     existing_sessions = list(pdir.glob("seance_*.json"))
     is_first_session = len(existing_sessions) == 0
 
-    # Génère le résumé via Mistral (bloquant ~30-60s)
-    summary = summarize_session(anonymized_text, is_first_session=is_first_session)
-
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
     session = {
         "date": date or datetime.date.today().isoformat(),
         "anonymized_text": anonymized_text,
         "autoeval": autoeval,
         "notes": notes,
-        "summary": summary,
+        "summary": "",
         "is_first_session": is_first_session,
     }
     (pdir / f"seance_{timestamp}.json").write_text(
         json.dumps(session, ensure_ascii=False, indent=2), encoding="utf-8"
     )
     return session
+
+
+def generate_session_summary(patient_id: str, filename: str) -> str:
+    pdir = patient_dir_for(patient_id)
+    if not pdir:
+        raise ValueError(f"Patient '{patient_id}' introuvable")
+    path = pdir / filename
+    if not path.exists():
+        raise ValueError(f"Séance '{filename}' introuvable")
+    data = json.loads(path.read_text(encoding="utf-8"))
+    summary = summarize_session(
+        data.get("anonymized_text", ""),
+        is_first_session=data.get("is_first_session", False),
+    )
+    data["summary"] = summary
+    path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+    return summary
 
 
 def update_session(
