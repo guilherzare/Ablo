@@ -1,7 +1,7 @@
 use std::io::{BufRead, BufReader, Write};
 use std::process::{Command, Stdio};
 use std::sync::mpsc::{self, Sender};
-use tauri::Emitter;
+use tauri::{Emitter, Manager};
 
 // ---------- Commande Python ----------
 
