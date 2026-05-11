@@ -84,14 +84,16 @@ def list_sessions(patient_id: str) -> list[dict]:
     if not pdir:
         return []
     result = []
-    for f in sorted(pdir.glob("seance_*.json")):
+    for f in pdir.glob("seance_*.json"):
         try:
             data = json.loads(f.read_text(encoding="utf-8"))
             data["filename"] = f.name
-            # Compatibilité ascendante : ajoute champs manquants pour anciennes séances
             data.setdefault("summary", "")
-            data.setdefault("is_first_session", False)
+            data.setdefault("date", "")
             result.append(data)
         except Exception:
             pass
+    result.sort(key=lambda s: s["date"])
+    for i, s in enumerate(result):
+        s["is_first_session"] = (i == 0)
     return result
