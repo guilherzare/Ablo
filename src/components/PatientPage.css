@@ -265,6 +265,8 @@
   .session-menu-dropdown { background: #1f2937; border-color: #374151; }
   .session-menu-item { color: #d1d5db; }
   .session-menu-item:hover { background: #374151; }
+  .session-menu-item--danger { color: #f87171; }
+  .session-menu-item--danger:hover { background: #374151; }
   .delete-session-modal { background: #1f2937; }
   .delete-session-title { color: #f9fafb; }
 }
