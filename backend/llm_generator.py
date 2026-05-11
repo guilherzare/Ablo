@@ -4,12 +4,19 @@ Streaming : émet des lignes JSON sur stdout.
 """
 import json
 import re
+import sys
 from pathlib import Path
 
 from model_manager import MODELS_DIR, MODELS
 from template_engine import load as load_template, Template
 
-_DEFAULT_TEMPLATE = Path(__file__).parent.parent / "templates" / "bilan_art_therapie.md"
+# En mode PyInstaller (--onefile), __file__ pointe vers le dossier temporaire d'extraction
+# (_MEIPASS), pas le répertoire du projet. On utilise sys._MEIPASS quand disponible.
+if getattr(sys, "frozen", False):
+    _BASE_DIR = Path(getattr(sys, "_MEIPASS", Path(__file__).parent))
+else:
+    _BASE_DIR = Path(__file__).parent.parent
+_DEFAULT_TEMPLATE = _BASE_DIR / "templates" / "bilan_art_therapie.md"
 _MODEL_PATH = MODELS_DIR / MODELS["mistral-7b-q4"]["filename"]
 
 

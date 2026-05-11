@@ -48,6 +48,7 @@ jobs:
             --collect-all tokenizers `
             --collect-all llama_cpp `
             --add-binary "ffmpeg.exe;." `
+            --add-data "..\templates;templates" `
             main.py
           New-Item -ItemType Directory -Force -Path ..\src-tauri\binaries | Out-Null
           Copy-Item dist\ablo-backend.exe ..\src-tauri\binaries\ablo-backend-x86_64-pc-windows-msvc.exe
