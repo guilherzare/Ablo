@@ -60,19 +60,29 @@ from session_manager import save_session, list_sessions
 _log("import lieu_manager…")
 from lieu_manager import list_lieux, create_lieu, rename_lieu, delete_lieu
 
-_log("tous les imports OK — envoi du signal ready")
-# Rétablir sys.stdout
-sys.stdout = _real_stdout
-# Écrire directement sur fd 1 (le pipe vers Rust) via os.write.
-# Plus fiable que print() sous Windows + PyInstaller + CREATE_NO_WINDOW,
-# où sys.stdout peut être un flux spécial qui ne correspond pas à fd 1.
+_log("tous les imports OK")
+
+# Rebind sys.stdout sur fd 1 (le vrai pipe vers Rust).
+# Sous Windows + PyInstaller + CREATE_NO_WINDOW, le sys.stdout d'origine
+# peut ne pas écrire sur fd 1. On crée un wrapper propre qui garantit que
+# TOUS les print() ultérieurs (main(), _emit() dans les sous-modules…)
+# écrivent bien dans le pipe que Rust écoute.
+import io
+sys.stdout = io.TextIOWrapper(
+    io.FileIO(1, mode='wb', closefd=False),
+    encoding='utf-8',
+    line_buffering=True,
+    errors='replace',
+)
+
+# Signal ready : os.write(1) en priorité (contourne sys.stdout),
+# puis fallback sur le nouveau sys.stdout.
 try:
     os.write(1, b'{"type":"ready"}\n')
     _log("signal ready envoyé via os.write(1)")
 except Exception as _e:
-    # Fallback si fd 1 n'est pas accessible directement
-    _real_stdout.write('{"type":"ready"}\n')
-    _real_stdout.flush()
+    sys.stdout.write('{"type":"ready"}\n')
+    sys.stdout.flush()
     _log(f"signal ready envoyé via sys.stdout (fallback, err={_e})")
 
 
