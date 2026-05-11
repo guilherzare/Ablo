@@ -245,7 +245,7 @@
 }
 .patient-menu-item:hover { background: #f9fafb; }
 .patient-menu-item.danger { color: #dc2626; }
-.patient-menu-item.danger:hover { background: #fef2f2; }
+.patient-menu-item.danger:hover { background: #f9fafb; }
 
 /* Modal de confirmation de suppression */
 .delete-modal-backdrop {
@@ -327,7 +327,7 @@
   .patient-menu-item { color: #d1d5db; }
   .patient-menu-item:hover { background: #374151; }
   .patient-menu-item.danger { color: #f87171; }
-  .patient-menu-item.danger:hover { background: #450a0a; }
+  .patient-menu-item.danger:hover { background: #374151; }
   .delete-modal { background: #1f2937; }
   .delete-modal-title { color: #f9fafb; }
   .delete-modal-msg { color: #9ca3af; }
