@@ -98,9 +98,10 @@ def _export_docx(
 
     therapist_name = settings.get("therapist_name", "")
     therapist_email = settings.get("therapist_email", "")
+    therapist_phone = settings.get("therapist_phone", "")
     date_str = datetime.date.today().strftime("%d/%m/%Y")
 
-    # En-tête : nom et email thérapeute sur la première page uniquement
+    # En-tête : nom, email et téléphone thérapeute sur la première page uniquement
     section0 = doc.sections[0]
     section0.different_first_page_header_footer = True
     hp = section0.first_page_header.paragraphs[0]
@@ -111,6 +112,8 @@ def _export_docx(
         run.font.size = Pt(10)
     if therapist_email:
         hp.add_run(f"\n{therapist_email}").font.size = Pt(9)
+    if therapist_phone:
+        hp.add_run(f"\n{therapist_phone}").font.size = Pt(9)
 
     # Titre principal
     title_para = doc.add_paragraph()
@@ -249,6 +252,7 @@ def _export_pdf(
 
     therapist_name = settings.get("therapist_name", "")
     therapist_email = settings.get("therapist_email", "")
+    therapist_phone = settings.get("therapist_phone", "")
     date_str = datetime.date.today().strftime("%d/%m/%Y")
 
     styles = getSampleStyleSheet()
@@ -282,13 +286,20 @@ def _export_pdf(
 
     def on_first_page(canvas, doc):
         canvas.saveState()
+        y = A4[1] - 1.5 * cm
         if therapist_name:
             canvas.setFont("Helvetica-Bold", 9)
-            canvas.drawString(2.5 * cm, A4[1] - 1.5 * cm, therapist_name)
+            canvas.drawString(2.5 * cm, y, therapist_name)
+            y -= 12
         if therapist_email:
             canvas.setFont("Helvetica", 8)
             canvas.setFillColor(HexColor("#6B7280"))
-            canvas.drawString(2.5 * cm, A4[1] - 1.5 * cm - 12, therapist_email)
+            canvas.drawString(2.5 * cm, y, therapist_email)
+            y -= 12
+        if therapist_phone:
+            canvas.setFont("Helvetica", 8)
+            canvas.setFillColor(HexColor("#6B7280"))
+            canvas.drawString(2.5 * cm, y, therapist_phone)
         canvas.restoreState()
 
     def on_later_pages(canvas, doc):

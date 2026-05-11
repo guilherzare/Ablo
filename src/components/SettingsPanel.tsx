@@ -7,6 +7,7 @@ import "./SettingsPanel.css";
 interface Settings {
   therapist_name: string;
   therapist_email: string;
+  therapist_phone: string;
   export_folder: string;
 }
 
@@ -18,6 +19,7 @@ export function SettingsPanel({ onClose }: Props) {
   const [settings, setSettings] = useState<Settings>({
     therapist_name: "",
     therapist_email: "",
+    therapist_phone: "",
     export_folder: "",
   });
   const [saved, setSaved] = useState(false);
@@ -148,6 +150,17 @@ export function SettingsPanel({ onClose }: Props) {
               placeholder="ex : claire.fontaine@cabinet-art.fr"
               value={settings.therapist_email}
               onChange={(e) => update("therapist_email", e.target.value)}
+            />
+          </label>
+
+          <label className="settings-label">
+            Téléphone
+            <input
+              className="settings-input"
+              type="tel"
+              placeholder="ex : 06 12 34 56 78"
+              value={settings.therapist_phone}
+              onChange={(e) => update("therapist_phone", e.target.value)}
             />
           </label>
 
