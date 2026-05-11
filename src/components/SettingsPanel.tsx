@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { open } from "@tauri-apps/plugin-dialog";
 import { getLabelColor } from "./HomePage";
@@ -27,6 +27,9 @@ export function SettingsPanel({ onClose }: Props) {
   const [editingLieu, setEditingLieu] = useState<{ name: string; value: string } | null>(null);
   const [confirmDeleteLieu, setConfirmDeleteLieu] = useState<string | null>(null);
 
+  const newLieuRef = useRef<HTMLInputElement>(null);
+  const editLieuRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     invoke<{ result: Settings }>("call_backend", { method: "get_settings", params: {} })
       .then((res) => setSettings(res.result as Settings))
@@ -36,13 +39,35 @@ export function SettingsPanel({ onClose }: Props) {
       .catch(() => {});
   }, []);
 
-  async function handleSave() {
+  // Focus manuel avec délai pour contourner le bug WebView2 (autoFocus perd le 1er caractère)
+  useEffect(() => {
+    if (!showCreateLieu) return;
+    const t = setTimeout(() => newLieuRef.current?.focus(), 50);
+    return () => clearTimeout(t);
+  }, [showCreateLieu]);
+
+  useEffect(() => {
+    if (!editingLieu) return;
+    const t = setTimeout(() => editLieuRef.current?.focus(), 50);
+    return () => clearTimeout(t);
+  }, [editingLieu]);
+
+  async function persistSettings() {
     await invoke("call_backend", {
       method: "update_settings",
       params: settings,
-    });
+    }).catch(() => {});
+  }
+
+  async function handleSave() {
+    await persistSettings();
     setSaved(true);
     setTimeout(() => { setSaved(false); onClose(); }, 800);
+  }
+
+  function handleClose() {
+    persistSettings();
+    onClose();
   }
 
   async function pickFolder() {
@@ -62,7 +87,7 @@ export function SettingsPanel({ onClose }: Props) {
     const name = newLieu.trim();
     if (!name) return;
     const res = await invoke<{ result: string[] }>("call_backend", { method: "create_lieu", params: { name } });
-    setLieux(res.result);
+    if (res.result) setLieux(res.result);
     setNewLieu("");
     setShowCreateLieu(false);
   }
@@ -73,14 +98,19 @@ export function SettingsPanel({ onClose }: Props) {
       method: "rename_lieu",
       params: { old_name: editingLieu.name, new_name: editingLieu.value.trim() },
     });
-    setLieux(res.result);
+    if (res.result) setLieux(res.result);
     setEditingLieu(null);
   }
 
   async function handleDeleteLieu(name: string) {
-    const res = await invoke<{ result: string[] }>("call_backend", { method: "delete_lieu", params: { name } });
-    setLieux(res.result);
-    setConfirmDeleteLieu(null);
+    try {
+      const res = await invoke<{ result: string[] }>("call_backend", { method: "delete_lieu", params: { name } });
+      if (res.result) setLieux(res.result);
+    } catch {
+      // silencieux — la liste sera rafraîchie à la prochaine ouverture
+    } finally {
+      setConfirmDeleteLieu(null);
+    }
   }
 
   const folderName = settings.export_folder
@@ -88,11 +118,11 @@ export function SettingsPanel({ onClose }: Props) {
     : null;
 
   return (
-    <div className="settings-overlay" onClick={onClose}>
+    <div className="settings-overlay" onClick={handleClose}>
       <div className="settings-panel" onClick={(e) => e.stopPropagation()}>
         <div className="settings-header">
           <h2>Réglages</h2>
-          <button className="settings-close" onClick={onClose}>×</button>
+          <button className="settings-close" onClick={handleClose}>×</button>
         </div>
 
         <div className="settings-section">
@@ -137,8 +167,8 @@ export function SettingsPanel({ onClose }: Props) {
                 return (
                   <div key={lieu} className="lieu-row lieu-row--confirm">
                     <span className="lieu-confirm-msg">Supprimer «&nbsp;{lieu}&nbsp;» ?</span>
-                    <button className="lieu-btn lieu-btn--danger" onClick={() => handleDeleteLieu(lieu)}>Supprimer</button>
-                    <button className="lieu-btn" onClick={() => setConfirmDeleteLieu(null)}>Annuler</button>
+                    <button className="lieu-btn lieu-btn--danger" onClick={(e) => { e.stopPropagation(); handleDeleteLieu(lieu); }}>Supprimer</button>
+                    <button className="lieu-btn" onClick={(e) => { e.stopPropagation(); setConfirmDeleteLieu(null); }}>Annuler</button>
                   </div>
                 );
               }
@@ -146,6 +176,7 @@ export function SettingsPanel({ onClose }: Props) {
                 return (
                   <div key={lieu} className="lieu-row">
                     <input
+                      ref={editLieuRef}
                       className="lieu-input"
                       value={editingLieu.value}
                       onChange={(e) => setEditingLieu({ name: lieu, value: e.target.value })}
@@ -153,7 +184,6 @@ export function SettingsPanel({ onClose }: Props) {
                         if (e.key === "Enter") handleRenameLieu();
                         if (e.key === "Escape") setEditingLieu(null);
                       }}
-                      autoFocus
                     />
                     <button className="lieu-btn lieu-btn--primary" onClick={handleRenameLieu} disabled={!editingLieu.value.trim()}>✓</button>
                     <button className="lieu-btn" onClick={() => setEditingLieu(null)}>✕</button>
@@ -179,6 +209,7 @@ export function SettingsPanel({ onClose }: Props) {
           ) : (
             <div className="lieu-create-row">
               <input
+                ref={newLieuRef}
                 className="settings-input"
                 type="text"
                 placeholder="Nouveau lieu…"
@@ -188,7 +219,6 @@ export function SettingsPanel({ onClose }: Props) {
                   if (e.key === "Enter") handleCreateLieu();
                   if (e.key === "Escape") { setShowCreateLieu(false); setNewLieu(""); }
                 }}
-                autoFocus
               />
               <button className="lieu-btn lieu-btn--primary" onClick={handleCreateLieu} disabled={!newLieu.trim()}>
                 Ajouter
