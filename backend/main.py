@@ -5,34 +5,66 @@ Lit des commandes JSON sur stdin, écrit les réponses JSON sur stdout.
 import sys
 import os
 import json
+import pathlib
+import datetime
+
+# Log de démarrage — écrit dans ~/.ablo/startup.log pour diagnostic
+_LOG_PATH = pathlib.Path.home() / ".ablo" / "startup.log"
+_LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
+_log_file = open(_LOG_PATH, "w", encoding="utf-8", buffering=1)
+
+def _log(msg: str) -> None:
+    ts = datetime.datetime.now().strftime("%H:%M:%S.%f")[:-3]
+    _log_file.write(f"[{ts}] {msg}\n")
+    _log_file.flush()
+
+_log("=== démarrage backend Ablo ===")
+_log(f"Python {sys.version}")
+_log(f"frozen={getattr(sys, 'frozen', False)}")
 
 # En mode packagé (PyInstaller), ajouter le dossier d'extraction au PATH
 # pour que ffmpeg et autres binaires inclus soient trouvables.
 if getattr(sys, 'frozen', False):
     _bundle_dir = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
     os.environ['PATH'] = _bundle_dir + os.pathsep + os.environ.get('PATH', '')
+    _log(f"_MEIPASS={_bundle_dir}")
 
 # Redirige sys.stdout pendant les imports pour éviter toute sortie parasite
 # sur le canal IPC JSON (les imports lourds sont différés à l'appel).
 _real_stdout = sys.stdout
 sys.stdout = open(os.devnull, 'w')
+_log("stdout redirigé vers devnull")
 
+_log("import settings_manager…")
 from settings_manager import get_settings, update_settings
+_log("import dictionary_manager…")
 from dictionary_manager import get_dictionary, update_dictionary, apply_dictionary
+_log("import template_engine…")
 from template_engine import load as load_template, validate_file as validate_template
+_log("import model_manager…")
 from model_manager import check_models, download_models
+_log("import transcription…")
 from transcription import transcribe
+_log("import anonymizer…")
 from anonymizer import anonymize
+_log("import llm_generator…")
 from llm_generator import generate, generate_final
+_log("import report_validator…")
 from report_validator import validate
+_log("import exporter…")
 from exporter import export
+_log("import patient_manager…")
 from patient_manager import list_patients, create_patient, update_patient, delete_patient, list_bilans
+_log("import session_manager…")
 from session_manager import save_session, list_sessions
+_log("import lieu_manager…")
 from lieu_manager import list_lieux, create_lieu, rename_lieu, delete_lieu
 
+_log("tous les imports OK — envoi du signal ready")
 # Rétablir sys.stdout et signaler à Rust que le backend est prêt.
 sys.stdout = _real_stdout
 print('{"type":"ready"}', flush=True)
+_log("signal ready envoyé")
 
 
 def handle(cmd: dict) -> dict | None:
