@@ -88,13 +88,13 @@ struct AppState {
 }
 
 fn run_backend_thread(mut handle: BackendHandle, rx: mpsc::Receiver<BackendRequest>) {
-    // Attendre le signal {"type":"ready"} avant tout — absorbe les sorties
-    // parasites des bibliothèques natives (ctranslate2, llama_cpp) au démarrage.
+    // Attendre le signal {"type":"ready"} en lisant octet par octet.
+    // Les bibliothèques natives (ctranslate2, llama_cpp) peuvent émettre des octets
+    // non-UTF-8 sur fd 1 — on les ignore plutôt que de planter.
     loop {
-        let mut line = String::new();
-        match handle.stdout.read_line(&mut line) {
+        let mut buf: Vec<u8> = Vec::new();
+        match handle.stdout.read_until(b'\n', &mut buf) {
             Ok(0) | Err(_) => {
-                // Python a quitté avant d'envoyer "ready" — vider la file avec des erreurs
                 for req in rx {
                     match req {
                         BackendRequest::Simple { tx, .. } => {
@@ -111,11 +111,14 @@ fn run_backend_thread(mut handle: BackendHandle, rx: mpsc::Receiver<BackendReque
                 return;
             }
             Ok(_) => {
-                if let Ok(val) = serde_json::from_str::<serde_json::Value>(line.trim()) {
-                    if val.get("type").and_then(|t| t.as_str()) == Some("ready") {
-                        break;
+                if let Ok(s) = std::str::from_utf8(&buf) {
+                    if let Ok(val) = serde_json::from_str::<serde_json::Value>(s.trim()) {
+                        if val.get("type").and_then(|t| t.as_str()) == Some("ready") {
+                            break;
+                        }
                     }
                 }
+                // Ligne non-UTF-8 ou pas "ready" — on continue à attendre
             }
         }
     }
@@ -128,16 +131,23 @@ fn run_backend_thread(mut handle: BackendHandle, rx: mpsc::Receiver<BackendReque
                         .stdin
                         .write_all(payload.as_bytes())
                         .map_err(|e| e.to_string())?;
-                    let mut line = String::new();
-                    handle
-                        .stdout
-                        .read_line(&mut line)
-                        .map_err(|e| e.to_string())?;
-                    if line.trim().is_empty() {
-                        return Err("Aucune réponse du backend".to_string());
+                    // Lit en boucle en ignorant les lignes non-UTF-8
+                    loop {
+                        let mut buf: Vec<u8> = Vec::new();
+                        match handle.stdout.read_until(b'\n', &mut buf) {
+                            Ok(0) | Err(_) => {
+                                return Err("Aucune réponse du backend".to_string())
+                            }
+                            Ok(_) => {}
+                        }
+                        if let Ok(s) = std::str::from_utf8(&buf) {
+                            let trimmed = s.trim();
+                            if !trimmed.is_empty() {
+                                return serde_json::from_str(trimmed)
+                                    .map_err(|e| format!("Réponse invalide : {}", e));
+                            }
+                        }
                     }
-                    serde_json::from_str(line.trim())
-                        .map_err(|e| format!("Réponse invalide : {}", e))
                 })();
                 let _ = tx.send(result);
             }
@@ -151,25 +161,28 @@ fn run_backend_thread(mut handle: BackendHandle, rx: mpsc::Receiver<BackendReque
                     continue;
                 }
                 loop {
-                    let mut line = String::new();
-                    match handle.stdout.read_line(&mut line) {
+                    let mut buf: Vec<u8> = Vec::new();
+                    match handle.stdout.read_until(b'\n', &mut buf) {
                         Ok(0) | Err(_) => break,
                         Ok(_) => {}
                     }
-                    let trimmed = line.trim();
-                    if trimmed.is_empty() {
-                        continue;
-                    }
-                    if let Ok(event) = serde_json::from_str::<serde_json::Value>(trimmed) {
-                        let ty = event
-                            .get("type")
-                            .and_then(|t| t.as_str())
-                            .unwrap_or("");
-                        let _ = window.emit(event_name, &event);
-                        if ty == "complete" || ty == "error" {
-                            break;
+                    if let Ok(s) = std::str::from_utf8(&buf) {
+                        let trimmed = s.trim();
+                        if trimmed.is_empty() {
+                            continue;
+                        }
+                        if let Ok(event) = serde_json::from_str::<serde_json::Value>(trimmed) {
+                            let ty = event
+                                .get("type")
+                                .and_then(|t| t.as_str())
+                                .unwrap_or("");
+                            let _ = window.emit(event_name, &event);
+                            if ty == "complete" || ty == "error" {
+                                break;
+                            }
                         }
                     }
+                    // Ligne non-UTF-8 ou JSON invalide — ignorée
                 }
             }
         }

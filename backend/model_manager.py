@@ -116,34 +116,37 @@ def download_models() -> None:
 
 def _download_whisper() -> None:
     """Télécharge tous les fichiers CTranslate2 de Whisper Small."""
+    downloaded_total = 0
+
     for filename, approx_size in WHISPER_FILES:
         dest = WHISPER_DIR / filename
         if dest.exists():
+            downloaded_total += approx_size
             continue
         url = f"{WHISPER_BASE_URL}/{filename}"
         tmp = dest.with_suffix(".tmp")
         req = urllib.request.Request(url, headers={"User-Agent": "Ablo/0.1"})
         try:
-            with urllib.request.urlopen(req, timeout=60, context=_SSL_CTX) as resp:
-                total = int(resp.headers.get("Content-Length", approx_size))
-                downloaded = 0
+            with urllib.request.urlopen(req, timeout=120, context=_SSL_CTX) as resp:
+                file_total = int(resp.headers.get("Content-Length", approx_size))
+                downloaded_file = 0
                 with open(tmp, "wb") as f:
                     while True:
                         chunk = resp.read(512 * 1024)
                         if not chunk:
                             break
                         f.write(chunk)
-                        downloaded += len(chunk)
-                        if filename == "model.bin":
-                            pct = min(int(downloaded * 100 / total), 99) if total else 0
-                            _emit({
-                                "type": "progress",
-                                "model": "whisper-small",
-                                "status": "downloading",
-                                "downloaded_bytes": downloaded,
-                                "total_bytes": total,
-                                "percent": pct,
-                            })
+                        downloaded_file += len(chunk)
+                        pct = min(int((downloaded_total + downloaded_file) * 100 / WHISPER_TOTAL_BYTES), 99)
+                        _emit({
+                            "type": "progress",
+                            "model": "whisper-small",
+                            "status": "downloading",
+                            "downloaded_bytes": downloaded_total + downloaded_file,
+                            "total_bytes": WHISPER_TOTAL_BYTES,
+                            "percent": pct,
+                        })
+            downloaded_total += downloaded_file
             tmp.rename(dest)
         except Exception as e:
             if tmp.exists():

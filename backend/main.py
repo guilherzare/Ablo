@@ -13,8 +13,13 @@ if getattr(sys, 'frozen', False):
     os.environ['PATH'] = _bundle_dir + os.pathsep + os.environ.get('PATH', '')
 
 # Certaines bibliothèques (ctranslate2, llama_cpp) écrivent sur stdout pendant
-# leur import. On redirige vers /dev/null pour ne pas polluer le canal IPC JSON.
+# leur import, à la fois via Python ET via leur code C natif (fd 1).
+# On redirige les deux niveaux pour protéger le canal IPC JSON.
 _real_stdout = sys.stdout
+_devnull_fd = os.open(os.devnull, os.O_WRONLY)
+_saved_fd1 = os.dup(1)
+os.dup2(_devnull_fd, 1)
+os.close(_devnull_fd)
 sys.stdout = open(os.devnull, 'w')
 
 from settings_manager import get_settings, update_settings
@@ -30,7 +35,9 @@ from patient_manager import list_patients, create_patient, update_patient, delet
 from session_manager import save_session, list_sessions
 from lieu_manager import list_lieux, create_lieu, rename_lieu, delete_lieu
 
-# Rétablir stdout et signaler à Rust que le backend est prêt.
+# Rétablir fd 1 (niveau OS) et sys.stdout (niveau Python), puis signaler "prêt".
+os.dup2(_saved_fd1, 1)
+os.close(_saved_fd1)
 sys.stdout = _real_stdout
 print('{"type":"ready"}', flush=True)
 
