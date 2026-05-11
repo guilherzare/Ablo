@@ -54,6 +54,7 @@ export default function App() {
   const [anonymizeError, setAnonymizeError] = useState("");
   const [showSettings, setShowSettings] = useState(false);
   const [lieuRefreshKey, setLieuRefreshKey] = useState(0);
+  const [sessionDate, setSessionDate] = useState(() => new Date().toISOString().split("T")[0]);
 
   // Header patient — menu "..."
   const [menuOpen, setMenuOpen] = useState(false);
@@ -94,6 +95,7 @@ export default function App() {
 
   function resetTranscription() {
     setTranscription(""); setAnonymizedText(""); setAnonSpans([]); setReportSections([]); setAnonymizeError("");
+    setSessionDate(new Date().toISOString().split("T")[0]);
   }
 
   async function handleAnonymise(nextState: AppState) {
@@ -396,6 +398,16 @@ export default function App() {
             <img src={sessionRecordImg} alt="" style={{ width: 160, height: 160, objectFit: "contain", marginBottom: 4, display: "block", margin: "0 auto 4px" }} />
             <h1>Enregistrement de la séance</h1>
             <p className="step-desc">Résumez oralement la séance à voix haute.</p>
+            <div className="session-date-row">
+              <label className="session-date-label" htmlFor="session-date-input">Date de la séance</label>
+              <input
+                id="session-date-input"
+                className="session-date-input"
+                type="date"
+                value={sessionDate}
+                onChange={(e) => setSessionDate(e.target.value)}
+              />
+            </div>
             <AudioRecorder onTranscriptionComplete={(text) => { setTranscription(text); setAppState("session-transcription"); }} />
           </section>
         )}
@@ -433,6 +445,7 @@ export default function App() {
               patientName={currentPatient.name}
               anonymizedText={anonymizedText}
               isFirstSession={patientSessionCount === 0}
+              date={sessionDate}
               onSaved={() => { resetTranscription(); setAppState("patient"); }}
               onBack={() => setAppState("session-anonymisation")}
             />

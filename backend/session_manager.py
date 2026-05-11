@@ -14,6 +14,7 @@ def save_session(
     anonymized_text: str,
     autoeval: dict,
     notes: str = "",
+    date: str = "",
 ) -> dict:
     pdir = patient_dir_for(patient_id)
     if not pdir:
@@ -28,7 +29,7 @@ def save_session(
 
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
     session = {
-        "date": datetime.date.today().isoformat(),
+        "date": date or datetime.date.today().isoformat(),
         "anonymized_text": anonymized_text,
         "autoeval": autoeval,
         "notes": notes,
@@ -41,19 +42,58 @@ def save_session(
     return session
 
 
+def update_session(
+    patient_id: str,
+    filename: str,
+    date: str = "",
+    notes: str = "",
+    summary: str = "",
+    autoeval: dict = None,
+) -> dict:
+    pdir = patient_dir_for(patient_id)
+    if not pdir:
+        raise ValueError(f"Patient '{patient_id}' introuvable")
+    path = pdir / filename
+    if not path.exists():
+        raise ValueError(f"Séance '{filename}' introuvable")
+    data = json.loads(path.read_text(encoding="utf-8"))
+    if date:
+        data["date"] = date
+    data["notes"] = notes
+    data["summary"] = summary
+    if autoeval is not None:
+        data["autoeval"] = autoeval
+    path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+    data["filename"] = filename
+    return data
+
+
+def delete_session(patient_id: str, filename: str) -> bool:
+    pdir = patient_dir_for(patient_id)
+    if not pdir:
+        raise ValueError(f"Patient '{patient_id}' introuvable")
+    path = pdir / filename
+    if not path.exists():
+        raise ValueError(f"Séance '{filename}' introuvable")
+    path.unlink()
+    return True
+
+
 def list_sessions(patient_id: str) -> list[dict]:
     pdir = patient_dir_for(patient_id)
     if not pdir:
         return []
     result = []
-    for f in sorted(pdir.glob("seance_*.json")):
+    for f in pdir.glob("seance_*.json"):
         try:
             data = json.loads(f.read_text(encoding="utf-8"))
             data["filename"] = f.name
-            # Compatibilité ascendante : ajoute champs manquants pour anciennes séances
             data.setdefault("summary", "")
-            data.setdefault("is_first_session", False)
+            data.setdefault("date", "")
             result.append(data)
         except Exception:
             pass
+    result.sort(key=lambda s: s["date"])
+    for i, s in enumerate(result):
+        s["is_first_session"] = (i == 0)
     return result

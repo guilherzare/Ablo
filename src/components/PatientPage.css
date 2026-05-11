@@ -129,6 +129,13 @@
   margin: 0;
 }
 
+.session-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
 .btn-view-summary {
   flex-shrink: 0;
   background: none;
@@ -147,6 +154,121 @@
 .btn-view-summary:hover {
   background: #ede9fe;
   border-color: #a5b4fc;
+}
+
+.session-menu-wrap {
+  position: relative;
+}
+
+.btn-session-menu {
+  background: none;
+  border: 1px solid #c7d2fe;
+  border-radius: 8px;
+  width: 33px;
+  height: 33px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.95rem;
+  font-family: inherit;
+  color: #9ca3af;
+  cursor: pointer;
+  line-height: 1;
+  flex-shrink: 0;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.btn-session-menu:hover,
+.btn-session-menu.active {
+  background: #ede9fe;
+  color: #4f46e5;
+  border-color: #a5b4fc;
+}
+
+.session-menu-dropdown {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 4px);
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  min-width: 160px;
+  z-index: 50;
+  overflow: hidden;
+}
+
+.session-menu-item {
+  display: block;
+  width: 100%;
+  padding: 10px 14px;
+  text-align: left;
+  background: none;
+  border: none;
+  font-size: 0.875rem;
+  font-family: inherit;
+  color: #374151;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.session-menu-item:hover { background: #f3f4f6; }
+.session-menu-item--danger { color: #dc2626; }
+.session-menu-item--danger:hover { background: #f3f4f6; }
+
+/* Modale suppression séance */
+.delete-session-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 15, 30, 0.4);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.delete-session-modal {
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 24px;
+  width: 100%;
+  max-width: 400px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.18);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.delete-session-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1a1a2e;
+  margin: 0;
+}
+
+.delete-session-msg {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.delete-session-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .session-menu-dropdown { background: #1f2937; border-color: #374151; }
+  .session-menu-item { color: #d1d5db; }
+  .session-menu-item:hover { background: #374151; }
+  .session-menu-item--danger { color: #f87171; }
+  .session-menu-item--danger:hover { background: #374151; }
+  .delete-session-modal { background: #1f2937; }
+  .delete-session-title { color: #f9fafb; }
 }
 
 .session-card-left {

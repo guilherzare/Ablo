@@ -8,11 +8,12 @@ interface Props {
   patientName: string;
   anonymizedText: string;
   isFirstSession: boolean;
+  date: string;
   onSaved: () => void;
   onBack: () => void;
 }
 
-export function SessionAutoEvalView({ patientId, patientName, anonymizedText, isFirstSession, onSaved, onBack }: Props) {
+export function SessionAutoEvalView({ patientId, patientName, anonymizedText, isFirstSession, date, onSaved, onBack }: Props) {
   const [scores, setScores] = useState<AutoEvalScores>({
     "État initial": 0,
     "Envie de revenir": 0,
@@ -42,6 +43,7 @@ export function SessionAutoEvalView({ patientId, patientName, anonymizedText, is
           anonymized_text: anonymizedText,
           autoeval: scores,
           notes,
+          date,
         },
       });
       onSaved();

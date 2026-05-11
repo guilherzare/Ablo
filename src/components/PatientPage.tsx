@@ -1,8 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import "./PatientPage.css";
 import vocalRecord from "../assets/vocal-record.png";
 import { SessionDetailsModal } from "./SessionDetailsModal";
+import { SessionEditModal } from "./SessionEditModal";
 
 export interface Patient {
   id: string;
@@ -49,6 +50,11 @@ export function PatientPage({ patient, onNewSession, onFinalBilan, onSessionsLoa
   const [bilans, setBilans] = useState<Bilan[]>([]);
   const [loading, setLoading] = useState(true);
   const [openedSession, setOpenedSession] = useState<{ session: Session; number: number } | null>(null);
+  const [menuOpenFor, setMenuOpenFor] = useState<string | null>(null);
+  const [editingSession, setEditingSession] = useState<{ session: Session; number: number } | null>(null);
+  const [deleteConfirmFor, setDeleteConfirmFor] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const menuRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   useEffect(() => {
     setLoading(true);
@@ -63,13 +69,41 @@ export function PatientPage({ patient, onNewSession, onFinalBilan, onSessionsLoa
       }),
     ])
       .then(([sessRes, bilanRes]) => {
-        setSessions(sessRes.result);
-        setBilans(bilanRes.result);
-        onSessionsLoaded?.(sessRes.result.length);
+        setSessions(sessRes.result ?? []);
+        setBilans(bilanRes.result ?? []);
+        onSessionsLoaded?.((sessRes.result ?? []).length);
       })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [patient.id]);
+
+  useEffect(() => {
+    if (!menuOpenFor) return;
+    function handleClick(e: MouseEvent) {
+      const ref = menuRefs.current[menuOpenFor!];
+      if (ref && !ref.contains(e.target as Node)) setMenuOpenFor(null);
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [menuOpenFor]);
+
+  async function handleDeleteSession(filename: string) {
+    setDeleting(true);
+    try {
+      await invoke("call_backend", {
+        method: "delete_session",
+        params: { patient_id: patient.id, filename },
+      });
+      setSessions((prev) => prev.filter((s) => s.filename !== filename));
+    } catch {}
+    setDeleting(false);
+    setDeleteConfirmFor(null);
+  }
+
+  function handleSessionSaved(updated: Session) {
+    setSessions((prev) => prev.map((s) => s.filename === updated.filename ? updated : s));
+    setEditingSession(null);
+  }
 
   return (
     <div className="patient-view">
@@ -82,6 +116,34 @@ export function PatientPage({ patient, onNewSession, onFinalBilan, onSessionsLoa
         />
       )}
 
+      {editingSession && (
+        <SessionEditModal
+          session={editingSession.session}
+          sessionNumber={editingSession.number}
+          patientId={patient.id}
+          onSaved={handleSessionSaved}
+          onClose={() => setEditingSession(null)}
+        />
+      )}
+
+      {deleteConfirmFor && (
+        <div className="delete-session-backdrop" onClick={() => !deleting && setDeleteConfirmFor(null)}>
+          <div className="delete-session-modal" onClick={(e) => e.stopPropagation()}>
+            <p className="delete-session-title">Supprimer cette séance ?</p>
+            <p className="delete-session-msg">
+              Cette action est irréversible. Le contenu de la séance sera définitivement supprimé.
+            </p>
+            <div className="delete-session-actions">
+              <button className="btn-modal-cancel" onClick={() => setDeleteConfirmFor(null)} disabled={deleting}>
+                Annuler
+              </button>
+              <button className="btn-modal-delete" onClick={() => handleDeleteSession(deleteConfirmFor)} disabled={deleting}>
+                {deleting ? "Suppression…" : "Supprimer"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Boutons d'action — uniquement si des séances existent */}
       {!loading && sessions.length > 0 && (
@@ -164,12 +226,42 @@ export function PatientPage({ patient, onNewSession, onFinalBilan, onSessionsLoa
                       <span className="session-date">{formatDate(s.date)}</span>
                     </div>
                   </div>
-                  <button
-                    className="btn-view-summary"
-                    onClick={() => setOpenedSession({ session: s, number })}
-                  >
-                    Voir le résumé
-                  </button>
+                  <div className="session-card-actions">
+                    <button
+                      className="btn-view-summary"
+                      onClick={() => setOpenedSession({ session: s, number })}
+                    >
+                      Voir le résumé
+                    </button>
+                    <div
+                      className="session-menu-wrap"
+                      ref={(el) => { menuRefs.current[s.filename] = el; }}
+                    >
+                      <button
+                        className={`btn-session-menu${menuOpenFor === s.filename ? " active" : ""}`}
+                        onClick={() => setMenuOpenFor(menuOpenFor === s.filename ? null : s.filename)}
+                        title="Options"
+                      >
+                        ···
+                      </button>
+                      {menuOpenFor === s.filename && (
+                        <div className="session-menu-dropdown">
+                          <button
+                            className="session-menu-item"
+                            onClick={() => { setEditingSession({ session: s, number }); setMenuOpenFor(null); }}
+                          >
+                            Éditer la séance
+                          </button>
+                          <button
+                            className="session-menu-item session-menu-item--danger"
+                            onClick={() => { setDeleteConfirmFor(s.filename); setMenuOpenFor(null); }}
+                          >
+                            Supprimer
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </li>
               );
             })}

@@ -64,11 +64,11 @@ export function HomePage({ onSelectPatient, lieuRefreshKey }: Props) {
 
   useEffect(() => {
     invoke<{ result: Patient[] }>("call_backend", { method: "list_patients", params: {} })
-      .then((res) => setPatients(res.result))
+      .then((res) => setPatients(res.result ?? []))
       .catch(() => {})
       .finally(() => setLoading(false));
     invoke<{ result: string[] }>("call_backend", { method: "list_lieux", params: {} })
-      .then((res) => setStoredLieux(res.result))
+      .then((res) => setStoredLieux(res.result ?? []))
       .catch(() => {});
   }, [lieuRefreshKey]);
 
