@@ -35,10 +35,9 @@ def transcribe(audio_path: str) -> None:
     try:
         # Modèle small, CPU uniquement, quantisation int8 pour les machines sans GPU
         model = WhisperModel(
-            "small",
+            str(Path.home() / ".ablo" / "models" / "faster-whisper-small"),
             device="cpu",
             compute_type="int8",
-            download_root=str(Path.home() / ".ablo" / "models" / "whisper"),
         )
     except Exception as e:
         _emit({"type": "error", "message": f"Impossible de charger le modèle Whisper : {e}"})
