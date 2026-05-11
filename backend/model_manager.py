@@ -42,6 +42,7 @@ MODELS: dict = {
     "mistral-7b-q4": {
         "label": "Génération de bilans (Mistral 7B)",
         "size_bytes": MISTRAL_SIZE,
+        "filename": MISTRAL_FILENAME,
     },
 }
 
