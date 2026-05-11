@@ -25,7 +25,6 @@ WHISPER_FILES = [
     ("config.json",                    600),
     ("tokenizer.json",           2_402_000),
     ("vocabulary.txt",             809_000),
-    ("preprocessor_config.json",       200),
 ]
 WHISPER_TOTAL_BYTES = sum(s for _, s in WHISPER_FILES)
 
