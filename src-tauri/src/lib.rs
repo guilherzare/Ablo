@@ -88,6 +88,38 @@ struct AppState {
 }
 
 fn run_backend_thread(mut handle: BackendHandle, rx: mpsc::Receiver<BackendRequest>) {
+    // Attendre le signal {"type":"ready"} avant tout — absorbe les sorties
+    // parasites des bibliothèques natives (ctranslate2, llama_cpp) au démarrage.
+    loop {
+        let mut line = String::new();
+        match handle.stdout.read_line(&mut line) {
+            Ok(0) | Err(_) => {
+                // Python a quitté avant d'envoyer "ready" — vider la file avec des erreurs
+                for req in rx {
+                    match req {
+                        BackendRequest::Simple { tx, .. } => {
+                            let _ = tx.send(Err("Le backend a quitté au démarrage".to_string()));
+                        }
+                        BackendRequest::Stream { window, event_name, .. } => {
+                            let _ = window.emit(
+                                event_name,
+                                serde_json::json!({"type": "error", "message": "Le backend a quitté au démarrage"}),
+                            );
+                        }
+                    }
+                }
+                return;
+            }
+            Ok(_) => {
+                if let Ok(val) = serde_json::from_str::<serde_json::Value>(line.trim()) {
+                    if val.get("type").and_then(|t| t.as_str()) == Some("ready") {
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
     for req in rx {
         match req {
             BackendRequest::Simple { payload, tx } => {

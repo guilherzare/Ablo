@@ -13,10 +13,9 @@ if getattr(sys, 'frozen', False):
     os.environ['PATH'] = _bundle_dir + os.pathsep + os.environ.get('PATH', '')
 
 # Certaines bibliothèques (ctranslate2, llama_cpp) écrivent sur stdout pendant
-# leur import, ce qui corromprait le canal IPC JSON avec Tauri.
-# On redirige stdout vers stderr pendant toute la phase d'import.
+# leur import. On redirige vers /dev/null pour ne pas polluer le canal IPC JSON.
 _real_stdout = sys.stdout
-sys.stdout = sys.stderr
+sys.stdout = open(os.devnull, 'w')
 
 from settings_manager import get_settings, update_settings
 from dictionary_manager import get_dictionary, update_dictionary, apply_dictionary
@@ -31,8 +30,9 @@ from patient_manager import list_patients, create_patient, update_patient, delet
 from session_manager import save_session, list_sessions
 from lieu_manager import list_lieux, create_lieu, rename_lieu, delete_lieu
 
-# Tous les imports sont faits : on rétablit stdout pour les échanges IPC avec Tauri.
+# Rétablir stdout et signaler à Rust que le backend est prêt.
 sys.stdout = _real_stdout
+print('{"type":"ready"}', flush=True)
 
 
 def handle(cmd: dict) -> dict | None:
