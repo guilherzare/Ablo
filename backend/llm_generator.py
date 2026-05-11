@@ -6,12 +6,6 @@ import json
 import re
 from pathlib import Path
 
-try:
-    from llama_cpp import Llama
-    _LLAMA_AVAILABLE = True
-except ImportError:
-    _LLAMA_AVAILABLE = False
-
 from model_manager import MODELS_DIR, MODELS
 from template_engine import load as load_template, Template
 
@@ -77,7 +71,9 @@ def _parse_sections(output: str, template: Template) -> list[dict]:
 
 
 def generate(text: str, template_path: str | None = None) -> None:
-    if not _LLAMA_AVAILABLE:
+    try:
+        from llama_cpp import Llama
+    except ImportError:
         _emit({
             "type": "error",
             "message": (
@@ -200,7 +196,9 @@ def summarize_session(text: str, is_first_session: bool = False) -> str:
     def log(msg: str) -> None:
         print(f"[summarize_session] {msg}", file=sys.stderr, flush=True)
 
-    if not _LLAMA_AVAILABLE:
+    try:
+        from llama_cpp import Llama
+    except ImportError:
         log("ABORT: llama-cpp-python non installé")
         return ""
     if not _MODEL_PATH.exists():
@@ -310,7 +308,9 @@ def generate_final(
     final_text: str = "",
     template_path: str | None = None,
 ) -> None:
-    if not _LLAMA_AVAILABLE:
+    try:
+        from llama_cpp import Llama
+    except ImportError:
         _emit({"type": "error", "message": "llama-cpp-python n'est pas installé."})
         return
 
