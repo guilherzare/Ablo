@@ -354,6 +354,37 @@
   max-width: 680px;
 }
 
+.session-date-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.session-date-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #6b7280;
+  white-space: nowrap;
+}
+
+.session-date-input {
+  padding: 6px 12px;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-family: inherit;
+  color: #1a1a2e;
+  background: #f9fafb;
+  transition: border-color 0.15s;
+}
+.session-date-input:focus {
+  outline: none;
+  border-color: #4f46e5;
+  background: #ffffff;
+}
+
 .step-section h1 {
   font-size: 1.5rem;
   font-weight: 700;

@@ -10,7 +10,7 @@ SETTINGS_PATH = Path.home() / ".ablo" / "settings.json"
 
 DEFAULTS: dict = {
     "template_path": None,
-    "export_folder": str(Path.home() / "Documents" / "Ablo"),
+    "export_folder": str(Path.home() / ".ablo" / "data"),
     "microphone_id": None,
     "therapist_name": "",
     "therapist_email": "",
