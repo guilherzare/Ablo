@@ -34,7 +34,6 @@ export function SessionAutoEvalView({ patientId, patientName, anonymizedText, is
   async function handleSave() {
     setSaving(true);
     setError("");
-    await new Promise((r) => setTimeout(r, 100));
     try {
       await invoke("call_backend", {
         method: "save_session",
@@ -55,15 +54,6 @@ export function SessionAutoEvalView({ patientId, patientName, anonymizedText, is
 
   return (
     <div className="session-auteval-view">
-      {saving && (
-        <div className="saving-overlay">
-          <div className="saving-overlay-box">
-            <div className="saving-spinner" />
-            <p className="saving-label">Enregistrement de la séance en cours…</p>
-            <p className="saving-sublabel">Cette opération peut prendre jusqu'à une minute.</p>
-          </div>
-        </div>
-      )}
 
       <p className="session-auteval-patient">
         Séance de <strong>{patientName}</strong>

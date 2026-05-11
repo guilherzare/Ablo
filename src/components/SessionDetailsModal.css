@@ -96,6 +96,19 @@
   margin: 0;
 }
 
+@keyframes summary-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+
+.session-details-generating {
+  font-size: 0.875rem;
+  color: #9ca3af;
+  font-style: italic;
+  margin: 0;
+  animation: summary-pulse 1.6s ease-in-out infinite;
+}
+
 /* Auto-évaluation : barres horizontales */
 .session-details-scores {
   list-style: none;

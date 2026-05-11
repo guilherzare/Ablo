@@ -54,6 +54,8 @@ export function PatientPage({ patient, onNewSession, onFinalBilan, onSessionsLoa
   const [editingSession, setEditingSession] = useState<{ session: Session; number: number } | null>(null);
   const [deleteConfirmFor, setDeleteConfirmFor] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [pendingSummaries, setPendingSummaries] = useState<Set<string>>(new Set());
+  const generatingRef = useRef<Set<string>>(new Set());
   const menuRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   useEffect(() => {
@@ -76,6 +78,30 @@ export function PatientPage({ patient, onNewSession, onFinalBilan, onSessionsLoa
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [patient.id]);
+
+  useEffect(() => {
+    sessions
+      .filter((s) => !s.summary && !generatingRef.current.has(s.filename))
+      .forEach((s) => {
+        generatingRef.current.add(s.filename);
+        setPendingSummaries((prev) => new Set([...prev, s.filename]));
+        invoke<{ result: string }>("call_backend", {
+          method: "generate_session_summary",
+          params: { patient_id: patient.id, filename: s.filename },
+        })
+          .then((res) => {
+            generatingRef.current.delete(s.filename);
+            setPendingSummaries((prev) => { const n = new Set(prev); n.delete(s.filename); return n; });
+            setSessions((prev) => prev.map((sess) =>
+              sess.filename === s.filename ? { ...sess, summary: res.result } : sess
+            ));
+          })
+          .catch(() => {
+            generatingRef.current.delete(s.filename);
+            setPendingSummaries((prev) => { const n = new Set(prev); n.delete(s.filename); return n; });
+          });
+      });
+  }, [sessions]);
 
   useEffect(() => {
     if (!menuOpenFor) return;
@@ -113,13 +139,17 @@ export function PatientPage({ patient, onNewSession, onFinalBilan, onSessionsLoa
   return (
     <div className="patient-view">
 
-      {openedSession && (
-        <SessionDetailsModal
-          session={openedSession.session}
-          sessionNumber={openedSession.number}
-          onClose={() => setOpenedSession(null)}
-        />
-      )}
+      {openedSession && (() => {
+        const liveSession = sessions.find((s) => s.filename === openedSession.session.filename) ?? openedSession.session;
+        return (
+          <SessionDetailsModal
+            session={liveSession}
+            sessionNumber={openedSession.number}
+            summaryPending={pendingSummaries.has(openedSession.session.filename)}
+            onClose={() => setOpenedSession(null)}
+          />
+        );
+      })()}
 
       {editingSession && (
         <SessionEditModal
@@ -230,6 +260,9 @@ export function PatientPage({ patient, onNewSession, onFinalBilan, onSessionsLoa
                       </span>
                       <span className="session-date">{formatDate(s.date)}</span>
                     </div>
+                    {pendingSummaries.has(s.filename) && (
+                      <span className="summary-pending-badge">Résumé en cours…</span>
+                    )}
                   </div>
                   <div className="session-card-actions">
                     <button
