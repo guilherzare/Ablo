@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import { listen } from "@tauri-apps/api/event";
 import "./PatientPage.css";
 import vocalRecord from "../assets/vocal-record.png";
 import { SessionDetailsModal } from "./SessionDetailsModal";
@@ -56,6 +57,7 @@ export function PatientPage({ patient, onNewSession, onFinalBilan, onSessionsLoa
   const [deleting, setDeleting] = useState(false);
   const [pendingSummaries, setPendingSummaries] = useState<Set<string>>(new Set()); // filenames en cours de génération
   const generatingRef = useRef<Set<string>>(new Set());
+  const unlistenMap = useRef<Map<string, () => void>>(new Map());
   const menuRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   useEffect(() => {
@@ -79,29 +81,48 @@ export function PatientPage({ patient, onNewSession, onFinalBilan, onSessionsLoa
       .finally(() => setLoading(false));
   }, [patient.id]);
 
-  // Déclenche la génération du résumé pour une séance spécifique
+  // Déclenche la génération du résumé via le backend LLM dédié.
+  // Le canal principal (call_backend) reste libre pour toutes les autres opérations.
   function triggerSummaryGeneration(filename: string) {
     if (generatingRef.current.has(filename)) return; // déjà en cours
     generatingRef.current.add(filename);
     setPendingSummaries((prev) => new Set([...prev, filename]));
-    invoke<{ result: string }>("call_backend", {
-      method: "generate_session_summary",
-      params: { patient_id: patient.id, filename },
-    })
-      .then((res) => {
-        generatingRef.current.delete(filename);
-        setPendingSummaries((prev) => { const n = new Set(prev); n.delete(filename); return n; });
-        if (res.result) {
+
+    function cleanup() {
+      generatingRef.current.delete(filename);
+      setPendingSummaries((prev) => { const n = new Set(prev); n.delete(filename); return n; });
+      unlistenMap.current.get(filename)?.();
+      unlistenMap.current.delete(filename);
+    }
+
+    // On s'abonne AVANT d'invoquer pour ne pas rater l'événement
+    listen<{ type: string; result?: string; filename?: string; message?: string }>(
+      "session-summary-result",
+      (event) => {
+        const data = event.payload;
+        if (data.filename !== filename) return; // résultat pour une autre séance
+        cleanup();
+        if (data.type === "complete" && data.result) {
           setSessions((prev) => prev.map((sess) =>
-            sess.filename === filename ? { ...sess, summary: res.result } : sess
+            sess.filename === filename ? { ...sess, summary: data.result! } : sess
           ));
         }
-      })
-      .catch(() => {
-        generatingRef.current.delete(filename);
-        setPendingSummaries((prev) => { const n = new Set(prev); n.delete(filename); return n; });
-      });
+      }
+    ).then((unlisten) => {
+      unlistenMap.current.set(filename, unlisten);
+      return invoke("start_session_summary", { patientId: patient.id, filename });
+    }).catch(() => {
+      cleanup();
+    });
   }
+
+  // Nettoyage des listeners si le composant se démonte pendant une génération
+  useEffect(() => {
+    return () => {
+      unlistenMap.current.forEach((unlisten) => unlisten());
+      unlistenMap.current.clear();
+    };
+  }, []);
 
   // Quand la modale s'ouvre, génère le résumé si absent
   useEffect(() => {

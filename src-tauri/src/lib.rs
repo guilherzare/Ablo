@@ -1,6 +1,7 @@
 use std::io::{BufRead, BufReader, Write};
 use std::process::{Command, Stdio};
 use std::sync::mpsc::{self, Sender};
+use std::sync::Mutex;
 use tauri::{Emitter, Manager};
 
 // ---------- Commande Python ----------
@@ -324,6 +325,80 @@ fn open_folder(path: String) -> Result<(), String> {
     Ok(())
 }
 
+// ---------- Backend LLM dédié (séparé du canal principal) ----------
+// Processus Python séparé pour la génération de résumés.
+// Permet aux appels de données (list_patients, get_settings…) de ne jamais
+// être bloqués par l'inférence Mistral.
+
+struct LlmState {
+    tx: Mutex<Option<Sender<BackendRequest>>>,
+}
+
+impl LlmState {
+    fn new() -> Self {
+        Self { tx: Mutex::new(None) }
+    }
+
+    fn get_or_init(&self) -> Result<Sender<BackendRequest>, String> {
+        let mut guard = self
+            .tx
+            .lock()
+            .map_err(|_| "LLM state lock poisoned".to_string())?;
+
+        if let Some(ref tx) = *guard {
+            return Ok(tx.clone());
+        }
+
+        // Premier appel : on démarre le processus LLM dédié
+        let mut child = spawn_backend()
+            .map_err(|e| format!("Impossible de démarrer le LLM backend : {}", e))?;
+
+        // Lire stderr dans un thread séparé
+        let stderr = child.stderr.take().unwrap();
+        std::thread::spawn(move || {
+            let reader = BufReader::new(stderr);
+            for line in reader.lines().flatten() {
+                eprintln!("[llm-backend] {}", line);
+            }
+        });
+
+        let handle = BackendHandle {
+            stdin: child.stdin.take().unwrap(),
+            stdout: BufReader::new(child.stdout.take().unwrap()),
+        };
+
+        let (tx, rx) = mpsc::channel::<BackendRequest>();
+        std::thread::spawn(move || run_backend_thread(handle, rx));
+
+        *guard = Some(tx.clone());
+        Ok(tx)
+    }
+}
+
+#[tauri::command]
+fn start_session_summary(
+    llm_state: tauri::State<LlmState>,
+    window: tauri::WebviewWindow,
+    patient_id: String,
+    filename: String,
+) -> Result<(), String> {
+    let tx = llm_state.get_or_init()?;
+    let payload = format!(
+        "{}\n",
+        serde_json::json!({
+            "method": "summarize_for_card",
+            "params": {"patient_id": patient_id, "filename": filename},
+            "id": 1
+        })
+    );
+    tx.send(BackendRequest::Stream {
+        payload,
+        window,
+        event_name: "session-summary-result",
+    })
+    .map_err(|_| "LLM backend non disponible".to_string())
+}
+
 // ---------- Point d'entrée ----------
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -353,6 +428,7 @@ pub fn run() {
             let (tx, rx) = mpsc::channel::<BackendRequest>();
             std::thread::spawn(move || run_backend_thread(handle, rx));
             app.manage(AppState { tx });
+            app.manage(LlmState::new());
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -363,6 +439,7 @@ pub fn run() {
             start_generation,
             start_final_generation,
             start_export,
+            start_session_summary,
             open_folder,
         ])
         .run(tauri::generate_context!())

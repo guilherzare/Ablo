@@ -279,6 +279,24 @@ def handle(cmd: dict) -> dict | None:
             _log(f"generate_session_summary ERREUR: {e}")
             return {"id": req_id, "error": str(e)}
 
+    # Variante streaming utilisée par le LLM backend dédié (start_session_summary).
+    # Émet {"type":"complete"/"error"} au lieu d'un retour Simple,
+    # pour que le processus LLM reste découplé du canal principal.
+    if method == "summarize_for_card":
+        filename = params.get("filename", "")
+        _log(f"summarize_for_card reçu patient={params.get('patient_id','')} file={filename}")
+        try:
+            result = generate_session_summary(
+                patient_id=params.get("patient_id", ""),
+                filename=filename,
+            )
+            _log(f"summarize_for_card OK result_len={len(result) if result else 0}")
+            print(json.dumps({"type": "complete", "result": result, "filename": filename}, ensure_ascii=False), flush=True)
+        except Exception as e:
+            _log(f"summarize_for_card ERREUR: {e}")
+            print(json.dumps({"type": "error", "message": str(e), "filename": filename}, ensure_ascii=False), flush=True)
+        return None
+
     if method == "update_session":
         try:
             result = update_session(
