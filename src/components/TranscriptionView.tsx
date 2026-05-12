@@ -39,9 +39,11 @@ export function TranscriptionView({ text, onChange, onContinue, isLoading, loadi
       if (corrected !== text) {
         const count = countDifferences(text, corrected);
         onChange(corrected);
+        setDictionary([]);  // Masque la liste après application (dictionnaire fichier conservé)
         setAppliedCount(count);
         setTimeout(() => setAppliedCount(null), 3000);
       } else {
+        setDictionary([]);  // Plus rien à corriger, on masque aussi
         setAppliedCount(0);
         setTimeout(() => setAppliedCount(null), 2000);
       }
