@@ -109,9 +109,22 @@ Basés sur une grille de `4px`.
 
 | Token | Valeur | Usage |
 |-------|--------|-------|
-| `shadow-card` | `0 1px 4px rgba(0,0,0,0.06)` | Cartes liste |
-| `shadow-modal` | `0 20px 60px rgba(0,0,0,0.18)` | Modales |
-| `shadow-dropdown` | `0 4px 16px rgba(0,0,0,0.10)` | Dropdowns, menus |
+| `shadow-card` | `0 1px 4px rgba(0,0,0,0.06)` | Cartes liste (repos) |
+| `shadow-card-hover` | `0 2px 8px rgba(79,70,229,0.08)` | Cartes liste (hover) — teinte indigo intentionnelle |
+| `shadow-modal` | `0 20px 60px rgba(0,0,0,0.18)` | Modales, popovers |
+| `shadow-dropdown` | `0 4px 16px rgba(0,0,0,0.10)` | Dropdowns, menus contextuels |
+| `shadow-focus` | `0 0 0 3px rgba(79,70,229,0.10)` | Focus ring inputs et boutons |
+| `shadow-panel` | `-4px 0 24px rgba(0,0,0,0.12)` | Panneau latéral (SettingsPanel) — directionnel |
+
+### Inconsistances connues à aligner
+
+| Fichier | Valeur actuelle | Token cible |
+|---------|----------------|-------------|
+| `App.css` l.268 | `0 20px 60px rgba(0,0,0,0.20)` | `shadow-modal` (0.18) |
+| `SessionAutoEvalView.css` l.28 | `0 20px 60px rgba(0,0,0,0.20)` | `shadow-modal` (0.18) |
+| `App.css` l.227 | `0 8px 24px rgba(0,0,0,0.12)` | `shadow-dropdown` |
+| `HomePage.css` l.470 | `0 8px 24px rgba(0,0,0,0.10)` | `shadow-dropdown` |
+| `FirstRun.css` l.17 | `0 4px 24px rgba(0,0,0,0.07)` | `shadow-dropdown` |
 
 ---
 
