@@ -340,12 +340,6 @@
   50% { opacity: 0.35; }
 }
 
-.summary-pending-badge {
-  font-size: 0.75rem;
-  color: #9ca3af;
-  font-style: italic;
-  animation: summary-pulse 1.6s ease-in-out infinite;
-}
 
 .session-notes {
   font-size: 0.82rem;

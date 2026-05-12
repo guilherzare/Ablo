@@ -294,9 +294,6 @@ export function PatientPage({ patient, onNewSession, onFinalBilan, onSessionsLoa
                       </span>
                       <span className="session-date">{formatDate(s.date)}</span>
                     </div>
-                    {pendingSummaries.has(s.filename) && (
-                      <span className="summary-pending-badge">Résumé en cours…</span>
-                    )}
                   </div>
                   <div className="session-card-actions">
                     <button
