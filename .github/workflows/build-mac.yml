@@ -1,0 +1,101 @@
+name: Build Mac Installer
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyinstaller certifi python-docx reportlab faster-whisper
+          CMAKE_ARGS="-DLLAMA_METAL=OFF" pip install llama-cpp-python
+
+      - name: Download ffmpeg for macOS
+        run: |
+          brew install ffmpeg
+          cp $(which ffmpeg) backend/ffmpeg
+
+      - name: Build Python backend with PyInstaller
+        run: |
+          cd backend
+          pyinstaller \
+            --onefile \
+            --name ablo-backend \
+            --collect-all faster_whisper \
+            --collect-all ctranslate2 \
+            --collect-all tokenizers \
+            --collect-all llama_cpp \
+            --add-binary "ffmpeg:." \
+            --add-data "../templates:templates" \
+            main.py
+          mkdir -p ../src-tauri/binaries
+          cp dist/ablo-backend ../src-tauri/binaries/ablo-backend-aarch64-apple-darwin
+
+      - name: Verify backend binary size
+        run: |
+          bin="src-tauri/binaries/ablo-backend-aarch64-apple-darwin"
+          if [ ! -f "$bin" ]; then
+            echo "ERREUR : $bin introuvable !"
+            exit 1
+          fi
+          size=$(wc -c < "$bin")
+          sizeMB=$((size / 1048576))
+          echo "Taille du backend : $size octets ($sizeMB Mo)"
+          if [ "$size" -lt 31457280 ]; then
+            echo "ERREUR : binaire trop petit ($sizeMB Mo)"
+            exit 1
+          fi
+          echo "OK - binaire valide"
+
+      - name: Upload backend binary (diagnostic)
+        uses: actions/upload-artifact@v4
+        with:
+          name: ablo-backend-mac
+          path: src-tauri/binaries/ablo-backend-aarch64-apple-darwin
+          if-no-files-found: error
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Node dependencies
+        run: npm install
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin
+
+      - name: Cache Rust build
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: './src-tauri -> target'
+
+      - name: Build Tauri app
+        run: npm run tauri build
+
+      - name: Upload Mac installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: ablo-mac-installer
+          path: |
+            src-tauri/target/release/bundle/dmg/*.dmg
+            src-tauri/target/release/bundle/macos/*.app
+          if-no-files-found: warn
