@@ -28,7 +28,8 @@ export function SessionEditModal({ session, sessionNumber, patientId, onSaved, o
   const isDirty =
     date !== session.date ||
     notes !== (session.notes ?? "") ||
-    summary !== (session.summary ?? "");
+    summary !== (session.summary ?? "") ||
+    JSON.stringify(scores) !== JSON.stringify((session.autoeval as AutoEvalScores) ?? {});
 
   function requestClose() {
     if (isDirty) setShowCloseConfirm(true);
