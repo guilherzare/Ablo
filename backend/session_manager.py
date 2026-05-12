@@ -63,10 +63,10 @@ def generate_session_summary(patient_id: str, filename: str) -> str:
         _log(f"ERROR: fichier '{filename}' introuvable dans {pdir}")
         raise ValueError(f"Séance '{filename}' introuvable")
     data = json.loads(path.read_text(encoding="utf-8"))
-    text = data.get("anonymized_text", "")
-    is_first = data.get("is_first_session", False)
-    _log(f"texte len={len(text)} is_first={is_first}")
-    summary = summarize_session(text, is_first_session=is_first)
+    summary = summarize_session(
+        data.get("anonymized_text", ""),
+        is_first_session=data.get("is_first_session", False),
+    )
     _log(f"summary len={len(summary)} summary_preview={summary[:80] if summary else 'EMPTY'}")
     # N'écrit dans le fichier que si le résumé est non vide (permet de réessayer en cas d'échec)
     if summary:
