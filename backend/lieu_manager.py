@@ -2,6 +2,7 @@
 Gestion des lieux (cabinets, villes…) disponibles pour étiqueter les patients.
 Stockage : <export_folder>/lieux.json
 """
+from __future__ import annotations
 import json
 from pathlib import Path
 from settings_manager import get_settings

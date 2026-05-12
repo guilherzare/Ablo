@@ -2,6 +2,7 @@
 TranscriptionModule : transcription audio locale via faster-whisper (CPU).
 Émet des lignes JSON de progression sur stdout.
 """
+from __future__ import annotations
 import json
 import sys
 import os

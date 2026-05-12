@@ -2,6 +2,7 @@
 Gestion des dossiers patients.
 Stockage : <export_folder>/Patients/<slug>_<id8>/patient.json
 """
+from __future__ import annotations
 import json
 import re
 import uuid

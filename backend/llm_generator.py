@@ -2,6 +2,7 @@
 Génération du bilan via Mistral 7B Q4_K_M (llama.cpp).
 Streaming : émet des lignes JSON sur stdout.
 """
+from __future__ import annotations
 import json
 import re
 import sys
