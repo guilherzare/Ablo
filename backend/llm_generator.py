@@ -139,7 +139,8 @@ def generate(text: str, template_path: str | None = None) -> None:
     })
 
     try:
-        llm = _get_llm(n_ctx=2048)
+        # n_ctx=3072 : couvre transcription ~2000 tokens + sortie 1200 tokens
+        llm = _get_llm(n_ctx=3072)
     except Exception as e:
         _emit({"type": "error", "message": f"Impossible de charger le modèle : {e}"})
         return
@@ -237,9 +238,9 @@ def summarize_session(text: str, is_first_session: bool = False) -> str:
     log(f"START first={is_first_session} text_len={len(text)}")
 
     try:
-        # n_ctx=2048 suffit pour les résumés (entrée ~1000 tokens + sortie ~500)
+        # n_ctx=3072 : couvre transcription jusqu'à ~2000 tokens + sortie 500 tokens
         # Partagé avec generate() pour éviter un rechargement entre les appels
-        llm = _get_llm(n_ctx=2048)
+        llm = _get_llm(n_ctx=3072)
         log("Modèle chargé (ou réutilisé depuis le cache)")
     except Exception as e:
         log(f"ERREUR chargement modèle : {e}")
