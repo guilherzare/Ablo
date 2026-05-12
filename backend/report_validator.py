@@ -1,6 +1,7 @@
 """
 Validation déterministe du bilan généré (sans IA).
 """
+from __future__ import annotations
 import re
 from typing import TypedDict
 

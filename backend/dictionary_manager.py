@@ -3,6 +3,7 @@ Dictionnaire de corrections de transcription.
 Persisté dans ~/.ablo/transcription_dictionary.json.
 Format : [{"wrong": "...", "correct": "..."}, ...]
 """
+from __future__ import annotations
 import json
 import re
 from pathlib import Path

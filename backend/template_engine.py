@@ -12,6 +12,7 @@ version: 1
 [required: true]
 [constraint: "Description de la contrainte"]
 """
+from __future__ import annotations
 import re
 from dataclasses import dataclass, asdict
 from pathlib import Path

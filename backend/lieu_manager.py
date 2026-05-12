@@ -2,6 +2,7 @@
 Gestion des lieux (cabinets, villes…) disponibles pour étiqueter les patients.
 Stockage : <export_folder>/lieux.json
 """
+from __future__ import annotations
 import json
 from pathlib import Path
 from settings_manager import get_settings
@@ -32,17 +33,20 @@ def _save(lieux: list[str]) -> None:
 
 def list_lieux() -> list[str]:
     stored = set(_load())
-    from patient_manager import _patients_dir
-    for d in _patients_dir().iterdir():
-        pf = d / "patient.json"
-        if not pf.exists():
-            continue
-        try:
-            label = json.loads(pf.read_text(encoding="utf-8")).get("label", "").strip()
-            if label:
-                stored.add(label)
-        except Exception:
-            pass
+    try:
+        from patient_manager import _patients_dir
+        for d in _patients_dir().iterdir():
+            pf = d / "patient.json"
+            if not pf.exists():
+                continue
+            try:
+                label = json.loads(pf.read_text(encoding="utf-8")).get("label", "").strip()
+                if label:
+                    stored.add(label)
+            except Exception:
+                pass
+    except Exception:
+        pass
     return sorted(stored)
 
 

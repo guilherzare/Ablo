@@ -2,6 +2,7 @@
 Export du bilan en Word (.docx) et PDF.
 Émet des lignes JSON sur stdout pour le streaming de progression.
 """
+from __future__ import annotations
 import json
 import datetime
 import uuid

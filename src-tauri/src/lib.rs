@@ -226,6 +226,21 @@ fn start_model_download(
 }
 
 #[tauri::command]
+fn start_large_v3_download(
+    state: tauri::State<AppState>,
+    window: tauri::WebviewWindow,
+) -> Result<(), String> {
+    let payload = format!(
+        "{}\n",
+        serde_json::json!({"method": "download_large_v3", "params": {}, "id": 1})
+    );
+    state
+        .tx
+        .send(BackendRequest::Stream { payload, window, event_name: "large-v3-download-progress" })
+        .map_err(|_| "Backend non disponible".to_string())
+}
+
+#[tauri::command]
 fn start_transcription(
     state: tauri::State<AppState>,
     window: tauri::WebviewWindow,
@@ -343,6 +358,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             call_backend,
             start_model_download,
+            start_large_v3_download,
             start_transcription,
             start_generation,
             start_final_generation,

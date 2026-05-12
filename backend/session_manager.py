@@ -2,6 +2,7 @@
 Gestion des bilans de séance par patient.
 Chaque séance = un fichier seance_YYYYMMDD_HHMMSS.json dans le dossier du patient.
 """
+from __future__ import annotations
 import json
 import datetime
 from pathlib import Path
