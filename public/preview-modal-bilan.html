@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Prévisualisation Modale + Bilan</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f5f5f7;
+      margin: 0;
+      padding: 32px 16px;
+      display: flex;
+      justify-content: center;
+    }
+    .page { width: 100%; max-width: 680px; display: flex; flex-direction: column; gap: 40px; }
+
+    .section-label {
+      font-size: 0.75rem; font-weight: 600; color: #9ca3af;
+      text-transform: uppercase; letter-spacing: 0.07em; margin: 0 0 12px;
+    }
+
+    /* ── Modal ── */
+    .modal {
+      background: #fff; border-radius: 14px; padding: 28px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.12);
+      display: flex; flex-direction: column; gap: 20px;
+    }
+    .modal-header { display: flex; align-items: flex-start; justify-content: space-between; }
+    .modal-eyebrow { font-size: 0.7rem; font-weight: 600; color: #4f46e5; text-transform: uppercase; letter-spacing: 0.06em; margin: 0 0 2px; }
+    .modal-title { font-size: 1.15rem; font-weight: 700; color: #1a1a2e; margin: 0; }
+    .modal-close { background: none; border: none; font-size: 1rem; color: #9ca3af; cursor: pointer; padding: 4px 8px; border-radius: 6px; }
+    .modal-section { display: flex; flex-direction: column; gap: 8px; }
+    .modal-section-title { font-size: 0.78rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #6b7280; margin: 0; }
+    .modal-summary { font-size: 0.92rem; color: #1a1a2e; line-height: 1.6; margin: 0; }
+    .scores-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
+    .score-row { display: grid; grid-template-columns: 130px 1fr 44px; align-items: center; gap: 10px; }
+    .score-label { font-size: 0.8rem; color: #374151; }
+    .score-bar { height: 8px; background: #f3f4f6; border-radius: 99px; overflow: hidden; }
+    .score-fill { height: 100%; border-radius: 99px; }
+    .score-value { font-size: 0.78rem; font-weight: 600; text-align: right; }
+
+    /* ── Bilan table ── */
+    .bilan-block {
+      background: #fff; border: 1px solid #e5e7eb; border-radius: 10px;
+      padding: 14px; display: flex; flex-direction: column; gap: 8px;
+    }
+    .bilan-section-title { font-weight: 600; font-size: 0.9rem; color: #1a1a2e; }
+    .bilan-hint { font-size: 0.8rem; color: #9ca3af; margin: 0; font-style: italic; }
+    .auteval-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    .auteval-th {
+      padding: 8px 10px; background: #4f46e5; color: white;
+      font-weight: 600; text-align: center; font-size: 0.8rem;
+    }
+    .auteval-th-criteria { text-align: left; width: 36%; }
+    .auteval-th-date { display: block; font-size: 0.68rem; font-weight: 400; opacity: 0.8; }
+    .auteval-td { padding: 7px 10px; border-bottom: 1px solid #f3f4f6; text-align: center; }
+    .auteval-td-label { text-align: left; font-weight: 500; color: #374151; }
+    .auteval-score-chip {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 34px; height: 34px; border-radius: 50%;
+      color: white; font-size: 0.75rem; font-weight: 700;
+      flex-shrink: 0;
+    }
+    .auteval-score-empty {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 26px; height: 26px; font-size: 0.85rem; color: #d1d5db;
+    }
+    .auteval-summary-hint { font-size: 0.78rem; color: #9ca3af; margin: 0; font-style: italic; }
+  </style>
+</head>
+<body>
+  <div class="page">
+
+    <!-- ── 1. Modale résumé de séance ── -->
+    <div>
+      <p class="section-label">1 — Modale résumé de séance</p>
+      <div class="modal">
+        <div class="modal-header">
+          <div>
+            <p class="modal-eyebrow">Séance 3</p>
+            <h2 class="modal-title">12/04/2025</h2>
+          </div>
+          <button class="modal-close">✕</button>
+        </div>
+
+        <div class="modal-section">
+          <h3 class="modal-section-title">Résumé de la séance</h3>
+          <p class="modal-summary">
+            Séance centrée sur le modelage argile. Marie a travaillé sur une forme abstraite
+            représentant ses émotions. Bonne concentration et engagement dans la tâche.
+            Retour positif en fin de séance.
+          </p>
+        </div>
+
+        <div class="modal-section">
+          <h3 class="modal-section-title">Autoévaluation du patient</h3>
+          <ul class="scores-list" id="modal-scores"></ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── 2. Tableau bilan multi-séances ── -->
+    <div>
+      <p class="section-label">2 — Tableau récapitulatif dans le bilan</p>
+      <div class="bilan-block">
+        <span class="bilan-section-title">Autoévaluation multi-séances</span>
+        <p class="bilan-hint">Évaluations réalisées par le patient à la fin de chaque séance, de 0 à 5, sur différents critères.</p>
+        <table class="auteval-table" id="bilan-table"></table>
+        <p class="auteval-summary-hint">Ce tableau est en lecture seule — il récapitule les scores saisis à chaque séance.</p>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    const CRITERIA = ["État initial", "Envie de revenir", "Bien fait", "Beau", "Bon moment", "État final"];
+
+    // Données exemple : 4 séances, plage complète de couleurs + N/A
+    const SESSIONS = [
+      { date: "2025-03-01", scores: { "État initial": 0.5, "Envie de revenir": 1,   "Bien fait": 0,   "Beau": 1.5, "Bon moment": null, "État final": 1   } },
+      { date: "2025-03-15", scores: { "État initial": 1.5, "Envie de revenir": 2,   "Bien fait": null,"Beau": 2.3, "Bon moment": 2,   "État final": 2.5 } },
+      { date: "2025-04-01", scores: { "État initial": 2.3, "Envie de revenir": 3,   "Bien fait": 2.5, "Beau": null,"Bon moment": 3.5, "État final": 3.8 } },
+      { date: "2025-04-12", scores: { "État initial": 3.8, "Envie de revenir": 4.5, "Bien fait": 3.5, "Beau": 4.9, "Bon moment": 4,   "État final": 4.9 } },
+    ];
+
+    // Couleur interpolée rouge→vert pour n'importe quelle valeur décimale 0-5
+    function scoreColor(v) {
+      const h = (v / 5) * 120;
+      const s = 85;
+      const l = 52 - (v / 5) * 12;
+      return `hsl(${h.toFixed(1)}, ${s}%, ${Math.round(l)}%)`;
+    }
+
+    function formatDate(iso) {
+      const [y, m, d] = iso.split("-");
+      return `${d}/${m}/${y}`;
+    }
+
+    // ── Modale : barres horizontales ──
+    const modalScores = SESSIONS[3].scores; // dernière séance
+    const list = document.getElementById("modal-scores");
+    CRITERIA.forEach(c => {
+      const val = modalScores[c];
+      const isNA = val === null || val === undefined;
+      const li = document.createElement("li");
+      li.className = "score-row";
+      li.innerHTML = `
+        <span class="score-label">${c}</span>
+        <div class="score-bar">
+          ${!isNA ? `<div class="score-fill" style="width:${(val/5)*100}%;background:${scoreColor(val)}"></div>` : ""}
+        </div>
+        <span class="score-value" style="color:${isNA ? '#d1d5db' : scoreColor(val)}">
+          ${isNA ? "—" : `${val}/5`}
+        </span>`;
+      list.appendChild(li);
+    });
+
+    // ── Bilan : tableau multi-séances ──
+    const table = document.getElementById("bilan-table");
+    // En-tête
+    const thead = table.createTHead();
+    const hrow = thead.insertRow();
+    hrow.innerHTML = `<th class="auteval-th auteval-th-criteria">Critère</th>` +
+      SESSIONS.map((s, i) => `<th class="auteval-th">S${i+1}<span class="auteval-th-date">${formatDate(s.date)}</span></th>`).join("");
+
+    // Corps
+    const tbody = table.createTBody();
+    CRITERIA.forEach(c => {
+      const tr = tbody.insertRow();
+      tr.innerHTML = `<td class="auteval-td auteval-td-label">${c}</td>` +
+        SESSIONS.map(s => {
+          const v = s.scores[c];
+          const isNA = v === null || v === undefined;
+          return `<td class="auteval-td auteval-td-score">${
+            isNA
+              ? `<span class="auteval-score-empty">—</span>`
+              : `<span class="auteval-score-chip" style="background:${scoreColor(v)}">${v}</span>`
+          }</td>`;
+        }).join("");
+    });
+  </script>
+</body>
+</html>

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { AutoEvalEditor, parseAutoEval, serializeAutoEval, AutoEvalScores } from "./AutoEvalEditor";
+import { AutoEvalEditor, parseAutoEval, serializeAutoEval, AutoEvalScores, defaultScores } from "./AutoEvalEditor";
 import "./SessionAutoEvalView.css";
 
 interface Props {
@@ -14,14 +14,7 @@ interface Props {
 }
 
 export function SessionAutoEvalView({ patientId, patientName, anonymizedText, isFirstSession, date, onSaved, onBack }: Props) {
-  const [scores, setScores] = useState<AutoEvalScores>({
-    "État initial": 0,
-    "Envie de revenir": 0,
-    "Bien fait": 0,
-    "Beau": 0,
-    "Bon moment": 0,
-    "État final": 0,
-  });
+  const [scores, setScores] = useState<AutoEvalScores>(defaultScores());
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -69,7 +62,7 @@ export function SessionAutoEvalView({ patientId, patientName, anonymizedText, is
         <section className="session-auteval-block">
           <h2 className="session-auteval-section-title">Autoévaluation du patient</h2>
           <p className="session-auteval-hint">
-            Demandez au patient de noter chaque critère de 0 à 5.
+            Saisissez la note du patient pour chaque critère (0 à 5, décimales acceptées). Cliquez sur N/A si un critère n'a pas été évalué.
           </p>
           <AutoEvalEditor
             content={serializeAutoEval(scores)}

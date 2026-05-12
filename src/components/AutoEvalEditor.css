@@ -1,112 +1,114 @@
 .auteval {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 14px;
   padding: 4px 0;
 }
 
 .auteval-row {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 12px;
 }
 
 .auteval-label {
-  flex: 0 0 150px;
+  flex: 0 0 140px;
   font-size: 0.875rem;
   color: #374151;
   font-weight: 500;
-  padding-top: 2px;
 }
 
-.auteval-slider-wrap {
-  flex: 1;
+.auteval-input-wrap {
   display: flex;
-  flex-direction: column;
+  align-items: center;
   gap: 8px;
 }
 
-/* Slider */
-.auteval-slider {
-  width: 100%;
+/* Point coloré indicateur */
+.auteval-dot-indicator {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  transition: background 0.2s;
+}
+
+/* Champ numérique — flèches natives masquées */
+.auteval-input {
+  width: 64px;
+  padding: 5px 8px;
+  border: 1px solid #d1d5db;
+  border-radius: 7px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  font-family: inherit;
+  color: #1a1a2e;
+  background: #ffffff;
+  text-align: center;
+  transition: border-color 0.2s;
+  -moz-appearance: textfield;
+}
+
+.auteval-input::-webkit-outer-spin-button,
+.auteval-input::-webkit-inner-spin-button {
   -webkit-appearance: none;
-  appearance: none;
-  height: 6px;
-  border-radius: 99px;
-  background: var(--track-bg, #e5e7eb);
+  margin: 0;
+}
+
+.auteval-input:focus {
   outline: none;
-  cursor: pointer;
-  transition: background 0.25s;
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
 }
 
-.auteval-slider::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: var(--thumb-color, #ef4444);
-  cursor: pointer;
-  border: 2.5px solid white;
-  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.25);
-  transition: background 0.25s, transform 0.1s;
-}
-
-.auteval-slider::-webkit-slider-thumb:hover {
-  transform: scale(1.15);
-}
-
-/* Ligne de points avec chiffres */
-.auteval-dots {
-  display: flex;
-  justify-content: space-between;
-  padding: 0 2px;
-}
-
-.auteval-dot-wrap {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 3px;
-}
-
-.auteval-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  transition: background 0.2s, transform 0.15s, opacity 0.2s;
-}
-
-.auteval-dot.active {
-  transform: scale(1.4);
-}
-
-.auteval-dot-num {
-  font-size: 0.7rem;
+.auteval-unit {
+  font-size: 0.8rem;
   color: #9ca3af;
   font-weight: 500;
-  line-height: 1;
-  transition: color 0.2s;
+  white-space: nowrap;
 }
 
-/* Score à droite */
-.auteval-score {
-  flex: 0 0 40px;
-  text-align: right;
-  font-size: 1rem;
-  font-weight: 700;
-  transition: color 0.2s;
-  padding-top: 2px;
+/* Valeur "—" quand non évaluée */
+.auteval-na-value {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #d1d5db;
+  width: 64px;
+  text-align: center;
+  display: inline-block;
 }
 
-.auteval-max {
-  font-size: 0.75rem;
-  font-weight: 400;
+/* Bouton N/A par ligne */
+.auteval-na-btn {
+  margin-left: auto;
+  padding: 3px 9px;
+  border: 1px solid #e5e7eb;
+  border-radius: 5px;
+  font-size: 0.72rem;
+  font-family: inherit;
+  font-weight: 500;
   color: #9ca3af;
+  background: #ffffff;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.auteval-na-btn:hover {
+  background: #f3f4f6;
+  border-color: #d1d5db;
+  color: #374151;
+}
+
+.auteval-na-btn.active {
+  background: #f3f4f6;
+  border-color: #d1d5db;
+  color: #374151;
+  font-weight: 600;
 }
 
 @media (prefers-color-scheme: dark) {
   .auteval-label { color: #d1d5db; }
-  .auteval-dot-num { color: #6b7280; }
-  .auteval-max { color: #6b7280; }
+  .auteval-input { background: #111827; border-color: #374151; color: #f3f4f6; }
 }

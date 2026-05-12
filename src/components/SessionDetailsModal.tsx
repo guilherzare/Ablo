@@ -1,5 +1,6 @@
 import "./SessionDetailsModal.css";
 import { Session } from "./PatientPage";
+import { scoreColor, AUTEVAL_CRITERIA } from "./AutoEvalEditor";
 
 interface Props {
   session: Session;
@@ -8,17 +9,6 @@ interface Props {
   onClose: () => void;
 }
 
-const CRITERIA_LABELS = [
-  "État initial",
-  "Envie de revenir",
-  "Bien fait",
-  "Beau",
-  "Bon moment",
-  "État final",
-];
-
-const DOT_COLORS = ["#ef4444", "#f97316", "#eab308", "#84cc16", "#22c55e", "#16a34a"];
-
 function formatDate(iso: string): string {
   if (!iso) return "";
   const [y, m, d] = iso.split("-");
@@ -26,7 +16,10 @@ function formatDate(iso: string): string {
 }
 
 export function SessionDetailsModal({ session, sessionNumber, summaryPending, onClose }: Props) {
-  const hasAutoeval = !session.is_first_session && session.autoeval && Object.keys(session.autoeval).length > 0;
+  // Affiche la section autoéval seulement si au moins un critère a une vraie valeur
+  const hasAutoeval = !session.is_first_session &&
+    session.autoeval &&
+    Object.values(session.autoeval).some((v) => v !== null && v !== undefined);
 
   return (
     <div className="session-details-backdrop" onClick={onClose}>
@@ -65,18 +58,23 @@ export function SessionDetailsModal({ session, sessionNumber, summaryPending, on
           <section className="session-details-section">
             <h3 className="session-details-section-title">Autoévaluation du patient</h3>
             <ul className="session-details-scores">
-              {CRITERIA_LABELS.map((label) => {
-                const value = session.autoeval[label] ?? 0;
+              {AUTEVAL_CRITERIA.map((label) => {
+                const value = session.autoeval[label] ?? null;
+                const isNA = value === null;
                 return (
                   <li key={label} className="session-details-score-row">
                     <span className="session-details-score-label">{label}</span>
                     <div className="session-details-score-bar">
-                      <div
-                        className="session-details-score-fill"
-                        style={{ width: `${(value / 5) * 100}%`, background: DOT_COLORS[value] ?? "#e5e7eb" }}
-                      />
+                      {!isNA && (
+                        <div
+                          className="session-details-score-fill"
+                          style={{ width: `${(value! / 5) * 100}%`, background: scoreColor(value!) }}
+                        />
+                      )}
                     </div>
-                    <span className="session-details-score-value">{value}/5</span>
+                    <span className="session-details-score-value" style={{ color: isNA ? "#d1d5db" : scoreColor(value!) }}>
+                      {isNA ? "—" : `${value}/5`}
+                    </span>
                   </li>
                 );
               })}
