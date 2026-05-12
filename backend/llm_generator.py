@@ -186,10 +186,12 @@ def _build_summary_prompt(text: str, is_first_session: bool) -> str:
             "Cette séance est la PREMIÈRE séance du patient. Le thérapeute aborde "
             "généralement la demande initiale, les objectifs de la prise en charge, "
             "le cadre proposé et l'histoire du patient.\n\n"
-            "Rédige un résumé concis (3 à 5 phrases) qui met l'accent sur :\n"
-            "- La demande initiale du patient et son contexte\n"
-            "- Les objectifs identifiés pour la prise en charge\n"
-            "- Le cadre / dispositif proposé pour la suite"
+            "Rédige le résumé en deux parties :\n\n"
+            "1. Un court paragraphe (2 à 3 phrases) sur la demande initiale du patient, "
+            "son contexte et le cadre / dispositif proposé pour la suite.\n\n"
+            "2. Une liste à puces des objectifs identifiés pour la prise en charge, "
+            "introduite par 'Objectifs identifiés :'. "
+            "Si aucun objectif n'est mentionné dans la transcription, omet cette partie."
         )
     else:
         focus = (
