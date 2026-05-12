@@ -32,10 +32,15 @@ def transcribe(audio_path: str) -> None:
                "message": "faster-whisper non installé. Exécutez : pip3 install faster-whisper"})
         return
 
+    # Essaie large-v3 en priorité, repli sur small si absent
+    models_dir = Path.home() / ".ablo" / "models"
+    large_path = models_dir / "faster-whisper-large-v3"
+    small_path = models_dir / "faster-whisper-small"
+    model_path = str(large_path) if large_path.exists() else str(small_path)
+
     try:
-        # Modèle small, CPU uniquement, quantisation int8 pour les machines sans GPU
         model = WhisperModel(
-            str(Path.home() / ".ablo" / "models" / "faster-whisper-small"),
+            model_path,
             device="cpu",
             compute_type="int8",
         )
@@ -46,11 +51,21 @@ def transcribe(audio_path: str) -> None:
     _emit({"type": "progress", "status": "transcribing",
            "message": "Transcription en cours…"})
 
+    # Prompt de domaine : aide Whisper à reconnaître le vocabulaire art-thérapie
+    INITIAL_PROMPT = (
+        "Séance d'art-thérapie. Bilan de prise en charge thérapeutique. "
+        "Médiation artistique, argile, peinture, aquarelle, collage, dessin, sculpture. "
+        "Transfert, contre-transfert, alliance thérapeutique, cadre thérapeutique. "
+        "Expression créatrice, processus de création, œuvre plastique. "
+        "Anamnèse, symptômes, trouble anxieux, dépression, trauma."
+    )
+
     try:
         segments, info = model.transcribe(
             audio_path,
             language="fr",
             beam_size=5,
+            initial_prompt=INITIAL_PROMPT,
             vad_filter=True,          # filtre les silences
             vad_parameters={"min_silence_duration_ms": 500},
         )

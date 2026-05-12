@@ -39,7 +39,9 @@ def apply_dictionary(text: str) -> str:
         if not wrong:
             continue
         try:
-            text = re.sub(re.escape(wrong), correct, text, flags=re.IGNORECASE)
+            # Utilise une lambda pour éviter l'interprétation des backslashes
+            # dans la chaîne de remplacement (bug re.sub avec \n, \1, etc.)
+            text = re.sub(re.escape(wrong), lambda m: correct, text, flags=re.IGNORECASE)
         except re.error:
             text = text.replace(wrong, correct)
     return text

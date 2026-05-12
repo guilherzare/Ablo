@@ -20,6 +20,7 @@ export function TranscriptionView({ text, onChange, onContinue, isLoading, loadi
   const [newWrong, setNewWrong] = useState("");
   const [newCorrect, setNewCorrect] = useState("");
   const [appliedCount, setAppliedCount] = useState<number | null>(null);
+  const [applyError, setApplyError] = useState(false);
   const [showForm, setShowForm] = useState(false);
 
   useEffect(() => {
@@ -38,14 +39,17 @@ export function TranscriptionView({ text, onChange, onContinue, isLoading, loadi
       if (corrected !== text) {
         const count = countDifferences(text, corrected);
         onChange(corrected);
+        setDictionary([]);  // Masque la liste après application (dictionnaire fichier conservé)
         setAppliedCount(count);
         setTimeout(() => setAppliedCount(null), 3000);
       } else {
+        setDictionary([]);  // Plus rien à corriger, on masque aussi
         setAppliedCount(0);
         setTimeout(() => setAppliedCount(null), 2000);
       }
     } catch {
-      // sans Tauri, on ne fait rien
+      setApplyError(true);
+      setTimeout(() => setApplyError(false), 3000);
     }
   }
 
@@ -109,6 +113,11 @@ export function TranscriptionView({ text, onChange, onContinue, isLoading, loadi
             )}
           </span>
           <div className="corrections-panel-actions">
+            {applyError && (
+              <span className="corrections-feedback corrections-feedback--error">
+                Erreur lors de l'application
+              </span>
+            )}
             {appliedCount !== null && (
               <span className={`corrections-feedback ${appliedCount === 0 ? "corrections-feedback--none" : ""}`}>
                 {appliedCount === 0 ? "Aucune correction à appliquer" : `${appliedCount} correction${appliedCount > 1 ? "s" : ""} appliquée${appliedCount > 1 ? "s" : ""}`}
