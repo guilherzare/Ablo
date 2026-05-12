@@ -42,7 +42,7 @@ from dictionary_manager import get_dictionary, update_dictionary, apply_dictiona
 _log("import template_engine…")
 from template_engine import load as load_template, validate_file as validate_template
 _log("import model_manager…")
-from model_manager import check_models, download_models
+from model_manager import check_models, download_models, check_large_v3, download_large_v3
 _log("import transcription…")
 from transcription import transcribe
 _log("import anonymizer…")
@@ -148,6 +148,14 @@ def handle(cmd: dict) -> dict | None:
     if method == "download_models":
         # Streaming : écrit directement sur stdout, pas de réponse unique
         download_models()
+        return None
+
+    if method == "check_large_v3":
+        return {"id": req_id, "result": check_large_v3()}
+
+    if method == "download_large_v3":
+        # Streaming : émet la progression sur stdout
+        download_large_v3()
         return None
 
     # --- Transcription ---

@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import { listen } from "@tauri-apps/api/event";
 import { open } from "@tauri-apps/plugin-dialog";
 import { getLabelColor } from "./HomePage";
 import "./SettingsPanel.css";
@@ -29,6 +30,12 @@ export function SettingsPanel({ onClose }: Props) {
   const [editingLieu, setEditingLieu] = useState<{ name: string; value: string } | null>(null);
   const [confirmDeleteLieu, setConfirmDeleteLieu] = useState<string | null>(null);
 
+  // --- Large V3 ---
+  const [largeV3Present, setLargeV3Present] = useState<boolean | null>(null);
+  const [largeV3Downloading, setLargeV3Downloading] = useState(false);
+  const [largeV3Percent, setLargeV3Percent] = useState(0);
+  const [largeV3Error, setLargeV3Error] = useState<string | null>(null);
+
   const newLieuRef = useRef<HTMLInputElement>(null);
   const editLieuRef = useRef<HTMLInputElement>(null);
 
@@ -39,6 +46,9 @@ export function SettingsPanel({ onClose }: Props) {
     invoke<{ result: string[] }>("call_backend", { method: "list_lieux", params: {} })
       .then((res) => setLieux(res.result))
       .catch(() => {});
+    invoke<{ result: { present: boolean } }>("call_backend", { method: "check_large_v3", params: {} })
+      .then((res) => setLargeV3Present(res.result.present))
+      .catch(() => setLargeV3Present(false));
   }, []);
 
   // Focus manuel avec délai pour contourner le bug WebView2 (autoFocus perd le 1er caractère)
@@ -112,6 +122,39 @@ export function SettingsPanel({ onClose }: Props) {
       // silencieux — la liste sera rafraîchie à la prochaine ouverture
     } finally {
       setConfirmDeleteLieu(null);
+    }
+  }
+
+  async function handleDownloadLargeV3() {
+    setLargeV3Downloading(true);
+    setLargeV3Percent(0);
+    setLargeV3Error(null);
+
+    const unlisten = await listen<{ type: string; percent?: number; message?: string }>(
+      "large-v3-download-progress",
+      (event) => {
+        const data = event.payload;
+        if (data.type === "progress" && data.percent !== undefined) {
+          setLargeV3Percent(data.percent);
+        } else if (data.type === "complete") {
+          setLargeV3Percent(100);
+          setLargeV3Present(true);   // card disparaît
+          setLargeV3Downloading(false);
+          unlisten();
+        } else if (data.type === "error") {
+          setLargeV3Error(data.message ?? "Erreur inconnue");
+          setLargeV3Downloading(false);
+          unlisten();
+        }
+      }
+    );
+
+    try {
+      await invoke("start_large_v3_download");
+    } catch (e) {
+      setLargeV3Error("Impossible de lancer le téléchargement");
+      setLargeV3Downloading(false);
+      unlisten();
     }
   }
 
@@ -252,6 +295,41 @@ export function SettingsPanel({ onClose }: Props) {
             </button>
           </div>
         </div>
+
+        {/* Section amélioration transcription — masquée si large-v3 déjà installé */}
+        {largeV3Present === false && (
+          <div className="settings-section">
+            <h3>Améliorer la transcription</h3>
+            <p className="settings-hint">
+              Le modèle haute qualité reconnaît mieux le vocabulaire clinique et réduit les erreurs de transcription.
+              Téléchargement unique de 3,1&nbsp;Go — connexion internet requise.
+            </p>
+            {!largeV3Downloading && !largeV3Error && (
+              <button className="btn-download-large" onClick={handleDownloadLargeV3}>
+                Télécharger le modèle haute qualité
+              </button>
+            )}
+            {largeV3Downloading && (
+              <div className="large-v3-progress-wrap">
+                <div className="large-v3-progress-bar-track">
+                  <div className="large-v3-progress-bar-fill" style={{ width: `${largeV3Percent}%` }} />
+                </div>
+                <span className="large-v3-progress-label">{largeV3Percent}%</span>
+                <p className="large-v3-progress-hint">
+                  Ne fermez pas l'application pendant le téléchargement.
+                </p>
+              </div>
+            )}
+            {largeV3Error && (
+              <div className="large-v3-error">
+                <span>{largeV3Error}</span>
+                <button className="btn-download-large" onClick={handleDownloadLargeV3}>
+                  Réessayer
+                </button>
+              </div>
+            )}
+          </div>
+        )}
 
         <div className="settings-footer">
           <button className="btn-save" onClick={handleSave}>

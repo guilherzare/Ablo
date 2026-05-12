@@ -256,6 +256,69 @@
   margin: 0;
 }
 
+/* --- Téléchargement Large V3 --- */
+
+.btn-download-large {
+  background: #4f46e5;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 9px 18px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.2s;
+  margin-top: 4px;
+}
+
+.btn-download-large:hover { background: #4338ca; }
+
+.large-v3-progress-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.large-v3-progress-bar-track {
+  height: 8px;
+  background: #e5e7eb;
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.large-v3-progress-bar-fill {
+  height: 100%;
+  background: #4f46e5;
+  border-radius: 99px;
+  transition: width 0.3s ease;
+}
+
+.large-v3-progress-label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #4f46e5;
+}
+
+.large-v3-progress-hint {
+  font-size: 0.8rem;
+  color: #9ca3af;
+  margin: 0;
+}
+
+.large-v3-error {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.large-v3-error span {
+  font-size: 0.85rem;
+  color: #dc2626;
+}
+
 @media (prefers-color-scheme: dark) {
   .settings-panel { background: #1f2937; }
   .settings-header { border-color: #374151; }
@@ -263,4 +326,5 @@
   .settings-section { border-color: #374151; }
   .settings-label { color: #d1d5db; }
   .settings-input { background: #111827; border-color: #374151; color: #f3f4f6; }
+  .large-v3-progress-bar-track { background: #374151; }
 }

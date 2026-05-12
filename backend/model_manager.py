@@ -28,6 +28,17 @@ WHISPER_FILES = [
 ]
 WHISPER_TOTAL_BYTES = sum(s for _, s in WHISPER_FILES)
 
+# Modèle Large V3 — meilleure qualité de transcription (~3,1 Go)
+WHISPER_LARGE_DIR = MODELS_DIR / "faster-whisper-large-v3"
+WHISPER_LARGE_BASE_URL = "https://huggingface.co/Systran/faster-whisper-large-v3/resolve/main"
+WHISPER_LARGE_FILES = [
+    ("model.bin",            3_100_000_000),   # fichier principal (~3,1 Go)
+    ("config.json",                  1_000),
+    ("tokenizer.json",           2_402_000),
+    ("vocabulary.txt",             809_000),
+]
+WHISPER_LARGE_TOTAL_BYTES = sum(s for _, s in WHISPER_LARGE_FILES)
+
 # Modèle Mistral : fichier GGUF unique
 MISTRAL_FILENAME = "mistral-7b-instruct-v0.2.Q4_K_M.gguf"
 MISTRAL_URL = "https://huggingface.co/TheBloke/Mistral-7B-Instruct-v0.2-GGUF/resolve/main/mistral-7b-instruct-v0.2.Q4_K_M.gguf"
@@ -52,6 +63,10 @@ def _emit(payload: dict) -> None:
 
 def _whisper_present() -> bool:
     return (WHISPER_DIR / "model.bin").exists()
+
+
+def _whisper_large_present() -> bool:
+    return (WHISPER_LARGE_DIR / "model.bin").exists()
 
 
 def _mistral_present() -> bool:
@@ -153,6 +168,72 @@ def _download_whisper() -> None:
             raise RuntimeError(f"Erreur téléchargement {filename} : {e}")
 
     _emit({"type": "progress", "model": "whisper-small", "status": "done", "percent": 100})
+
+
+def check_large_v3() -> dict:
+    """Retourne l'état du modèle Large V3 (optionnel)."""
+    return {
+        "present": _whisper_large_present(),
+        "size_bytes": WHISPER_LARGE_TOTAL_BYTES,
+    }
+
+
+def download_large_v3() -> None:
+    """Télécharge Whisper Large V3 avec progression sur stdout."""
+    if _whisper_large_present():
+        _emit({"type": "complete"})
+        return
+
+    WHISPER_LARGE_DIR.mkdir(parents=True, exist_ok=True)
+
+    # Nettoyage des fichiers .tmp d'un téléchargement précédent interrompu
+    for tmp_file in WHISPER_LARGE_DIR.glob("*.tmp"):
+        try:
+            tmp_file.unlink()
+        except OSError:
+            pass
+
+    _emit({"type": "progress", "status": "starting", "percent": 0,
+           "total_bytes": WHISPER_LARGE_TOTAL_BYTES})
+
+    downloaded_total = 0
+    for filename, approx_size in WHISPER_LARGE_FILES:
+        dest = WHISPER_LARGE_DIR / filename
+        if dest.exists():
+            downloaded_total += approx_size
+            continue
+        url = f"{WHISPER_LARGE_BASE_URL}/{filename}"
+        tmp = dest.with_suffix(".tmp")
+        req = urllib.request.Request(url, headers={"User-Agent": "Ablo/0.1"})
+        try:
+            # Timeout long : model.bin fait ~3,1 Go (~25 min sur 20 Mbps)
+            with urllib.request.urlopen(req, timeout=7200, context=_SSL_CTX) as resp:
+                file_total = int(resp.headers.get("Content-Length", approx_size))
+                downloaded_file = 0
+                with open(tmp, "wb") as f:
+                    while True:
+                        chunk = resp.read(512 * 1024)
+                        if not chunk:
+                            break
+                        f.write(chunk)
+                        downloaded_file += len(chunk)
+                        pct = min(int((downloaded_total + downloaded_file) * 100 / WHISPER_LARGE_TOTAL_BYTES), 99)
+                        _emit({
+                            "type": "progress",
+                            "status": "downloading",
+                            "downloaded_bytes": downloaded_total + downloaded_file,
+                            "total_bytes": WHISPER_LARGE_TOTAL_BYTES,
+                            "percent": pct,
+                        })
+            downloaded_total += downloaded_file
+            tmp.rename(dest)
+        except Exception as e:
+            if tmp.exists():
+                tmp.unlink()
+            _emit({"type": "error", "message": f"Erreur téléchargement {filename} : {e}"})
+            return
+
+    _emit({"type": "complete"})
 
 
 def _download_single(name: str, url: str, expected_size: int, dest: Path) -> None:
