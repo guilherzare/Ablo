@@ -1,17 +1,15 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { Section } from "./GenerationView";
-import { AutoEvalEditor, AUTEVAL_CRITERIA } from "./AutoEvalEditor";
+import { AutoEvalEditor, AUTEVAL_CRITERIA, scoreColor } from "./AutoEvalEditor";
 import "./ReportEditor.css";
 
 // ── Tableau récapitulatif multi-séances ──────────────────────────────────────
 
 interface MultiSessionAutoeval {
   type: "multi_session";
-  sessions: { date: string; scores: Record<string, number> }[];
+  sessions: { date: string; scores: Record<string, number | null> }[];
 }
-
-const DOT_COLORS = ["#ef4444", "#f97316", "#eab308", "#84cc16", "#22c55e", "#16a34a"];
 
 function parseMultiSession(content: string): MultiSessionAutoeval | null {
   try {
@@ -51,15 +49,16 @@ function AutoEvalSummary({ data }: { data: MultiSessionAutoeval }) {
               <td className="auteval-td auteval-td-label">{criterion}</td>
               {sessions.map((s, i) => {
                 const isEmpty = Object.keys(s.scores).length === 0;
-                const val = isEmpty ? null : (s.scores[criterion] ?? 0);
+                const val = isEmpty ? null : (s.scores[criterion] ?? null);
+                const isNA = val === null;
                 return (
                   <td key={i} className="auteval-td auteval-td-score">
-                    {val === null ? (
+                    {isNA ? (
                       <span className="auteval-score-empty">—</span>
                     ) : (
                       <span
                         className="auteval-score-chip"
-                        style={{ background: DOT_COLORS[val] }}
+                        style={{ background: scoreColor(val!) }}
                       >
                         {val}
                       </span>
