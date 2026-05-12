@@ -217,8 +217,8 @@
 
 .home-search-row {
   display: flex;
-  gap: 8px;
   align-items: center;
+  gap: 8px;
 }
 
 .home-search-wrap {

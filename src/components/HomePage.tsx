@@ -273,9 +273,6 @@ export function HomePage({ onSelectPatient, lieuRefreshKey }: Props) {
         <div className="home-view">
           <div className="home-header">
             <h1 className="home-title">Patients</h1>
-            <button className="btn-new-patient" onClick={() => setCreating(true)}>
-              + Nouveau patient
-            </button>
           </div>
 
           <div className="home-search-row">
@@ -292,10 +289,13 @@ export function HomePage({ onSelectPatient, lieuRefreshKey }: Props) {
                 onChange={(e) => setSearch(e.target.value)}
               />
             </div>
+            <button className="btn-new-patient" onClick={() => setCreating(true)}>
+              + Nouveau patient
+            </button>
           </div>
 
           <div className="filter-bar">
-              <span className="filter-bar-label">Filtrer par :</span>
+            <span className="filter-bar-label">Filtrer par :</span>
             {availableLabels.length > 0 && (
               <div className="filter-dropdown-wrap" ref={lieuMenuRef}>
                 <button
