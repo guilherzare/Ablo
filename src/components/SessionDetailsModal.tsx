@@ -4,6 +4,7 @@ import { Session } from "./PatientPage";
 interface Props {
   session: Session;
   sessionNumber: number;
+  summaryPending?: boolean;
   onClose: () => void;
 }
 
@@ -24,7 +25,7 @@ function formatDate(iso: string): string {
   return `${d}/${m}/${y}`;
 }
 
-export function SessionDetailsModal({ session, sessionNumber, onClose }: Props) {
+export function SessionDetailsModal({ session, sessionNumber, summaryPending, onClose }: Props) {
   const hasAutoeval = !session.is_first_session && session.autoeval && Object.keys(session.autoeval).length > 0;
 
   return (
@@ -44,7 +45,9 @@ export function SessionDetailsModal({ session, sessionNumber, onClose }: Props) 
           <h3 className="session-details-section-title">
             {session.is_first_session ? "Objectifs de la prise en charge" : "Résumé de la séance"}
           </h3>
-          {session.summary ? (
+          {summaryPending ? (
+            <p className="session-details-generating">Génération en cours…</p>
+          ) : session.summary ? (
             <p className="session-details-summary">{session.summary}</p>
           ) : (
             <p className="session-details-empty">Aucun résumé disponible pour cette séance.</p>

@@ -56,7 +56,7 @@ from exporter import export
 _log("import patient_manager…")
 from patient_manager import list_patients, create_patient, update_patient, delete_patient, list_bilans
 _log("import session_manager…")
-from session_manager import save_session, update_session, delete_session, list_sessions
+from session_manager import save_session, generate_session_summary, update_session, delete_session, list_sessions
 _log("import lieu_manager…")
 from lieu_manager import list_lieux, create_lieu, rename_lieu, delete_lieu
 
@@ -100,6 +100,9 @@ def handle(cmd: dict) -> dict | None:
     method = cmd.get("method", "")
     params = cmd.get("params", {})
     req_id = cmd.get("id")
+    # Log every incoming request (sauf les méthodes trop fréquentes)
+    if method not in ("ping",):
+        _log(f"→ {method}")
 
     if method == "ping":
         return {"id": req_id, "result": "pong"}
@@ -252,6 +255,19 @@ def handle(cmd: dict) -> dict | None:
             )
             return {"id": req_id, "result": result}
         except ValueError as e:
+            return {"id": req_id, "error": str(e)}
+
+    if method == "generate_session_summary":
+        _log(f"generate_session_summary reçu patient={params.get('patient_id','')} file={params.get('filename','')}")
+        try:
+            result = generate_session_summary(
+                patient_id=params.get("patient_id", ""),
+                filename=params.get("filename", ""),
+            )
+            _log(f"generate_session_summary OK result_len={len(result) if result else 0}")
+            return {"id": req_id, "result": result}
+        except Exception as e:
+            _log(f"generate_session_summary ERREUR: {e}")
             return {"id": req_id, "error": str(e)}
 
     if method == "update_session":

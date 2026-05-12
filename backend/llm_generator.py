@@ -224,7 +224,7 @@ def summarize_session(text: str, is_first_session: bool = False) -> str:
     try:
         llm = Llama(
             model_path=str(_MODEL_PATH),
-            n_ctx=2048,
+            n_ctx=4096,  # augmenté pour supporter les longues transcriptions
             n_threads=8,
             n_gpu_layers=-1,
             verbose=False,

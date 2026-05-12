@@ -21,8 +21,19 @@ export function SessionEditModal({ session, sessionNumber, patientId, onSaved, o
   );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [showCloseConfirm, setShowCloseConfirm] = useState(false);
 
   const hasAutoeval = !session.is_first_session;
+
+  const isDirty =
+    date !== session.date ||
+    notes !== (session.notes ?? "") ||
+    summary !== (session.summary ?? "");
+
+  function requestClose() {
+    if (isDirty) setShowCloseConfirm(true);
+    else onClose();
+  }
 
   function handleAutoEvalChange(content: string) {
     const parsed = parseAutoEval(content);
@@ -52,8 +63,10 @@ export function SessionEditModal({ session, sessionNumber, patientId, onSaved, o
   }
 
   return (
-    <div className="session-edit-backdrop" onClick={onClose}>
+    <>
+    <div className="session-edit-backdrop" onClick={saving ? undefined : requestClose}>
       <div className="session-edit-modal" onClick={(e) => e.stopPropagation()}>
+
         <header className="session-edit-header">
           <div>
             <p className="session-edit-eyebrow">
@@ -61,7 +74,7 @@ export function SessionEditModal({ session, sessionNumber, patientId, onSaved, o
             </p>
             <h2 className="session-edit-title">Modifier la séance</h2>
           </div>
-          <button className="session-edit-close" onClick={onClose} disabled={saving} aria-label="Fermer">✕</button>
+          <button className="session-edit-close" onClick={requestClose} disabled={saving} aria-label="Fermer">✕</button>
         </header>
 
         <section className="session-edit-section">
@@ -121,7 +134,7 @@ export function SessionEditModal({ session, sessionNumber, patientId, onSaved, o
         {error && <p className="session-edit-error">❌ {error}</p>}
 
         <footer className="session-edit-footer">
-          <button className="btn-edit-cancel" onClick={onClose} disabled={saving}>
+          <button className="btn-edit-cancel" onClick={requestClose} disabled={saving}>
             Annuler
           </button>
           <button className="btn-edit-save" onClick={handleSave} disabled={saving}>
@@ -130,5 +143,22 @@ export function SessionEditModal({ session, sessionNumber, patientId, onSaved, o
         </footer>
       </div>
     </div>
+    {showCloseConfirm && (
+      <div className="delete-session-backdrop" onClick={() => setShowCloseConfirm(false)}>
+        <div className="delete-session-modal" onClick={(e) => e.stopPropagation()}>
+          <p className="delete-session-title">Modifications non enregistrées</p>
+          <p className="delete-session-msg">Vos modifications seront perdues si vous quittez sans enregistrer.</p>
+          <div className="delete-session-actions">
+            <button className="btn-modal-cancel" onClick={() => setShowCloseConfirm(false)}>
+              Annuler
+            </button>
+            <button className="btn-modal-delete" onClick={onClose}>
+              Quitter sans enregistrer
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+    </>
   );
 }
