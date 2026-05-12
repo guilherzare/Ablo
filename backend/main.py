@@ -2,6 +2,7 @@
 Backend Python d'Ablo — point d'entrée du pont IPC.
 Lit des commandes JSON sur stdin, écrit les réponses JSON sur stdout.
 """
+from __future__ import annotations
 import sys
 import os
 import json
