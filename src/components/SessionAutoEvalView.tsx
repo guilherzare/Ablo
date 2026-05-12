@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { AutoEvalEditor, parseAutoEval, serializeAutoEval, AutoEvalScores, defaultScores, AUTEVAL_CRITERIA } from "./AutoEvalEditor";
+import { AutoEvalEditor, parseAutoEval, serializeAutoEval, AutoEvalScores, defaultScores } from "./AutoEvalEditor";
 import "./SessionAutoEvalView.css";
 
 interface Props {
@@ -13,11 +13,7 @@ interface Props {
   onBack: () => void;
 }
 
-// Scores null = autoévaluation non réalisée
-const NULL_SCORES: AutoEvalScores = Object.fromEntries(AUTEVAL_CRITERIA.map((c) => [c, null]));
-
 export function SessionAutoEvalView({ patientId, patientName, anonymizedText, isFirstSession, date, onSaved, onBack }: Props) {
-  const [notEvaluated, setNotEvaluated] = useState(false);
   const [scores, setScores] = useState<AutoEvalScores>(defaultScores());
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
@@ -37,7 +33,7 @@ export function SessionAutoEvalView({ patientId, patientName, anonymizedText, is
         params: {
           patient_id: patientId,
           anonymized_text: anonymizedText,
-          autoeval: notEvaluated ? NULL_SCORES : scores,
+          autoeval: scores,
           notes,
           date,
         },
@@ -64,32 +60,14 @@ export function SessionAutoEvalView({ patientId, patientName, anonymizedText, is
         </section>
       ) : (
         <section className="session-auteval-block">
-          <div className="session-auteval-section-header">
-            <h2 className="session-auteval-section-title">Autoévaluation du patient</h2>
-            <button
-              type="button"
-              className={`btn-not-evaluated${notEvaluated ? " active" : ""}`}
-              onClick={() => setNotEvaluated((v) => !v)}
-            >
-              {notEvaluated ? "✓ Non évaluée" : "Non évaluée"}
-            </button>
-          </div>
-
-          {notEvaluated ? (
-            <p className="session-auteval-hint session-auteval-hint--na">
-              L'autoévaluation ne sera pas enregistrée pour cette séance.
-            </p>
-          ) : (
-            <>
-              <p className="session-auteval-hint">
-                Saisissez la note du patient pour chaque critère (0 à 5, décimales acceptées).
-              </p>
-              <AutoEvalEditor
-                content={serializeAutoEval(scores)}
-                onChange={handleAutoEvalChange}
-              />
-            </>
-          )}
+          <h2 className="session-auteval-section-title">Autoévaluation du patient</h2>
+          <p className="session-auteval-hint">
+            Saisissez la note du patient pour chaque critère (0 à 5, décimales acceptées). Cliquez sur N/A si un critère n'a pas été évalué.
+          </p>
+          <AutoEvalEditor
+            content={serializeAutoEval(scores)}
+            onChange={handleAutoEvalChange}
+          />
         </section>
       )}
 

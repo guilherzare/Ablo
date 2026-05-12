@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Prévisualisation Autoévaluation</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f5f5f7;
+      margin: 0;
+      padding: 32px 16px;
+      display: flex;
+      justify-content: center;
+    }
+    .container {
+      width: 100%;
+      max-width: 520px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+    .page-title {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #9ca3af;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin: 0 0 4px;
+    }
+
+    /* ── SessionAutoEvalView ── */
+    .session-auteval-patient { font-size: 0.9rem; color: #6b7280; margin: 0; }
+    .session-auteval-block {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding: 18px;
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+    }
+    .session-auteval-section-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #1a1a2e;
+      margin: 0;
+    }
+    .optional-badge {
+      font-size: 0.72rem;
+      font-weight: 500;
+      color: #9ca3af;
+      background: #f3f4f6;
+      padding: 2px 7px;
+      border-radius: 99px;
+      margin-left: 6px;
+    }
+    .session-auteval-hint { font-size: 0.82rem; color: #9ca3af; margin: 0; }
+    .session-auteval-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: 4px;
+    }
+    .btn-cancel-session {
+      background: none; border: none;
+      font-size: 0.875rem; color: #6b7280;
+      cursor: pointer; font-family: inherit; padding: 8px 0;
+    }
+    .btn-save-session {
+      background: #4f46e5; color: white; border: none;
+      border-radius: 8px; padding: 11px 28px;
+      font-size: 0.95rem; font-weight: 600;
+      cursor: pointer; font-family: inherit;
+    }
+    .session-notes-textarea {
+      width: 100%; padding: 10px 12px;
+      font-size: 0.9rem; line-height: 1.6;
+      border: 1px solid #d1d5db; border-radius: 8px;
+      font-family: inherit; resize: vertical;
+      color: #1a1a2e; background: #ffffff;
+    }
+
+    /* ── AutoEvalEditor ── */
+    .auteval { display: flex; flex-direction: column; gap: 14px; padding: 4px 0; }
+    .auteval-row { display: flex; align-items: center; gap: 12px; }
+    .auteval-label { flex: 0 0 130px; font-size: 0.875rem; color: #374151; font-weight: 500; }
+    .auteval-input-wrap { display: flex; align-items: center; gap: 8px; }
+    .auteval-dot-indicator {
+      width: 14px; height: 14px; border-radius: 50%;
+      flex-shrink: 0; transition: background 0.2s;
+    }
+    .auteval-input {
+      width: 64px; padding: 5px 8px;
+      border: 1px solid #d1d5db; border-radius: 7px;
+      font-size: 0.95rem; font-weight: 600;
+      font-family: inherit; color: #1a1a2e;
+      background: #ffffff; text-align: center;
+    }
+    .auteval-input:focus {
+      outline: none; border-color: #4f46e5;
+      box-shadow: 0 0 0 3px rgba(79,70,229,0.1);
+    }
+    .auteval-unit { font-size: 0.8rem; color: #9ca3af; font-weight: 500; white-space: nowrap; }
+    .auteval-na-value {
+      font-size: 0.95rem; font-weight: 600; color: #d1d5db;
+      width: 64px; text-align: center; display: inline-block;
+    }
+    /* Bouton N/A par ligne */
+    .auteval-na-btn {
+      margin-left: auto;
+      padding: 3px 9px;
+      border: 1px solid #e5e7eb;
+      border-radius: 5px;
+      font-size: 0.72rem;
+      font-family: inherit;
+      font-weight: 500;
+      color: #9ca3af;
+      background: #ffffff;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s, color 0.15s;
+    }
+    .auteval-na-btn:hover { background: #f3f4f6; border-color: #d1d5db; color: #374151; }
+    .auteval-na-btn.active { background: #f3f4f6; border-color: #d1d5db; color: #374151; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <p class="page-title">Prévisualisation — Autoévaluation</p>
+    <p class="session-auteval-patient">Séance de <strong>Marie Dupont</strong></p>
+
+    <div class="session-auteval-block">
+      <h2 class="session-auteval-section-title">Autoévaluation du patient</h2>
+      <p class="session-auteval-hint">Saisissez la note du patient pour chaque critère (0 à 5, décimales acceptées). Cliquez sur N/A si un critère n'a pas été évalué.</p>
+      <div class="auteval" id="auteval-form"></div>
+    </div>
+
+    <div class="session-auteval-block">
+      <h2 class="session-auteval-section-title">Notes du thérapeute <span class="optional-badge">optionnel</span></h2>
+      <textarea class="session-notes-textarea" placeholder="Observations personnelles sur la séance, points marquants, éléments à retenir pour la suite…" rows="3"></textarea>
+    </div>
+
+    <div class="session-auteval-footer">
+      <button class="btn-cancel-session">← Retour</button>
+      <button class="btn-save-session">Enregistrer la séance</button>
+    </div>
+  </div>
+
+  <script>
+    const CRITERIA = ["État initial", "Envie de revenir", "Bien fait", "Beau", "Bon moment", "État final"];
+    const DEFAULTS  = [0, 1, 2.3, 3, 4, 5];
+    // null = N/A
+    const state = DEFAULTS.map(v => v);
+
+    function scoreColor(v) {
+      const h = (v / 5) * 120;
+      const s = 85;
+      const l = 52 - (v / 5) * 12;
+      return `hsl(${h.toFixed(1)}, ${s}%, ${Math.round(l)}%)`;
+    }
+
+    function parseInput(raw) {
+      const normalized = raw.replace(",", ".");
+      if (normalized === "" || normalized === ".") return null;
+      const n = parseFloat(normalized);
+      return isNaN(n) ? null : Math.min(5, Math.max(0, Math.round(n * 10) / 10));
+    }
+
+    function renderRows() {
+      const wrap = document.getElementById("auteval-form");
+      wrap.innerHTML = "";
+      CRITERIA.forEach((label, i) => {
+        const isNA = state[i] === null;
+        const val = isNA ? 0 : state[i];
+        const row = document.createElement("div");
+        row.className = "auteval-row";
+        row.innerHTML = `
+          <span class="auteval-label">${label}</span>
+          <div class="auteval-input-wrap">
+            <span class="auteval-dot-indicator" id="dot-${i}"
+              style="background:${isNA ? '#d1d5db' : scoreColor(val)}"></span>
+            ${isNA
+              ? `<span class="auteval-na-value">—</span>`
+              : `<input type="text" inputmode="decimal" class="auteval-input"
+                   value="${val}" placeholder="0" id="inp-${i}"
+                   oninput="handleInput(this,${i})" onblur="handleBlur(this,${i})">
+                 <span class="auteval-unit">/5</span>`
+            }
+          </div>
+          <button type="button" class="auteval-na-btn${isNA ? ' active' : ''}"
+            onclick="toggleNA(${i})">${isNA ? 'Évaluer' : 'N/A'}</button>`;
+        wrap.appendChild(row);
+      });
+    }
+
+    function handleInput(input, i) {
+      const replaced = input.value.replace(",", ".");
+      if (replaced !== input.value) {
+        const pos = input.selectionStart;
+        input.value = replaced;
+        input.setSelectionRange(pos, pos);
+      }
+      const n = parseInput(input.value);
+      if (n !== null) document.getElementById(`dot-${i}`).style.background = scoreColor(n);
+    }
+
+    function handleBlur(input, i) {
+      const n = parseInput(input.value) ?? 0;
+      state[i] = n;
+      input.value = String(n);
+      document.getElementById(`dot-${i}`).style.background = scoreColor(n);
+    }
+
+    function toggleNA(i) {
+      state[i] = state[i] === null ? 0 : null;
+      renderRows();
+    }
+
+    renderRows();
+  </script>
+</body>
+</html>
