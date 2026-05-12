@@ -114,30 +114,6 @@ export function PatientPage({ patient, onNewSession, onFinalBilan, onSessionsLoa
   }, [openedSession]);
 
   useEffect(() => {
-    sessions
-      .filter((s) => !s.summary && !generatingRef.current.has(s.filename))
-      .forEach((s) => {
-        generatingRef.current.add(s.filename);
-        setPendingSummaries((prev) => new Set([...prev, s.filename]));
-        invoke<{ result: string }>("call_backend", {
-          method: "generate_session_summary",
-          params: { patient_id: patient.id, filename: s.filename },
-        })
-          .then((res) => {
-            generatingRef.current.delete(s.filename);
-            setPendingSummaries((prev) => { const n = new Set(prev); n.delete(s.filename); return n; });
-            setSessions((prev) => prev.map((sess) =>
-              sess.filename === s.filename ? { ...sess, summary: res.result } : sess
-            ));
-          })
-          .catch(() => {
-            generatingRef.current.delete(s.filename);
-            setPendingSummaries((prev) => { const n = new Set(prev); n.delete(s.filename); return n; });
-          });
-      });
-  }, [sessions]);
-
-  useEffect(() => {
     if (!menuOpenFor) return;
     function handleClick(e: MouseEvent) {
       const ref = menuRefs.current[menuOpenFor!];
