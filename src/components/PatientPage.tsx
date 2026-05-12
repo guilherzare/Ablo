@@ -54,7 +54,7 @@ export function PatientPage({ patient, onNewSession, onFinalBilan, onSessionsLoa
   const [editingSession, setEditingSession] = useState<{ session: Session; number: number } | null>(null);
   const [deleteConfirmFor, setDeleteConfirmFor] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
-  const [pendingSummaries, setPendingSummaries] = useState<Set<string>>(new Set());
+  const [pendingSummaries, setPendingSummaries] = useState<Set<string>>(new Set()); // filenames en cours de génération
   const generatingRef = useRef<Set<string>>(new Set());
   const menuRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
@@ -79,29 +79,39 @@ export function PatientPage({ patient, onNewSession, onFinalBilan, onSessionsLoa
       .finally(() => setLoading(false));
   }, [patient.id]);
 
-  useEffect(() => {
-    sessions
-      .filter((s) => !s.summary && !generatingRef.current.has(s.filename))
-      .forEach((s) => {
-        generatingRef.current.add(s.filename);
-        setPendingSummaries((prev) => new Set([...prev, s.filename]));
-        invoke<{ result: string }>("call_backend", {
-          method: "generate_session_summary",
-          params: { patient_id: patient.id, filename: s.filename },
-        })
-          .then((res) => {
-            generatingRef.current.delete(s.filename);
-            setPendingSummaries((prev) => { const n = new Set(prev); n.delete(s.filename); return n; });
-            setSessions((prev) => prev.map((sess) =>
-              sess.filename === s.filename ? { ...sess, summary: res.result } : sess
-            ));
-          })
-          .catch(() => {
-            generatingRef.current.delete(s.filename);
-            setPendingSummaries((prev) => { const n = new Set(prev); n.delete(s.filename); return n; });
-          });
+  // Déclenche la génération du résumé pour une séance spécifique
+  function triggerSummaryGeneration(filename: string) {
+    if (generatingRef.current.has(filename)) return; // déjà en cours
+    generatingRef.current.add(filename);
+    setPendingSummaries((prev) => new Set([...prev, filename]));
+    invoke<{ result: string }>("call_backend", {
+      method: "generate_session_summary",
+      params: { patient_id: patient.id, filename },
+    })
+      .then((res) => {
+        generatingRef.current.delete(filename);
+        setPendingSummaries((prev) => { const n = new Set(prev); n.delete(filename); return n; });
+        if (res.result) {
+          setSessions((prev) => prev.map((sess) =>
+            sess.filename === filename ? { ...sess, summary: res.result } : sess
+          ));
+        }
+      })
+      .catch(() => {
+        generatingRef.current.delete(filename);
+        setPendingSummaries((prev) => { const n = new Set(prev); n.delete(filename); return n; });
       });
-  }, [sessions]);
+  }
+
+  // Quand la modale s'ouvre, génère le résumé si absent
+  useEffect(() => {
+    if (!openedSession) return;
+    const liveSession = sessions.find((s) => s.filename === openedSession.session.filename) ?? openedSession.session;
+    if (!liveSession.summary) {
+      triggerSummaryGeneration(liveSession.filename);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openedSession]);
 
   useEffect(() => {
     if (!menuOpenFor) return;
@@ -145,7 +155,7 @@ export function PatientPage({ patient, onNewSession, onFinalBilan, onSessionsLoa
           <SessionDetailsModal
             session={liveSession}
             sessionNumber={openedSession.number}
-            summaryPending={pendingSummaries.has(openedSession.session.filename)}
+            summaryPending={pendingSummaries.has(liveSession.filename)}
             onClose={() => setOpenedSession(null)}
           />
         );
@@ -260,9 +270,6 @@ export function PatientPage({ patient, onNewSession, onFinalBilan, onSessionsLoa
                       </span>
                       <span className="session-date">{formatDate(s.date)}</span>
                     </div>
-                    {pendingSummaries.has(s.filename) && (
-                      <span className="summary-pending-badge">Résumé en cours…</span>
-                    )}
                   </div>
                   <div className="session-card-actions">
                     <button

@@ -74,7 +74,7 @@ struct BackendHandle {
 enum BackendRequest {
     Simple {
         payload: String,
-        tx: mpsc::SyncSender<Result<serde_json::Value, String>>,
+        tx: tokio::sync::oneshot::Sender<Result<serde_json::Value, String>>,
     },
     Stream {
         payload: String,
@@ -192,12 +192,12 @@ fn run_backend_thread(mut handle: BackendHandle, rx: mpsc::Receiver<BackendReque
 // ---------- Commandes Tauri ----------
 
 #[tauri::command]
-fn call_backend(
-    state: tauri::State<AppState>,
+async fn call_backend(
+    state: tauri::State<'_, AppState>,
     method: String,
     params: serde_json::Value,
 ) -> Result<serde_json::Value, String> {
-    let (tx, rx) = mpsc::sync_channel(1);
+    let (tx, rx) = tokio::sync::oneshot::channel();
     let payload = format!(
         "{}\n",
         serde_json::json!({"method": method, "params": params, "id": 1})
@@ -206,7 +206,7 @@ fn call_backend(
         .tx
         .send(BackendRequest::Simple { payload, tx })
         .map_err(|_| "Backend non disponible".to_string())?;
-    rx.recv()
+    rx.await
         .map_err(|_| "Pas de réponse du backend".to_string())?
 }
 

@@ -100,6 +100,9 @@ def handle(cmd: dict) -> dict | None:
     method = cmd.get("method", "")
     params = cmd.get("params", {})
     req_id = cmd.get("id")
+    # Log every incoming request (sauf les méthodes trop fréquentes)
+    if method not in ("ping",):
+        _log(f"→ {method}")
 
     if method == "ping":
         return {"id": req_id, "result": "pong"}
@@ -255,13 +258,16 @@ def handle(cmd: dict) -> dict | None:
             return {"id": req_id, "error": str(e)}
 
     if method == "generate_session_summary":
+        _log(f"generate_session_summary reçu patient={params.get('patient_id','')} file={params.get('filename','')}")
         try:
             result = generate_session_summary(
                 patient_id=params.get("patient_id", ""),
                 filename=params.get("filename", ""),
             )
+            _log(f"generate_session_summary OK result_len={len(result) if result else 0}")
             return {"id": req_id, "result": result}
-        except ValueError as e:
+        except Exception as e:
+            _log(f"generate_session_summary ERREUR: {e}")
             return {"id": req_id, "error": str(e)}
 
     if method == "update_session":

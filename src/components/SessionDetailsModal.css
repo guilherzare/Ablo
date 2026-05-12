@@ -14,10 +14,10 @@
 .session-details-modal {
   background: #ffffff;
   border-radius: 14px;
-  padding: 24px 24px 20px;
+  padding: 28px 28px 24px;
   width: 100%;
-  max-width: 560px;
-  max-height: 85vh;
+  max-width: 680px;
+  max-height: 92vh;
   overflow-y: auto;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.18);
   display: flex;
@@ -96,17 +96,21 @@
   margin: 0;
 }
 
-@keyframes summary-pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.35; }
+@keyframes shimmer {
+  0% { background-position: 200% center; }
+  100% { background-position: -200% center; }
 }
 
 .session-details-generating {
   font-size: 0.875rem;
-  color: #9ca3af;
   font-style: italic;
   margin: 0;
-  animation: summary-pulse 1.6s ease-in-out infinite;
+  background: linear-gradient(90deg, #9ca3af 25%, #e5e7eb 50%, #9ca3af 75%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer 2s linear infinite;
 }
 
 /* Auto-évaluation : barres horizontales */
