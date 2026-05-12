@@ -67,7 +67,9 @@ def _whisper_present() -> bool:
 
 
 def _whisper_large_present() -> bool:
-    return (WHISPER_LARGE_DIR / "model.bin").exists()
+    p = WHISPER_LARGE_DIR / "model.bin"
+    # Vérifie existence ET taille minimale (fichier tronqué = téléchargement interrompu)
+    return p.exists() and p.stat().st_size >= 2_900_000_000
 
 
 def _mistral_present() -> bool:
@@ -227,6 +229,12 @@ def download_large_v3() -> None:
                             "percent": pct,
                         })
             downloaded_total += downloaded_file
+            # Vérifie que le fichier n'est pas tronqué avant de le valider
+            actual_size = tmp.stat().st_size
+            if filename == "model.bin" and actual_size < 2_900_000_000:
+                tmp.unlink()
+                _emit({"type": "error", "message": f"Téléchargement interrompu : model.bin fait {actual_size // 1_000_000} Mo au lieu de ~3 100 Mo. Réessayez."})
+                return
             tmp.rename(dest)
         except Exception as e:
             if tmp.exists():
