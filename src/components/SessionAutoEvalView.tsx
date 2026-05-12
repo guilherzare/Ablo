@@ -15,12 +15,12 @@ interface Props {
 
 export function SessionAutoEvalView({ patientId, patientName, anonymizedText, isFirstSession, date, onSaved, onBack }: Props) {
   const [scores, setScores] = useState<AutoEvalScores>({
-    "État initial": 0,
-    "Envie de revenir": 0,
-    "Bien fait": 0,
-    "Beau": 0,
-    "Bon moment": 0,
-    "État final": 0,
+    "État initial": null,
+    "Envie de revenir": null,
+    "Bien fait": null,
+    "Beau": null,
+    "Bon moment": null,
+    "État final": null,
   });
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
@@ -69,7 +69,7 @@ export function SessionAutoEvalView({ patientId, patientName, anonymizedText, is
         <section className="session-auteval-block">
           <h2 className="session-auteval-section-title">Autoévaluation du patient</h2>
           <p className="session-auteval-hint">
-            Demandez au patient de noter chaque critère de 0 à 5.
+            Saisissez la note du patient pour chaque critère (0 à 5, décimales acceptées). Laissez «&nbsp;Non évalué&nbsp;» si le patient ne souhaite pas répondre.
           </p>
           <AutoEvalEditor
             content={serializeAutoEval(scores)}
