@@ -120,8 +120,6 @@ Basés sur une grille de `4px`.
 
 | Fichier | Valeur actuelle | Token cible |
 |---------|----------------|-------------|
-| `App.css` l.227 | `0 8px 24px rgba(0,0,0,0.12)` | `shadow-dropdown` |
-| `HomePage.css` l.470 | `0 8px 24px rgba(0,0,0,0.10)` | `shadow-dropdown` |
 | `FirstRun.css` l.17 | `0 4px 24px rgba(0,0,0,0.07)` | `shadow-dropdown` |
 
 ---
