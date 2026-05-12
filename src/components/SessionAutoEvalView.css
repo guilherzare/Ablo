@@ -97,6 +97,47 @@
   margin: 0;
 }
 
+.session-auteval-hint--na {
+  font-style: italic;
+}
+
+/* Header section autoéval : titre + bouton "Non évaluée" alignés */
+.session-auteval-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+/* Bouton global Non évaluée */
+.btn-not-evaluated {
+  padding: 4px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  font-family: inherit;
+  font-weight: 500;
+  color: #9ca3af;
+  background: #ffffff;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.btn-not-evaluated:hover {
+  background: #f3f4f6;
+  border-color: #d1d5db;
+  color: #374151;
+}
+
+.btn-not-evaluated.active {
+  background: #f3f4f6;
+  border-color: #d1d5db;
+  color: #374151;
+  font-weight: 600;
+}
+
 .session-notes-textarea {
   width: 100%;
   padding: 10px 12px;
