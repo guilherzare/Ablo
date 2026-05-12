@@ -35,7 +35,8 @@ WHISPER_LARGE_FILES = [
     ("model.bin",            3_100_000_000),   # fichier principal (~3,1 Go)
     ("config.json",                  1_000),
     ("tokenizer.json",           2_402_000),
-    ("vocabulary.txt",             809_000),
+    ("vocabulary.json",            809_000),
+    ("preprocessor_config.json",    10_000),
 ]
 WHISPER_LARGE_TOTAL_BYTES = sum(s for _, s in WHISPER_LARGE_FILES)
 

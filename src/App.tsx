@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import sessionRecordImg from "./assets/session-record.png";
+const sessionRecordImg = "/session-record.png"; // servi depuis public/
 import { invoke } from "@tauri-apps/api/core";
 import { FirstRun } from "./components/FirstRun";
 import { HomePage, getLabelColor } from "./components/HomePage";
@@ -374,7 +374,7 @@ export default function App() {
         </div>
       )}
 
-      <main className={`app-main${appState === "home" || (appState === "patient" && patientSessionCount > 0) ? " app-main--top" : ""}`}>
+      <main className={`app-main${appState !== "patient" || patientSessionCount > 0 ? " app-main--top" : ""}`}>
 
         {appState === "home" && (
           <section className="step-section">

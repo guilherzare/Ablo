@@ -44,7 +44,7 @@ export function SettingsPanel({ onClose }: Props) {
       .then((res) => setSettings(res.result as Settings))
       .catch(() => {});
     invoke<{ result: string[] }>("call_backend", { method: "list_lieux", params: {} })
-      .then((res) => setLieux(res.result))
+      .then((res) => setLieux(res.result ?? []))
       .catch(() => {});
     invoke<{ result: { present: boolean } }>("call_backend", { method: "check_large_v3", params: {} })
       .then((res) => setLargeV3Present(res.result.present))
