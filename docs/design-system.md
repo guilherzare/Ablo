@@ -118,9 +118,7 @@ Basés sur une grille de `4px`.
 
 ### Inconsistances connues à aligner
 
-| Fichier | Valeur actuelle | Token cible |
-|---------|----------------|-------------|
-| `FirstRun.css` l.17 | `0 4px 24px rgba(0,0,0,0.07)` | `shadow-dropdown` |
+Aucune — toutes les ombres sont alignées sur les tokens.
 
 ---
 
