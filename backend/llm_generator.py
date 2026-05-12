@@ -20,6 +20,28 @@ else:
 _DEFAULT_TEMPLATE = _BASE_DIR / "templates" / "bilan_art_therapie.md"
 _MODEL_PATH = MODELS_DIR / MODELS["mistral-7b-q4"]["filename"]
 
+# Cache du modèle : chargé une seule fois, réutilisé pour tous les résumés et bilans.
+# Évite 30-60s de rechargement entre chaque appel.
+_llm_instance: object = None  # instance Llama mise en cache
+_llm_n_ctx: int = 0           # n_ctx avec lequel l'instance a été chargée
+
+
+def _get_llm(n_ctx: int) -> object:
+    """Retourne l'instance Llama en cache, ou en charge une nouvelle si n_ctx a changé."""
+    global _llm_instance, _llm_n_ctx
+    if _llm_instance is not None and _llm_n_ctx == n_ctx:
+        return _llm_instance
+    from llama_cpp import Llama
+    _llm_instance = Llama(
+        model_path=str(_MODEL_PATH),
+        n_ctx=n_ctx,
+        n_threads=8,
+        n_gpu_layers=-1,
+        verbose=False,
+    )
+    _llm_n_ctx = n_ctx
+    return _llm_instance
+
 
 def _emit(payload: dict) -> None:
     print(json.dumps(payload, ensure_ascii=False), flush=True)
@@ -82,7 +104,7 @@ def _parse_sections(output: str, template: Template) -> list[dict]:
 
 def generate(text: str, template_path: str | None = None) -> None:
     try:
-        from llama_cpp import Llama
+        import llama_cpp  # noqa: F401
     except ImportError:
         _emit({
             "type": "error",
@@ -116,16 +138,8 @@ def generate(text: str, template_path: str | None = None) -> None:
         "message": "Chargement du modèle (30–60 secondes)…",
     })
 
-    # n_gpu_layers=-1 = décharge toutes les couches sur le GPU (Metal sur macOS, CUDA sur Windows)
-    # Gain typique : 3-5x par rapport au CPU seul
     try:
-        llm = Llama(
-            model_path=str(_MODEL_PATH),
-            n_ctx=2048,
-            n_threads=8,
-            n_gpu_layers=-1,
-            verbose=False,
-        )
+        llm = _get_llm(n_ctx=2048)
     except Exception as e:
         _emit({"type": "error", "message": f"Impossible de charger le modèle : {e}"})
         return
@@ -209,7 +223,7 @@ def summarize_session(text: str, is_first_session: bool = False) -> str:
         print(f"[summarize_session] {msg}", file=sys.stderr, flush=True)
 
     try:
-        from llama_cpp import Llama
+        import llama_cpp  # noqa: F401
     except ImportError:
         log("ABORT: llama-cpp-python non installé")
         return ""
@@ -223,14 +237,10 @@ def summarize_session(text: str, is_first_session: bool = False) -> str:
     log(f"START first={is_first_session} text_len={len(text)}")
 
     try:
-        llm = Llama(
-            model_path=str(_MODEL_PATH),
-            n_ctx=4096,  # augmenté pour supporter les longues transcriptions
-            n_threads=8,
-            n_gpu_layers=-1,
-            verbose=False,
-        )
-        log("Modèle chargé")
+        # n_ctx=2048 suffit pour les résumés (entrée ~1000 tokens + sortie ~500)
+        # Partagé avec generate() pour éviter un rechargement entre les appels
+        llm = _get_llm(n_ctx=2048)
+        log("Modèle chargé (ou réutilisé depuis le cache)")
     except Exception as e:
         log(f"ERREUR chargement modèle : {e}")
         return ""
@@ -240,7 +250,7 @@ def summarize_session(text: str, is_first_session: bool = False) -> str:
     try:
         result = llm(
             prompt,
-            max_tokens=300,
+            max_tokens=500,  # augmenté : 300 tronquait les résumés de 4-5 phrases
             temperature=0.0,
             repeat_penalty=1.1,
             stop=["</s>", "[INST]"],
@@ -323,7 +333,7 @@ def generate_final(
     template_path: str | None = None,
 ) -> None:
     try:
-        from llama_cpp import Llama
+        import llama_cpp  # noqa: F401
     except ImportError:
         _emit({"type": "error", "message": "llama-cpp-python n'est pas installé."})
         return
@@ -346,13 +356,9 @@ def generate_final(
     _emit({"type": "progress", "status": "loading_model", "message": "Chargement du modèle…"})
 
     try:
-        llm = Llama(
-            model_path=str(_MODEL_PATH),
-            n_ctx=6144,  # contexte pour 5-6 séances (~4000 tokens utilisés)
-            n_threads=8,
-            n_gpu_layers=-1,
-            verbose=False,
-        )
+        # n_ctx=6144 pour le bilan final multi-séances (contexte plus grand que les résumés)
+        # Recharge le modèle si nécessaire (opération rare, acceptable)
+        llm = _get_llm(n_ctx=6144)
     except Exception as e:
         _emit({"type": "error", "message": f"Impossible de charger le modèle : {e}"})
         return
