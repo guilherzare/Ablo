@@ -221,17 +221,18 @@ def _export_docx(
 
         doc.add_paragraph()
 
-    # Section photos de productions (optionnelle)
+    # Section photos de productions — toutes centrées à 80 % de la largeur utile
     photos_bytes = [b for d in (photo_data or []) if (b := _dataurl_to_bytes(d)) is not None]
     if photos_bytes:
         heading = doc.add_heading("Productions du patient", level=1)
         heading.runs[0].font.size = Pt(11)
         heading.runs[0].bold = True
+
+        w = int(Cm(16) * 0.80)  # ~12.8 cm, ratio préservé car hauteur non forcée
         for img_bytes in photos_bytes:
             try:
-                doc.add_picture(io.BytesIO(img_bytes), width=Cm(12))
-                last_para = doc.paragraphs[-1]
-                last_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                doc.add_picture(io.BytesIO(img_bytes), width=w)
+                doc.paragraphs[-1].alignment = WD_ALIGN_PARAGRAPH.CENTER
                 doc.add_paragraph()
             except Exception:
                 pass
@@ -420,27 +421,18 @@ def _export_pdf(
             story.append(Paragraph("<i>[Section non renseignée]</i>", small_style))
         story.append(Spacer(1, 0.3 * cm))
 
-    # Section photos de productions (optionnelle)
+    # Section photos de productions — toutes centrées à 80 % de la largeur utile
     photos_bytes = [b for d in (photo_data or []) if (b := _dataurl_to_bytes(d)) is not None]
     if photos_bytes:
         story.append(Paragraph("Productions du patient", h1_style))
-        page_width = 13.5 * cm
-        img_width = page_width / len(photos_bytes) - 0.5 * cm
-        from reportlab.platypus import Image as RLImage, HRFlowable
-        img_list = []
+        from reportlab.platypus import Image as RLImage
+        w = 13.5 * cm * 0.80  # ~10.8 cm, ratio préservé car hauteur non forcée
         for img_bytes in photos_bytes:
             try:
-                img_list.append(RLImage(io.BytesIO(img_bytes), width=img_width, height=img_width * 0.75))
+                story.append(RLImage(io.BytesIO(img_bytes), width=w))
+                story.append(Spacer(1, 0.3 * cm))
             except Exception:
                 pass
-        if img_list:
-            if len(img_list) == 1:
-                story.append(img_list[0])
-            else:
-                tbl = Table([img_list], colWidths=[img_width + 0.5 * cm] * len(img_list))
-                tbl.setStyle(TableStyle([("ALIGN", (0, 0), (-1, -1), "CENTER"), ("VALIGN", (0, 0), (-1, -1), "MIDDLE")]))
-                story.append(tbl)
-        story.append(Spacer(1, 0.3 * cm))
 
     # Formule de clôture — lieu du patient (tag) ou placeholder rouge si absent
     if patient_label:

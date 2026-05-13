@@ -17,6 +17,20 @@
   margin-left: 4px;
 }
 
+.optional-badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 1px 7px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: #6b7280;
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  vertical-align: middle;
+  letter-spacing: 0.02em;
+}
+
 /* Bannière de validation */
 .validation-banner {
   padding: 12px 16px;

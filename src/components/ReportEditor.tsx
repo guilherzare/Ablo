@@ -257,14 +257,13 @@ export function ReportEditor({ sections: initialSections, anonymizedText, onExpo
         <div className="section-header">
           <span className="section-title">
             Productions du patient
-            <span className="section-constraint" style={{ marginLeft: 8 }}>optionnel · max 2 photos</span>
+            <span className="optional-badge">Optionnel</span>
           </span>
           <span className="section-constraint">
-            Les photos apparaîtront dans une section dédiée du bilan exporté.
-            Si aucune photo n'est ajoutée, la section n'est pas incluse.
+            Si des photos sont ajoutées, une section dédiée apparaîtra dans le bilan exporté.
           </span>
         </div>
-        <PhotoDropzone photos={photos} onChange={setPhotos} maxPhotos={2} />
+        <PhotoDropzone photos={photos} onChange={setPhotos} />
       </div>
 
       <div className="editor-footer">
