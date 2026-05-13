@@ -1,0 +1,110 @@
+.photo-dropzone-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ── Thumbnails ── */
+.photo-thumbs {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.photo-thumb {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 120px;
+}
+
+.photo-thumb-img {
+  width: 120px;
+  height: 90px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+.photo-thumb-remove {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: none;
+  background: #ef4444;
+  color: white;
+  font-size: 0.65rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.photo-thumb-remove:hover { background: #dc2626; }
+
+.photo-thumb-name {
+  font-size: 0.68rem;
+  color: #9ca3af;
+  text-align: center;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── Drop area ── */
+.photo-drop-area {
+  border: 2px dashed #d1d5db;
+  border-radius: 10px;
+  padding: 20px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+  background: #fafafa;
+}
+
+.photo-drop-area:hover,
+.photo-drop-area.dragging {
+  border-color: #4f46e5;
+  background: #f5f3ff;
+}
+
+.photo-drop-icon {
+  font-size: 1.6rem;
+  line-height: 1;
+}
+
+.photo-drop-label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #374151;
+  margin: 0;
+  text-align: center;
+}
+
+.photo-drop-hint {
+  font-size: 0.75rem;
+  color: #9ca3af;
+  margin: 0;
+}
+
+.photo-drop-input {
+  display: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  .photo-drop-area { background: #1f2937; border-color: #374151; }
+  .photo-drop-area:hover, .photo-drop-area.dragging { background: #1e1b4b; border-color: #4f46e5; }
+  .photo-drop-label { color: #d1d5db; }
+  .photo-thumb-img { border-color: #374151; }
+}

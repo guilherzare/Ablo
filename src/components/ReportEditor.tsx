@@ -2,6 +2,7 @@ import { useState, useCallback, useRef, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { Section } from "./GenerationView";
 import { AutoEvalEditor, AUTEVAL_CRITERIA, scoreColor } from "./AutoEvalEditor";
+import { PhotoDropzone, PhotoData } from "./PhotoDropzone";
 import "./ReportEditor.css";
 
 // ── Tableau récapitulatif multi-séances ──────────────────────────────────────
@@ -87,7 +88,7 @@ interface Props {
   sections: Section[];
   templateName: string;
   anonymizedText: string;
-  onExport: (sections: Section[]) => void;
+  onExport: (sections: Section[], photos: PhotoData[]) => void;
 }
 
 const ANON_MARKER_RE = /(\[[A-Z_]+_\d+\])/g;
@@ -162,6 +163,7 @@ function SectionTextarea({
 
 export function ReportEditor({ sections: initialSections, anonymizedText, onExport }: Props) {
   const [sections, setSections] = useState<Section[]>(initialSections);
+  const [photos, setPhotos] = useState<PhotoData[]>([]);
   const [validation, setValidation] = useState<ValidationResult | null>(null);
   const [confirmed, setConfirmed] = useState(false);
   const [isValidating, setIsValidating] = useState(false);
@@ -250,6 +252,21 @@ export function ReportEditor({ sections: initialSections, anonymizedText, onExpo
         })}
       </div>
 
+      {/* ── Section photos (optionnelle) ── */}
+      <div className="section-block">
+        <div className="section-header">
+          <span className="section-title">
+            Productions du patient
+            <span className="section-constraint" style={{ marginLeft: 8 }}>optionnel · max 2 photos</span>
+          </span>
+          <span className="section-constraint">
+            Les photos apparaîtront dans une section dédiée du bilan exporté.
+            Si aucune photo n'est ajoutée, la section n'est pas incluse.
+          </span>
+        </div>
+        <PhotoDropzone photos={photos} onChange={setPhotos} maxPhotos={2} />
+      </div>
+
       <div className="editor-footer">
         <button
           className="btn-validate"
@@ -271,7 +288,7 @@ export function ReportEditor({ sections: initialSections, anonymizedText, onExpo
         <button
           className="btn-export"
           disabled={!confirmed}
-          onClick={() => onExport(sections)}
+          onClick={() => onExport(sections, photos)}
         >
           Exporter →
         </button>

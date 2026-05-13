@@ -6,6 +6,8 @@ from __future__ import annotations
 import json
 import datetime
 import uuid
+import base64
+import io
 from pathlib import Path
 
 try:
@@ -80,6 +82,16 @@ def _format_date(iso: str) -> str:
         return iso[:10] if len(iso) >= 10 else iso
 
 
+def _dataurl_to_bytes(data_url: str) -> bytes | None:
+    """Convertit un data URL base64 en bytes bruts."""
+    try:
+        if "," in data_url:
+            data_url = data_url.split(",", 1)[1]
+        return base64.b64decode(data_url)
+    except Exception:
+        return None
+
+
 def _export_docx(
     sections: list[dict],
     template_name: str,
@@ -88,6 +100,7 @@ def _export_docx(
     filename: str,
     settings: dict,
     patient_label: str = "",
+    photo_data: list[str] | None = None,
 ) -> Path:
     doc = Document()
 
@@ -208,6 +221,21 @@ def _export_docx(
 
         doc.add_paragraph()
 
+    # Section photos de productions (optionnelle)
+    photos_bytes = [b for d in (photo_data or []) if (b := _dataurl_to_bytes(d)) is not None]
+    if photos_bytes:
+        heading = doc.add_heading("Productions du patient", level=1)
+        heading.runs[0].font.size = Pt(11)
+        heading.runs[0].bold = True
+        for img_bytes in photos_bytes:
+            try:
+                doc.add_picture(io.BytesIO(img_bytes), width=Cm(12))
+                last_para = doc.paragraphs[-1]
+                last_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                doc.add_paragraph()
+            except Exception:
+                pass
+
     # Formule de clôture — lieu du patient (tag) ou placeholder rouge si absent
     closing_para = doc.add_paragraph()
     closing_para.alignment = WD_ALIGN_PARAGRAPH.RIGHT
@@ -248,6 +276,7 @@ def _export_pdf(
     filename: str,
     settings: dict,
     patient_label: str = "",
+    photo_data: list[str] | None = None,
 ) -> Path:
     dest = out_dir / f"{filename}.pdf"
 
@@ -391,6 +420,28 @@ def _export_pdf(
             story.append(Paragraph("<i>[Section non renseignée]</i>", small_style))
         story.append(Spacer(1, 0.3 * cm))
 
+    # Section photos de productions (optionnelle)
+    photos_bytes = [b for d in (photo_data or []) if (b := _dataurl_to_bytes(d)) is not None]
+    if photos_bytes:
+        story.append(Paragraph("Productions du patient", h1_style))
+        page_width = 13.5 * cm
+        img_width = page_width / len(photos_bytes) - 0.5 * cm
+        from reportlab.platypus import Image as RLImage, HRFlowable
+        img_list = []
+        for img_bytes in photos_bytes:
+            try:
+                img_list.append(RLImage(io.BytesIO(img_bytes), width=img_width, height=img_width * 0.75))
+            except Exception:
+                pass
+        if img_list:
+            if len(img_list) == 1:
+                story.append(img_list[0])
+            else:
+                tbl = Table([img_list], colWidths=[img_width + 0.5 * cm] * len(img_list))
+                tbl.setStyle(TableStyle([("ALIGN", (0, 0), (-1, -1), "CENTER"), ("VALIGN", (0, 0), (-1, -1), "MIDDLE")]))
+                story.append(tbl)
+        story.append(Spacer(1, 0.3 * cm))
+
     # Formule de clôture — lieu du patient (tag) ou placeholder rouge si absent
     if patient_label:
         lieu_part = patient_label
@@ -405,7 +456,7 @@ def _export_pdf(
     return dest
 
 
-def export(sections: list[dict], template_name: str, patient_name: str = "", patient_id: str = "") -> None:
+def export(sections: list[dict], template_name: str, patient_name: str = "", patient_id: str = "", photo_data: list[str] | None = None) -> None:
     session_id = uuid.uuid4().hex[:8]
 
     # Dossier Bilan/ dans le dossier du patient si possible, sinon dossier général
@@ -434,7 +485,7 @@ def export(sections: list[dict], template_name: str, patient_name: str = "", pat
     if _DOCX_AVAILABLE:
         _emit({"type": "progress", "status": "docx", "message": "Génération du fichier Word…"})
         try:
-            docx_path = str(_export_docx(sections, template_name, patient_name, out_dir, filename, settings, patient_label))
+            docx_path = str(_export_docx(sections, template_name, patient_name, out_dir, filename, settings, patient_label, photo_data))
         except Exception as e:
             _emit({"type": "error", "message": f"Erreur Word : {e}"})
             return
@@ -444,7 +495,7 @@ def export(sections: list[dict], template_name: str, patient_name: str = "", pat
     if _PDF_AVAILABLE:
         _emit({"type": "progress", "status": "pdf", "message": "Génération du PDF…"})
         try:
-            pdf_path = str(_export_pdf(sections, template_name, patient_name, out_dir, filename, settings, patient_label))
+            pdf_path = str(_export_pdf(sections, template_name, patient_name, out_dir, filename, settings, patient_label, photo_data))
         except Exception as e:
             _emit({"type": "error", "message": f"Erreur PDF : {e}"})
             return

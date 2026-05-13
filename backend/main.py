@@ -196,6 +196,7 @@ def handle(cmd: dict) -> dict | None:
             template_name=params.get("template_name", "Bilan de séance"),
             patient_name=params.get("patient_name", ""),
             patient_id=params.get("patient_id", ""),
+            photo_data=params.get("photo_data", []),
         )
         return None
 

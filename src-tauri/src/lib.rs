@@ -298,10 +298,12 @@ fn start_export(
     template_name: String,
     patient_name: String,
     patient_id: String,
+    photo_data: Option<Vec<String>>,
 ) -> Result<(), String> {
+    let photos = photo_data.unwrap_or_default();
     let payload = format!(
         "{}\n",
-        serde_json::json!({"method": "export", "params": {"sections": sections, "template_name": template_name, "patient_name": patient_name, "patient_id": patient_id}, "id": 1})
+        serde_json::json!({"method": "export", "params": {"sections": sections, "template_name": template_name, "patient_name": patient_name, "patient_id": patient_id, "photo_data": photos}, "id": 1})
     );
     state
         .tx
