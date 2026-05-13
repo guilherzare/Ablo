@@ -19,10 +19,11 @@ interface Props {
   templateName: string;
   patientId?: string;
   patientName?: string;
+  photoData?: string[]; // base64 data URLs des photos de productions
   onRestart: () => void;
 }
 
-export function ExportView({ sections, templateName, patientId, patientName: initialPatientName, onRestart }: Props) {
+export function ExportView({ sections, templateName, patientId, patientName: initialPatientName, photoData = [], onRestart }: Props) {
   const [patientName, setPatientName] = useState(initialPatientName ?? "");
   const [started, setStarted] = useState(false);
   const [status, setStatus] = useState("Préparation de l'export…");
@@ -53,7 +54,7 @@ export function ExportView({ sections, templateName, patientId, patientName: ini
       }
     });
 
-    invoke("start_export", { sections, templateName, patientName, patientId: patientId ?? "" })
+    invoke("start_export", { sections, templateName, patientName, patientId: patientId ?? "", photoData })
       .catch((e) => setError(String(e)));
 
     return () => { unlisten.then((fn) => fn()); };

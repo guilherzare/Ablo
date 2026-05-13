@@ -1,0 +1,155 @@
+.photo-dropzone-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* ── Liste des fichiers ── */
+.photo-file-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.photo-file-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 0.875rem;
+}
+
+.photo-file-icon {
+  width: 16px;
+  height: 16px;
+  color: #9ca3af;
+  flex-shrink: 0;
+}
+
+.photo-file-name {
+  flex: 1;
+  color: #374151;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.photo-file-btn {
+  padding: 3px 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-family: inherit;
+  border-radius: 5px;
+  cursor: pointer;
+  border: 1px solid #e5e7eb;
+  background: white;
+  color: #374151;
+  flex-shrink: 0;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.photo-file-btn:hover {
+  background: #f3f4f6;
+  border-color: #d1d5db;
+}
+
+.photo-file-btn--danger {
+  color: #dc2626;
+  border-color: #fecaca;
+  background: white;
+}
+
+.photo-file-btn--danger:hover {
+  background: #fef2f2;
+  border-color: #fca5a5;
+}
+
+/* ── Zone de dépôt ── */
+.photo-drop-area {
+  border: 2px dashed #d1d5db;
+  border-radius: 10px;
+  padding: 28px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  transition: border-color 0.2s, background 0.2s;
+  background: #ffffff;
+}
+
+.photo-drop-area.dragging {
+  border-color: #4f46e5;
+  background: #f5f3ff;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+.photo-drop-icon {
+  width: 36px;
+  height: 36px;
+  color: #9ca3af;
+  flex-shrink: 0;
+  margin-bottom: 6px;
+}
+
+.photo-drop-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #374151;
+  margin: 0;
+  text-align: center;
+}
+
+.photo-drop-hint {
+  font-size: 0.78rem;
+  color: #9ca3af;
+  margin: 0;
+  font-style: italic;
+}
+
+.photo-drop-or {
+  font-size: 0.75rem;
+  color: #d1d5db;
+  margin-top: 4px;
+}
+
+.photo-drop-btn {
+  margin-top: 10px;
+  padding: 7px 18px;
+  background: #f3f4f6;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  color: #374151;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.photo-drop-btn:hover {
+  background: #e5e7eb;
+  border-color: #c9ccd0;
+}
+
+.photo-drop-input {
+  display: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  .photo-file-item { background: #111827; border-color: #374151; }
+  .photo-file-name { color: #d1d5db; }
+  .photo-file-btn { background: #1f2937; border-color: #374151; color: #d1d5db; }
+  .photo-file-btn:hover { background: #374151; }
+  .photo-file-btn--danger { color: #f87171; border-color: #7f1d1d; background: #1f2937; }
+  .photo-drop-area { background: #1f2937; border-color: #374151; }
+  .photo-drop-area.dragging { background: #1e1b4b; border-color: #4f46e5; }
+  .photo-drop-label { color: #d1d5db; }
+  .photo-drop-icon { color: #6b7280; }
+  .photo-drop-btn { background: #374151; border-color: #4b5563; color: #e5e7eb; }
+  .photo-drop-btn:hover { background: #4b5563; }
+}

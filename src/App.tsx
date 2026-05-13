@@ -49,6 +49,7 @@ export default function App() {
   const [anonymizedText, setAnonymizedText] = useState("");
   const [anonSpans, setAnonSpans] = useState<MaskSpan[]>([]);
   const [reportSections, setReportSections] = useState<Section[]>([]);
+  const [reportPhotos, setReportPhotos] = useState<{ name: string; dataUrl: string }[]>([]);
   const [templateName, setTemplateName] = useState("Bilan de prise en charge en Art-thérapie");
   const [isAnonymizing, setIsAnonymizing] = useState(false);
   const [anonymizeError, setAnonymizeError] = useState("");
@@ -505,7 +506,7 @@ export default function App() {
             <p className="step-desc">Relisez et corrigez chaque section avant d'exporter.</p>
             <ReportEditor
               sections={reportSections} templateName={templateName} anonymizedText={anonymizedText}
-              onExport={(sections) => { setReportSections(sections); setAppState("final-export"); }}
+              onExport={(sections, photos) => { setReportSections(sections); setReportPhotos(photos); setAppState("final-export"); }}
             />
           </section>
         )}
@@ -518,6 +519,7 @@ export default function App() {
               sections={reportSections} templateName={templateName}
               patientId={currentPatient?.id}
               patientName={currentPatient?.name}
+              photoData={reportPhotos.map((p) => p.dataUrl)}
               onRestart={() => { resetTranscription(); setAppState("home"); }}
             />
           </section>
