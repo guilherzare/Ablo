@@ -6,6 +6,10 @@ build-windows:
   tags:
     - saas-windows-medium-amd64
   script:
+    # ── Activer les longs chemins Windows ────────────────────────────────
+    - Set-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem' -Name 'LongPathsEnabled' -Value 1
+    - git config --global core.longpaths true
+
     # ── Python + dépendances ──────────────────────────────────────────────
     - python -m pip install --upgrade pip
     - pip install pyinstaller certifi python-docx reportlab faster-whisper
