@@ -72,5 +72,5 @@ build-windows:
 
   # Lance uniquement sur main ou manuellement
   rules:
-    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_BRANCH == "ablo"
     - when: manual
