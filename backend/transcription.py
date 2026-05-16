@@ -8,9 +8,43 @@ import sys
 import os
 from pathlib import Path
 
+# Cache du modèle Whisper — chargé une seule fois pour toute la session.
+# Évite de recharger 462 Mo depuis le disque à chaque transcription.
+_whisper_model = None
+_whisper_model_path: str | None = None
+
 
 def _emit(payload: dict) -> None:
     print(json.dumps(payload, ensure_ascii=False), flush=True)
+
+
+def _get_model():
+    """Retourne le modèle Whisper, en le chargeant depuis le disque si nécessaire.
+    Essaie large-v3 en priorité, repli sur small si absent."""
+    global _whisper_model, _whisper_model_path
+
+    # Déterminer le chemin du meilleur modèle disponible
+    models_dir = Path.home() / ".ablo" / "models"
+    large_path = models_dir / "faster-whisper-large-v3"
+    small_path = models_dir / "faster-whisper-small"
+    model_path = str(large_path) if large_path.exists() else str(small_path)
+
+    # Si le modèle est déjà en mémoire ET c'est le même chemin, le réutiliser
+    if _whisper_model is not None and _whisper_model_path == model_path:
+        return _whisper_model
+
+    try:
+        from faster_whisper import WhisperModel
+    except ImportError:
+        raise RuntimeError("faster-whisper non installé. Exécutez : pip3 install faster-whisper")
+
+    _whisper_model = WhisperModel(
+        model_path,
+        device="cpu",
+        compute_type="int8",
+    )
+    _whisper_model_path = model_path
+    return _whisper_model
 
 
 def transcribe(audio_path: str) -> None:
@@ -23,28 +57,13 @@ def transcribe(audio_path: str) -> None:
         _emit({"type": "error", "message": f"Fichier audio introuvable : {audio_path}"})
         return
 
-    _emit({"type": "progress", "status": "loading",
-           "message": "Chargement du modèle de transcription…"})
+    # N'affiche le message de chargement que si le modèle n'est pas encore en mémoire
+    if _whisper_model is None:
+        _emit({"type": "progress", "status": "loading",
+               "message": "Chargement du modèle de transcription…"})
 
     try:
-        from faster_whisper import WhisperModel
-    except ImportError:
-        _emit({"type": "error",
-               "message": "faster-whisper non installé. Exécutez : pip3 install faster-whisper"})
-        return
-
-    # Essaie large-v3 en priorité, repli sur small si absent
-    models_dir = Path.home() / ".ablo" / "models"
-    large_path = models_dir / "faster-whisper-large-v3"
-    small_path = models_dir / "faster-whisper-small"
-    model_path = str(large_path) if large_path.exists() else str(small_path)
-
-    try:
-        model = WhisperModel(
-            model_path,
-            device="cpu",
-            compute_type="int8",
-        )
+        model = _get_model()
     except Exception as e:
         _emit({"type": "error", "message": f"Impossible de charger le modèle Whisper : {e}"})
         return
