@@ -23,7 +23,7 @@ jobs:
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pyinstaller certifi python-docx reportlab faster-whisper
+          pip install pyinstaller certifi python-docx reportlab Pillow faster-whisper
           $env:CMAKE_ARGS = "-DLLAMA_BLAS=OFF -DLLAMA_CUDA=OFF -DLLAMA_METAL=OFF"
           pip install llama-cpp-python
         shell: pwsh

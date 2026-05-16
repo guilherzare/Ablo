@@ -26,20 +26,24 @@ _llm_instance: object = None  # instance Llama mise en cache
 _llm_n_ctx: int = 0           # n_ctx avec lequel l'instance a été chargée
 
 
-def _get_llm(n_ctx: int) -> object:
-    """Retourne l'instance Llama en cache, ou en charge une nouvelle si n_ctx a changé."""
+_N_CTX = 6144  # contexte unifié : couvre résumés ET bilan final sans rechargement
+
+
+def _get_llm(n_ctx: int = _N_CTX) -> object:
+    """Retourne l'instance Llama en cache. Toujours chargée avec _N_CTX pour éviter
+    de recharger le modèle entre les résumés (3072) et le bilan final (6144)."""
     global _llm_instance, _llm_n_ctx
-    if _llm_instance is not None and _llm_n_ctx == n_ctx:
+    if _llm_instance is not None:
         return _llm_instance
     from llama_cpp import Llama
     _llm_instance = Llama(
         model_path=str(_MODEL_PATH),
-        n_ctx=n_ctx,
+        n_ctx=_N_CTX,
         n_threads=8,
-        n_gpu_layers=-1,
+        n_gpu_layers=-1,  # utilise le GPU si disponible (Metal sur Mac, CUDA sur Windows)
         verbose=False,
     )
-    _llm_n_ctx = n_ctx
+    _llm_n_ctx = _N_CTX
     return _llm_instance
 
 

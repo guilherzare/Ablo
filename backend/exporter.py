@@ -221,17 +221,24 @@ def _export_docx(
 
         doc.add_paragraph()
 
-    # Section photos de productions — toutes centrées à 80 % de la largeur utile
+    # Section photos de productions — redimensionnées pour tenir dans la page
     photos_bytes = [b for d in (photo_data or []) if (b := _dataurl_to_bytes(d)) is not None]
     if photos_bytes:
         heading = doc.add_heading("Productions du patient", level=1)
         heading.runs[0].font.size = Pt(11)
         heading.runs[0].bold = True
 
-        w = int(Cm(16) * 0.80)  # ~12.8 cm, ratio préservé car hauteur non forcée
+        max_w_cm = Cm(16) * 0.80   # ~12.8 cm
+        max_h_cm = Cm(18)          # hauteur max pour ne pas déborder d'une page
         for img_bytes in photos_bytes:
             try:
-                doc.add_picture(io.BytesIO(img_bytes), width=w)
+                from PIL import Image as PILImage
+                with PILImage.open(io.BytesIO(img_bytes)) as pil_img:
+                    orig_w, orig_h = pil_img.size
+                scale = min(max_w_cm / orig_w, max_h_cm / orig_h)
+                draw_w = int(orig_w * scale)
+                draw_h = int(orig_h * scale)
+                doc.add_picture(io.BytesIO(img_bytes), width=draw_w, height=draw_h)
                 doc.paragraphs[-1].alignment = WD_ALIGN_PARAGRAPH.CENTER
                 doc.add_paragraph()
             except Exception:
@@ -421,15 +428,23 @@ def _export_pdf(
             story.append(Paragraph("<i>[Section non renseignée]</i>", small_style))
         story.append(Spacer(1, 0.3 * cm))
 
-    # Section photos de productions — toutes centrées à 80 % de la largeur utile
+    # Section photos de productions — redimensionnées pour tenir dans la page
     photos_bytes = [b for d in (photo_data or []) if (b := _dataurl_to_bytes(d)) is not None]
     if photos_bytes:
         story.append(Paragraph("Productions du patient", h1_style))
         from reportlab.platypus import Image as RLImage
-        w = 13.5 * cm * 0.80  # ~10.8 cm, ratio préservé car hauteur non forcée
+        from PIL import Image as PILImage
+        max_w = 13.5 * cm * 0.80   # ~10.8 cm
+        max_h = 14.0 * cm          # hauteur max pour ne pas déborder de page
         for img_bytes in photos_bytes:
             try:
-                story.append(RLImage(io.BytesIO(img_bytes), width=w))
+                # Calculer les dimensions en respectant le ratio et les limites
+                with PILImage.open(io.BytesIO(img_bytes)) as pil_img:
+                    orig_w, orig_h = pil_img.size
+                scale = min(max_w / orig_w, max_h / orig_h)
+                draw_w = orig_w * scale
+                draw_h = orig_h * scale
+                story.append(RLImage(io.BytesIO(img_bytes), width=draw_w, height=draw_h))
                 story.append(Spacer(1, 0.3 * cm))
             except Exception:
                 pass
