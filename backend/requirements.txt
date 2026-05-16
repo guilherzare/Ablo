@@ -12,3 +12,4 @@ llama-cpp-python
 # Export documents
 python-docx
 reportlab
+Pillow
