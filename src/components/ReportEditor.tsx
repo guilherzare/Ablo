@@ -55,7 +55,7 @@ function AutoEvalSummary({ data }: { data: MultiSessionAutoeval }) {
                 return (
                   <td key={i} className="auteval-td auteval-td-score">
                     {isNA ? (
-                      <span className="auteval-score-empty">—</span>
+                      <span className="auteval-score-empty">N/C</span>
                     ) : (
                       <span
                         className="auteval-score-chip"
