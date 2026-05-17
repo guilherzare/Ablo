@@ -42,7 +42,8 @@ AUTEVAL_CRITERIA = [
     "État final",
 ]
 
-DOT_LABELS = ["—", "Faible", "Passable", "Bien", "Très bien", "Excellent"]
+DOT_LABELS = ["Très faible", "Faible", "Passable", "Bien", "Très bien", "Excellent"]
+DOT_LABEL_NC = "N/C"  # séance sans auto-évaluation (première séance)
 
 
 def _parse_auteval(content: str) -> dict | None:
@@ -175,13 +176,13 @@ def _export_docx(
                     row_cells[0].paragraphs[0].add_run(criterion).font.size = Pt(9)
                     for i, sess in enumerate(sessions):
                         scores = sess.get("scores", {})
-                        cell_text = "—" if not scores else str(scores.get(criterion, 0))
+                        cell_text = DOT_LABEL_NC if not scores else str(scores.get(criterion, 0))
                         row_cells[i + 1].paragraphs[0].add_run(cell_text).font.size = Pt(9)
                 legend = doc.add_paragraph()
                 legend_run = legend.add_run(
-                    "Scores de 0 à 5 — 0 : non renseigné · 1 : Faible · 2 : Passable · "
+                    "Scores de 0 à 5 — 0 : Très faible · 1 : Faible · 2 : Passable · "
                     "3 : Bien · 4 : Très bien · 5 : Excellent. "
-                    "La première séance ne comporte pas d'autoévaluation (—)."
+                    "N/C = Non Communiqué (première séance sans auto-évaluation)."
                 )
                 legend_run.italic = True
                 legend_run.font.size = Pt(8)
@@ -372,7 +373,7 @@ def _export_pdf(
                     row = [criterion]
                     for sess in sessions:
                         scores = sess.get("scores", {})
-                        row.append("—" if not scores else str(scores.get(criterion, 0)))
+                        row.append(DOT_LABEL_NC if not scores else str(scores.get(criterion, 0)))
                     table_data.append(row)
                 n_cols = len(header_row)
                 crit_col = 5 * cm
@@ -393,9 +394,9 @@ def _export_pdf(
                 ]))
                 story.append(tbl)
                 legend_text = (
-                    "<i>Scores de 0 à 5 — 0 : non renseigné · 1 : Faible · 2 : Passable · "
+                    "<i>Scores de 0 à 5 — 0 : Très faible · 1 : Faible · 2 : Passable · "
                     "3 : Bien · 4 : Très bien · 5 : Excellent. "
-                    "La première séance ne comporte pas d'autoévaluation (—).</i>"
+                    "N/C = Non Communiqué (première séance sans auto-évaluation).</i>"
                 )
                 story.append(Paragraph(legend_text, small_style))
             else:
