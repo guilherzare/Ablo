@@ -43,6 +43,9 @@ jobs:
           # Chemin vers les assets faster_whisper (silero_vad_v6.onnx)
           $fwAssets = python -c "import faster_whisper, os; print(os.path.join(os.path.dirname(faster_whisper.__file__), 'assets'))"
           Write-Host "faster_whisper assets : $fwAssets"
+          # Chemin vers le package python-docx (pour bundler parts/, templates/, etc.)
+          $docxDir = python -c "import docx, os; print(os.path.dirname(docx.__file__))"
+          Write-Host "python-docx dir : $docxDir"
           pyinstaller `
             --onefile `
             --name ablo-backend `
@@ -50,9 +53,11 @@ jobs:
             --collect-all ctranslate2 `
             --collect-all tokenizers `
             --collect-all llama_cpp `
+            --collect-all PIL `
             --add-binary "ffmpeg.exe;." `
             --add-data "..\templates;templates" `
             --add-data "${fwAssets};faster_whisper/assets" `
+            --add-data "${docxDir};docx" `
             main.py
           New-Item -ItemType Directory -Force -Path ..\src-tauri\binaries | Out-Null
           Copy-Item dist\ablo-backend.exe ..\src-tauri\binaries\ablo-backend-x86_64-pc-windows-msvc.exe
