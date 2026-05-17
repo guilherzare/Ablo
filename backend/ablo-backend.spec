@@ -26,6 +26,15 @@ datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
 tmp_ret = collect_all('PIL')
 datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
 
+# Templates internes de python-docx (default-header.xml, default.docx, etc.)
+try:
+    import docx as _docx
+    _docx_tpl = os.path.join(os.path.dirname(_docx.__file__), 'templates')
+    if os.path.isdir(_docx_tpl):
+        datas += [(_docx_tpl, 'docx/templates')]
+except ImportError:
+    pass
+
 
 a = Analysis(
     ['main.py'],

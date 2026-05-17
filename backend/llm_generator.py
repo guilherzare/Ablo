@@ -318,12 +318,18 @@ def _build_final_prompt(sessions: list[dict], final_text: str, template: Templat
 
 
 def _inject_autoeval(sections: list[dict], sessions: list[dict]) -> list[dict]:
-    """Remplace le contenu de la section autoévaluation par le JSON multi-séances."""
+    """Remplace le contenu de la section autoévaluation par le JSON multi-séances.
+    La première séance (is_first_session=True ou index 0) n'a pas d'autoévaluation → scores vide."""
     autoeval_data = {
         "type": "multi_session",
         "sessions": [
-            {"date": s.get("date", ""), "scores": s.get("autoeval", {})}
-            for s in sessions
+            {
+                "date": s.get("date", ""),
+                # Scores vides si première séance : AutoEvalEditor initialise à 0 par défaut
+                # mais la S1 ne comporte pas d'autoévaluation (N/C dans le tableau)
+                "scores": {} if (s.get("is_first_session", False) or i == 0) else s.get("autoeval", {}),
+            }
+            for i, s in enumerate(sessions)
         ],
     }
     return [
