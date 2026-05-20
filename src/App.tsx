@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 const sessionRecordImg = "/session-record.png"; // servi depuis public/
 import { invoke } from "@tauri-apps/api/core";
+import { getVersion } from "@tauri-apps/api/app";
 import { FirstRun } from "./components/FirstRun";
 import { HomePage, getLabelColor } from "./components/HomePage";
 import { PatientPage, Patient, Session } from "./components/PatientPage";
@@ -54,6 +55,7 @@ export default function App() {
   const [isAnonymizing, setIsAnonymizing] = useState(false);
   const [anonymizeError, setAnonymizeError] = useState("");
   const [showSettings, setShowSettings] = useState(false);
+  const [appVersion, setAppVersion] = useState("");
   const [lieuRefreshKey, setLieuRefreshKey] = useState(0);
   const [sessionDate, setSessionDate] = useState(() => new Date().toISOString().split("T")[0]);
 
@@ -69,6 +71,8 @@ export default function App() {
   const [deleting, setDeleting] = useState(false);
   const [patientSessionCount, setPatientSessionCount] = useState(0);
   const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => { getVersion().then(setAppVersion).catch(() => {}); }, []);
 
   useEffect(() => {
     invoke<{ result: Record<string, { present: boolean }> }>("call_backend", {
@@ -529,7 +533,7 @@ export default function App() {
 
       {(appState === "home" || appState === "patient") && (
         <footer className="app-footer">
-          <p className="app-version">Ablo v0.1.0 · 2026</p>
+          <p className="app-version">{appVersion ? `Ablo v${appVersion} · 2026` : "Ablo · 2026"}</p>
         </footer>
       )}
     </div>

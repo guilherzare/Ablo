@@ -63,7 +63,8 @@ def _emit(payload: dict) -> None:
 
 
 def _whisper_present() -> bool:
-    return (WHISPER_DIR / "model.bin").exists()
+    required = ["model.bin", "config.json", "tokenizer.json", "vocabulary.txt"]
+    return all((WHISPER_DIR / f).exists() for f in required)
 
 
 def _whisper_large_present() -> bool:
